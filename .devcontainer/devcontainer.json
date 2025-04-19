@@ -1,0 +1,23 @@
+{
+    "name": "Laravel 12 (Microsoft Dev Container)",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "app",
+    "workspaceFolder": "/workspace",
+    "postCreateCommand": "composer install || true && yarn install || true && php artisan key:generate",
+    "customizations": {
+      "vscode": {
+        "settings": {
+          "terminal.integrated.defaultProfile.linux": "bash"
+        },
+        "extensions": [
+          "bmewburn.vscode-intelephense-client",
+          "xdebug.php-debug",
+          "mehedidracula.php-namespace-resolver",
+          "esbenp.prettier-vscode"
+        ]
+      }
+    },
+    "forwardPorts": [8000],
+    "remoteUser": "vscode"
+  }
+  
