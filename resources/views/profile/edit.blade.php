@@ -1,25 +1,28 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+        <h2 class="font-bold text-2xl text-[#1b1b18] dark:text-[#EDEDEC]">
             {{ __('Profile') }}
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+    <div class="py-8">
+        <div class="container mx-auto px-4 lg:px-8 space-y-8">
+            <!-- Update Profile Information Form -->
+            <div class="p-6 sm:p-8 bg-white dark:bg-[#0a0a0a] border border-gray-100 dark:border-[#3E3E3A] rounded-xl shadow-sm">
                 <div class="max-w-xl">
                     @include('profile.partials.update-profile-information-form')
                 </div>
             </div>
 
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+            <!-- Update Password Form -->
+            <div class="p-6 sm:p-8 bg-white dark:bg-[#0a0a0a] border border-gray-100 dark:border-[#3E3E3A] rounded-xl shadow-sm">
                 <div class="max-w-xl">
                     @include('profile.partials.update-password-form')
                 </div>
             </div>
 
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+            <!-- Delete User Form -->
+            <div class="p-6 sm:p-8 bg-white dark:bg-[#0a0a0a] border border-gray-100 dark:border-[#3E3E3A] rounded-xl shadow-sm">
                 <div class="max-w-xl">
                     @include('profile.partials.delete-user-form')
                 </div>

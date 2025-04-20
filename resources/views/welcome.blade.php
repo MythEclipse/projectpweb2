@@ -1519,150 +1519,143 @@
     @endif
 </head>
 
-<x-app-layout>
-    <div x-data="{
-        products: [
-            { id: 1, name: 'Kemeja Flanel', price: 250000, image: 'images/shirt1.jpg', category: 'Pria', inStock: true },
-            { id: 2, name: 'Dress Summer', price: 350000, image: 'images/dress1.jpg', category: 'Wanita', inStock: false },
-            { id: 3, name: 'Jaket Hoodie', price: 450000, image: 'images/jacket1.jpg', category: 'Unisex', inStock: true },
-        ],
-        cartItems: 0,
-        searchQuery: '',
-        selectedCategory: 'Semua',
-        sortBy: 'terbaru',
+<body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] dark:text-[#EDEDEC] min-h-screen">
+    <!-- Header Navigation -->
+    <header class="sticky top-0 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-sm z-50 border-b border-gray-100 dark:border-[#3E3E3A]">
+        <nav class="container mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
+            <a href="/" class="text-2xl font-bold text-pink-600 dark:text-pink-400">Fashionku</a>
 
-        get filteredProducts() {
-            return this.products
-                .filter(product =>
-                    product.name.toLowerCase().includes(this.searchQuery.toLowerCase()) &&
-                    (this.selectedCategory === 'Semua' || product.category === this.selectedCategory)
-                )
-                .sort((a, b) => {
-                    if(this.sortBy === 'harga_terendah') return a.price - b.price
-                    if(this.sortBy === 'harga_tertinggi') return b.price - a.price
-                    return b.id - a.id // Default sort by newest
-                })
-        }
-    }" class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] dark:text-[#EDEDEC] min-h-screen">
-        <!-- Header Navigation -->
-        <header class="sticky top-0 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-sm z-50 border-b border-gray-100 dark:border-[#3E3E3A]">
-            <nav class="container mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
-                <a href="/" class="text-2xl font-bold text-pink-600 dark:text-pink-400">Fashionku</a>
-                <div class="flex items-center gap-4">
-                    @auth
-                        <a href="{{ url('/dashboard') }}" class="px-4 py-2 text-sm font-medium transition-all hover:bg-gray-100 dark:hover:bg-[#3E3E3A] rounded-lg">
-                            Dashboard
-                        </a>
-                    @else
-                        <a href="{{ route('login') }}" class="px-4 py-2 text-sm font-medium transition-all hover:bg-gray-100 dark:hover:bg-[#3E3E3A] rounded-lg">
-                            Log in
-                        </a>
-                        @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 transition-colors">
-                                Register
-                            </a>
-                        @endif
-                    @endauth
-                </div>
-            </nav>
-        </header>
-
-        <!-- Hero Section -->
-        <section class="relative pt-20 pb-32 px-4 lg:px-8 bg-gradient-to-br from-pink-50 to-purple-50 dark:from-[#1a1a1a] dark:to-[#2d2d2d]">
-            <div class="container mx-auto max-w-4xl text-center">
-                <h1 class="text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6 animate-fade-in-up">
-                    Temukan Gaya Terbaikmu
-                </h1>
-                <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-                    Koleksi eksklusif baju kekinian dengan kualitas premium dan harga terjangkau. Tampil percaya diri dengan gaya terkini!
-                </p>
-                <a href="{{ route('homepage') }}" class="inline-block bg-pink-600 hover:bg-pink-700 text-white px-8 py-4 rounded-lg text-lg font-medium transition-transform hover:scale-105 shadow-lg">
-                    Jelajahi Koleksi
+            @if (Route::has('login'))
+            <div class="flex items-center gap-4">
+                @auth
+                <a href="{{ url('/dashboard') }}" class="px-4 py-2 text-sm font-medium transition-all hover:bg-gray-100 dark:hover:bg-[#3E3E3A] rounded-lg">
+                    Dashboard
                 </a>
-            </div>
-        </section>
+                @else
+                <a href="{{ route('login') }}" class="px-4 py-2 text-sm font-medium transition-all hover:bg-gray-100 dark:hover:bg-[#3E3E3A] rounded-lg">
+                    Log in
+                </a>
 
-        <!-- Product Grid Section -->
-        <main class="pt-20 pb-12 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row gap-4">
-                <input type="text" x-model="searchQuery" placeholder="Cari produk..." class="w-full md:w-64 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
-                <select x-model="selectedCategory" class="w-full md:w-48 px-4 py-2 border rounded-lg">
-                    <option>Semua</option>
-                    <option>Pria</option>
-                    <option>Wanita</option>
-                    <option>Unisex</option>
-                </select>
-                <select x-model="sortBy" class="w-full md:w-48 px-4 py-2 border rounded-lg">
-                    <option value="terbaru">Terbaru</option>
-                    <option value="harga_terendah">Harga Terendah</option>
-                    <option value="harga_tertinggi">Harga Tertinggi</option>
-                </select>
+                @if (Route::has('register'))
+                <a href="{{ route('register') }}" class="px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 transition-colors">
+                    Register
+                </a>
+                @endif
+                @endauth
+            </div>
+            @endif
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative pt-20 pb-32 px-4 lg:px-8 bg-gradient-to-br from-pink-50 to-purple-50 dark:from-[#1a1a1a] dark:to-[#2d2d2d]">
+        <div class="container mx-auto max-w-4xl text-center">
+            <h1 class="text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6 animate-fade-in-up">
+                Temukan Gaya Terbaikmu
+            </h1>
+            <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+                Koleksi eksklusif baju kekinian dengan kualitas premium dan harga terjangkau. Tampil percaya diri dengan gaya terkini!
+            </p>
+            <a href="{{ route('login') }}" class="inline-block bg-pink-600 hover:bg-pink-700 text-white px-8 py-4 rounded-lg text-lg font-medium transition-transform hover:scale-105 shadow-lg">
+                Jelajahi Koleksi
+            </a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <!-- Tentang Kami Section -->
+<section id="tentang" class="py-20 bg-white dark:bg-[#1a1a1a]">
+    <div class="container mx-auto px-4 lg:px-8 max-w-6xl">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div class="relative group">
+                <div class="absolute inset-0 bg-pink-600/10 rounded-2xl transform rotate-2 group-hover:rotate-1 transition-all"></div>
+                <img src="https://source.unsplash.com/600x400/?fashion-store"
+                     alt="Tentang Kami"
+                     class="rounded-2xl relative shadow-lg transform group-hover:-translate-y-2 transition-all">
             </div>
 
-            <div class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" x-data="{
-                init() {
-                    const observer = new IntersectionObserver((entries) => {
-                        entries.forEach(entry => {
-                            if(entry.isIntersecting) {
-                                entry.target.style.opacity = 1
-                                entry.target.style.transform = 'translateY(0)'
-                            }
-                        })
-                    }, { threshold: 0.1 })
-                    Array.from(this.$el.children).forEach((child, index) => {
-                        child.style.opacity = 0
-                        child.style.transform = 'translateY(20px)'
-                        child.style.transition = `all 0.3s ease-out ${index * 0.1}s`
-                        observer.observe(child)
-                    })
-                }
-            }">
-                <template x-for="product in filteredProducts" :key="product.id">
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                        <div class="relative group">
-                            <img :src="product.image" :alt="product.name" class="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-300">
-                            <div x-show="!product.inStock" class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                <span class="text-white font-bold">Stok Habis</span>
-                            </div>
-                        </div>
-                        <div class="p-4">
-                            <h3 x-text="product.name" class="font-semibold text-lg mb-2"></h3>
-                            <p class="text-gray-600 mb-2">
-                                Rp <span x-text="new Intl.NumberFormat('id-ID').format(product.price)"></span>
-                            </p>
-                            <div class="flex justify-between items-center">
-                                <button @click="cartItems++" :disabled="!product.inStock" class="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity">
-                                    + Keranjang
-                                </button>
-                                <button class="text-pink-600 hover:text-pink-700">
-                                    Detail
-                                </button>
-                            </div>
-                        </div>
+            <div>
+                <h2 class="text-4xl font-bold mb-6 dark:text-white">
+                    Cerita Dibalik Fashionku
+                </h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+                    Sejak 2015, kami berkomitmen menghadirkan fashion berkualitas dengan harga terjangkau. Setiap produk
+                    kami rancang dengan memperhatikan detail terkecil, memadukan trend global dan sentuhan lokal.
+                </p>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-gray-50 dark:bg-[#2d2d2d] rounded-xl">
+                        <h3 class="text-pink-600 font-semibold mb-2">10.000+</h3>
+                        <p class="text-sm dark:text-gray-400">Pelanggan Bahagia</p>
                     </div>
-                </template>
-
-                <div x-show="filteredProducts.length === 0" class="col-span-full text-center py-12">
-                    <p class="text-gray-600 text-lg">Produk tidak ditemukan</p>
-                </div>
-            </div>
-        </main>
-
-        <!-- Footer -->
-        <footer class="bg-white dark:bg-[#1a1a1a] border-t border-gray-100 dark:border-[#3E3E3A]">
-            <div class="container mx-auto px-4 lg:px-8 py-12">
-                <div class="text-center">
-                    <p class="text-gray-600 dark:text-gray-400">&copy; 2025 Fashionku. All rights reserved.</p>
-                    <div class="mt-4 flex justify-center space-x-4">
-                        <a href="#" class="text-gray-500 hover:text-pink-600">Instagram</a>
-                        <a href="#" class="text-gray-500 hover:text-pink-600">Facebook</a>
-                        <a href="#" class="text-gray-500 hover:text-pink-600">TikTok</a>
+                    <div class="p-4 bg-gray-50 dark:bg-[#2d2d2d] rounded-xl">
+                        <h3 class="text-pink-600 font-semibold mb-2">500+</h3>
+                        <p class="text-sm dark:text-gray-400">Desain Eksklusif</p>
                     </div>
                 </div>
             </div>
-        </footer>
+        </div>
     </div>
-</x-app-layout>
+</section>
+
+<!-- Hubungi Kami Section -->
+<section id="kontak" class="py-20 bg-gray-50 dark:bg-[#0a0a0a]">
+    <div class="container mx-auto px-4 lg:px-8 max-w-4xl">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold mb-4 dark:text-white">Hubungi Kami</h2>
+            <p class="text-gray-600 dark:text-gray-400">Punya pertanyaan? Tim kami siap membantu 24/7</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8 text-center">
+            <div class="p-6 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm hover:shadow-lg transition-shadow">
+                <div class="w-14 h-14 bg-pink-100 dark:bg-pink-900 rounded-lg mb-4 mx-auto flex items-center justify-center">
+                    📍
+                </div>
+                <h3 class="font-medium mb-2 dark:text-white">Lokasi</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Jl. Merdeka No.123<br>
+                    Kuningan, Jawa Barat
+                </p>
+            </div>
+
+            <div class="p-6 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm hover:shadow-lg transition-shadow">
+                <div class="w-14 h-14 bg-pink-100 dark:bg-pink-900 rounded-lg mb-4 mx-auto flex items-center justify-center">
+                    📞
+                </div>
+                <h3 class="font-medium mb-2 dark:text-white">Telepon</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    +62 812 3456 7890<br>
+                    Senin-Minggu, 08:00 - 20:00 WIB
+                </p>
+            </div>
+
+            <div class="p-6 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm hover:shadow-lg transition-shadow">
+                <div class="w-14 h-14 bg-pink-100 dark:bg-pink-900 rounded-lg mb-4 mx-auto flex items-center justify-center">
+                    📧
+                </div>
+                <h3 class="font-medium mb-2 dark:text-white">Email</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    info@fashionku.id<br>
+                    support@fashionku.id
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-[#1a1a1a] border-t border-gray-100 dark:border-[#3E3E3A]">
+        <div class="container mx-auto px-4 lg:px-8 py-12">
+            <div class="text-center">
+                <p class="text-gray-600 dark:text-gray-400">&copy; 2025 Fashionku. All rights reserved.</p>
+                <div class="mt-4 flex justify-center space-x-4">
+                    <a href="#" class="text-gray-500 hover:text-pink-600">Instagram</a>
+                    <a href="#" class="text-gray-500 hover:text-pink-600">Facebook</a>
+                    <a href="#" class="text-gray-500 hover:text-pink-600">TikTok</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
 
 
 </html>
