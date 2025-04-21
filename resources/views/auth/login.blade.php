@@ -89,4 +89,5 @@
             </div>
         </form>
     </div>
+    {{-- footer --}}
 </x-guest-layout>

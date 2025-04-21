@@ -1524,9 +1524,17 @@
 <body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] dark:text-[#EDEDEC] min-h-screen">
     <!-- Header Navigation -->
     <header
+        
         class="sticky top-0 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-sm z-50 border-b border-gray-100 dark:border-[#3E3E3A]">
-        <nav class="container mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
-            <a href="/" class="text-2xl font-bold text-pink-600 dark:text-pink-400">Fashionku</a>
+        <nav class="container mx-auto px-4 lg:px-8 py-1 flex items-center justify-between">
+            <div class="shrink-0">
+                <a href="{{ route('dashboard') }}" class="flex items-center group">
+                    <x-application-logo
+                        class="block h-8 w-auto text-pink-600 dark:text-pink-400 transition duration-300 group-hover:scale-105" />
+                    <span
+                        class="ml-3 text-2xl font-bold text-pink-600 dark:text-pink-400 hidden md:block">Fashionku</span>
+                </a>
+            </div>
 
             @if (Route::has('login'))
                 <div class="flex items-center gap-4">
@@ -1582,7 +1590,7 @@
                     <div
                         class="absolute inset-0 bg-pink-600/10 rounded-2xl transform rotate-2 group-hover:rotate-1 transition-all">
                     </div>
-                    <img src="https://source.unsplash.com/600x400/?fashion-store" alt="Tentang Kami"
+                    <img src="{{ asset('img/Baju.png') }}" alt="Tentang Kami"
                         class="rounded-2xl relative shadow-lg transform group-hover:-translate-y-2 transition-all">
                 </div>
 
@@ -1596,12 +1604,12 @@
                         kami rancang dengan memperhatikan detail terkecil, memadukan trend global dan sentuhan lokal.
                     </p>
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="p-4 bg-gray-100 dark:bg-[#2d2d2d] rounded-xl">
-                            <h3 class="text-pink-600 font-semibold mb-2">10.000+</h3>
+                        <div class="p-4 bg-gray-100 dark:bg-[#2d2d2d] rounded-xl transition-transform hover:scale-105 shadow-lg">
+                            <h3 class="text-pink-600 font-semibold mb-2">1.000+</h3>
                             <p class="text-sm dark:text-gray-400">Pelanggan Bahagia</p>
                         </div>
-                        <div class="p-4 bg-gray-100 dark:bg-[#2d2d2d] rounded-xl">
-                            <h3 class="text-pink-600 font-semibold mb-2">500+</h3>
+                        <div class="p-4 bg-gray-100 dark:bg-[#2d2d2d] rounded-xl transition-transform hover:scale-105 shadow-lg">
+                            <h3 class="text-pink-600 font-semibold mb-2">100+</h3>
                             <p class="text-sm dark:text-gray-400">Desain Eksklusif</p>
                         </div>
                     </div>
@@ -1663,9 +1671,9 @@
             <div class="text-center">
                 <p class="black text-base dark:text-white">&copy; 2025 Fashionku. All rights reserved.</p>
                 <div class="mt-4 flex justify-center space-x-4">
-                    <a href="#" class="black hover:text-white dark:hover:text-black transition-transform hover:scale-105">Instagram</a>
-                    <a href="#" class="black hover:text-white dark:hover:text-black transition-transform hover:scale-105">Facebook</a>
-                    <a href="#" class="black hover:text-white dark:hover:text-black transition-transform hover:scale-105">TikTok</a>
+                    <a href="#" class="black hover:text-white dark:hover:text-black transition-transform hover:scale-120">Instagram</a>
+                    <a href="#" class="black hover:text-white dark:hover:text-black transition-transform hover:scale-120">Facebook</a>
+                    <a href="#" class="black hover:text-white dark:hover:text-black transition-transform hover:scale-120">TikTok</a>
                 </div>
             </div>
         </div>
