@@ -21,16 +21,30 @@ class GoogleController extends Controller
 
         $avatar = $googleUser->getAvatar() ?? 'https://ui-avatars.com/api/?name=' . urlencode($googleUser->getName());
 
-        $user = User::updateOrCreate(
-            ['email' => $googleUser->getEmail()],
-            [
+        $user = User::where('email', $googleUser->getEmail())->first();
+
+        if ($user) {
+            // Only update avatar if user doesn't have one
+            $updateData = [
                 'name' => $googleUser->getName(),
+                'password' => bcrypt(Str::random(24)),
+                'google_id' => $googleUser->getId(),
+                'email_verified_at' => now()
+            ];
+            if (empty($user->avatar)) {
+                $updateData['avatar'] = $avatar;
+            }
+            $user->update($updateData);
+        } else {
+            $user = User::create([
+                'name' => $googleUser->getName(),
+                'email' => $googleUser->getEmail(),
                 'password' => bcrypt(Str::random(24)),
                 'google_id' => $googleUser->getId(),
                 'avatar' => $avatar,
                 'email_verified_at' => now()
-            ]
-        );
+            ]);
+        }
 
         Auth::login($user);
 
