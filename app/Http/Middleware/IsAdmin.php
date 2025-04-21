@@ -9,11 +9,10 @@ class IsAdmin
 {
     public function handle($request, Closure $next)
     {
-        if (!Auth::check() || !Auth::user()->is_admin) {
-            abort(403, 'Unauthorized.');
+        if (Auth::check() && Auth::user()->is_admin) {
+            return $next($request);
         }
 
-        return $next($request);
+        return redirect('/');
     }
 }
-

@@ -2,20 +2,20 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\GoogleController;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Middleware\IsAdmin;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
-
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/homepage', function () {
     return view('homepage');
-})->middleware(['auth','verified'])->name('homepage');
+})->middleware(['auth', 'verified'])->name('homepage');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -24,6 +24,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/update-image', [ProfileController::class, 'updateImage'])->name('profile.updateImage');
 });
 
+Route::middleware(['auth', IsAdmin::class])->group(function () {
+    Route::get('/admin', function () {
+        return view('admin.home');
+    })->name('admin');
+});
 
 Route::get('/auth/google/redirect', [GoogleController::class, 'redirect'])->name('google.redirect');
 Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
