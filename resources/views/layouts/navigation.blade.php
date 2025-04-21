@@ -25,9 +25,13 @@
                     <x-slot name="trigger">
                         <button class="flex items-center space-x-3 hover:bg-gray-100 dark:hover:bg-[#3E3E3A] px-4 py-2 rounded-lg transition-all duration-200">
                             <div class="relative">
-                                <img src="https://asepharyana.cloud/api/imageproxy?url={{ Auth::user()->avatar }}"
-                                     alt="Avatar"
-                                     class="w-10 h-10 rounded-full border-2 border-pink-100 dark:border-[#3E3E3A] object-cover hover:border-pink-400 transition duration-300" />
+                                <img
+                                src="https://asepharyana.cloud/api/imageproxy?url={{ urlencode(Auth::user()->avatar) }}"
+                                alt="Avatar"
+                                class="w-12 h-12 rounded-full border-2 border-pink-100 dark:border-[#3E3E3A] mr-3 object-cover"
+                                onerror="this.onerror=null; this.src='{{ Auth::user()->avatar }}';"
+                            />
+
                             </div>
                             <div class="flex flex-col items-start">
                                 <span class="text-sm font-medium text-gray-700 dark:text-[#EDEDEC]">{{ Auth::user()->name }}</span>
@@ -104,9 +108,12 @@
         <!-- Responsive Settings Options -->
         <div class="pt-4 pb-2 border-t border-gray-100 dark:border-[#3E3E3A]">
             <div class="flex items-center px-4 mb-3">
-                <img src="https://asepharyana.cloud/api/imageproxy?url={{ Auth::user()->avatar }}"
-                     alt="Avatar"
-                     class="w-12 h-12 rounded-full border-2 border-pink-100 dark:border-[#3E3E3A] mr-3">
+                <img
+                src="https://asepharyana.cloud/api/imageproxy?url={{ urlencode(Auth::user()->avatar) }}"
+                alt="Avatar"
+                class="w-12 h-12 rounded-full border-2 border-pink-100 dark:border-[#3E3E3A] mr-3 object-cover"
+                onerror="this.onerror=null; this.src='{{ Auth::user()->avatar }}';"
+            />
                 <div>
                     <div class="font-medium text-gray-800 dark:text-[#EDEDEC]">{{ Auth::user()->name }}</div>
                     <div class="text-sm text-gray-500 dark:text-[#3E3E3A]">{{ Auth::user()->email }}</div>

@@ -13,6 +13,12 @@
                     @include('profile.partials.update-profile-information-form')
                 </div>
             </div>
+            <!-- Update Profile Image Form -->
+            <div class="p-6 sm:p-8 bg-white dark:bg-[#0a0a0a] border border-gray-100 dark:border-[#3E3E3A] rounded-xl shadow-sm">
+                <div class="max-w-xl">
+                    @include('profile.partials.update-image')
+                </div>
+            </div>
 
             <!-- Update Password Form -->
             <div class="p-6 sm:p-8 bg-white dark:bg-[#0a0a0a] border border-gray-100 dark:border-[#3E3E3A] rounded-xl shadow-sm">
