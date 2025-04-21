@@ -12,7 +12,7 @@
   <defs>
     <style>
       .logo-path {
-        fill: #ec4899;
+        fill: #db2777;
         stroke: none;
         transition: fill 0.3s ease;
       }
