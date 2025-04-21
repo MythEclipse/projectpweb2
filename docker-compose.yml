@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_octane_app
+    volumes:
+      - .:/var/www
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+      APP_KEY: base64:Aj6SOBBldGGCNgqLWFnoZiVIWj7nhxDivtHC1tmMWes=
+      APP_URL: http://localhost:8000
+      APP_SERVE: octane
