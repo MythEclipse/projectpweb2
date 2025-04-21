@@ -48,7 +48,7 @@
             <div class="border-t border-gray-200 dark:border-[#3E3E3A] px-12 py-6">
                 <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
                     <div class="flex gap-6">
-                        <a href="#" class="hover:text-pink-600 dark:hover:text-pink-400 transition-all">Tentang Kami</a>
+                        <a href="/aboutus" class="hover:text-pink-600 dark:hover:text-pink-400 transition-all">Tentang Kami</a>
                     </div>
                     <div class="flex items-center gap-4">
                         <span>🌐 Bahasa Indonesia</span>
