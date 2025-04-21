@@ -1604,12 +1604,12 @@
                         kami rancang dengan memperhatikan detail terkecil, memadukan trend global dan sentuhan lokal.
                     </p>
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="p-4 bg-gray-100 dark:bg-[#2d2d2d] rounded-xl">
-                            <h3 class="text-pink-600 font-semibold mb-2">10.000+</h3>
+                        <div class="p-4 bg-gray-100 dark:bg-[#2d2d2d] rounded-xl transition-transform hover:scale-105 shadow-lg">
+                            <h3 class="text-pink-600 font-semibold mb-2">1.000+</h3>
                             <p class="text-sm dark:text-gray-400">Pelanggan Bahagia</p>
                         </div>
-                        <div class="p-4 bg-gray-100 dark:bg-[#2d2d2d] rounded-xl">
-                            <h3 class="text-pink-600 font-semibold mb-2">500+</h3>
+                        <div class="p-4 bg-gray-100 dark:bg-[#2d2d2d] rounded-xl transition-transform hover:scale-105 shadow-lg">
+                            <h3 class="text-pink-600 font-semibold mb-2">100+</h3>
                             <p class="text-sm dark:text-gray-400">Desain Eksklusif</p>
                         </div>
                     </div>
