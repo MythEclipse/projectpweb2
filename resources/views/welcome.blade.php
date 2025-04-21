@@ -1548,12 +1548,15 @@
     </header>
 
     <!-- Hero Section -->
-    <section class="relative pt-20 pb-32 px-4 lg:px-8 bg-gradient-to-br from-pink-50 to-purple-50 dark:from-[#1a1a1a] dark:to-[#2d2d2d]">
-        <div class="container mx-auto max-w-4xl text-center">
+    <section class="relative pt-20 pb-32 px-4 lg:px-8 bg-gradient-to-br from-pink-50 to-purple-50 dark:from-[#1a1a1a] dark:to-[#2d2d2d] overflow-hidden">
+        <!-- Background Image -->
+        <img src="{{ asset('img/Background.webp') }}" alt="Background" class="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-30">
+    
+        <div class="container mx-auto max-w-4xl text-center relative z-10">
             <h1 class="text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6 animate-fade-in-up">
                 Temukan Gaya Terbaikmu
             </h1>
-            <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+            <p class="text-xl text-gray-800 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
                 Koleksi eksklusif baju kekinian dengan kualitas premium dan harga terjangkau. Tampil percaya diri dengan gaya terkini!
             </p>
             <a href="{{ route('login') }}" class="inline-block bg-pink-600 hover:bg-pink-700 text-white px-8 py-4 rounded-lg text-lg font-medium transition-transform hover:scale-105 shadow-lg">
@@ -1561,6 +1564,7 @@
             </a>
         </div>
     </section>
+    
 
     <!-- Features Section -->
     <!-- Tentang Kami Section -->
@@ -1612,7 +1616,7 @@
                 </div>
                 <h3 class="font-medium mb-2 dark:text-white">Lokasi</h3>
                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Jl. Merdeka No.123<br>
+                    Panawuan, JL Melati<br>
                     Kuningan, Jawa Barat
                 </p>
             </div>
@@ -1643,14 +1647,14 @@
 </section>
 
     <!-- Footer -->
-    <footer class="bg-white dark:bg-[#1a1a1a] border-t border-gray-100 dark:border-[#3E3E3A]">
-        <div class="container mx-auto px-4 lg:px-8 py-12">
+    <footer class="bg-pink-600 dark:bg-[#1a1a1a] border-t border-gray-100 dark:border-[#3E3E3A]">
+        <div class="container mx-auto px-4 lg:px-8 py-4">
             <div class="text-center">
-                <p class="text-gray-600 dark:text-gray-400">&copy; 2025 Fashionku. All rights reserved.</p>
+                <p class="black text-base dark:text-gray-400">&copy; 2025 Fashionku. All rights reserved.</p>
                 <div class="mt-4 flex justify-center space-x-4">
-                    <a href="#" class="text-gray-500 hover:text-pink-600">Instagram</a>
-                    <a href="#" class="text-gray-500 hover:text-pink-600">Facebook</a>
-                    <a href="#" class="text-gray-500 hover:text-pink-600">TikTok</a>
+                    <a href="#" class="black hover:text-white">Instagram</a>
+                    <a href="#" class="black hover:text-white">Facebook</a>
+                    <a href="#" class="black hover:text-white">TikTok</a>
                 </div>
             </div>
         </div>
