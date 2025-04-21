@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -24,7 +25,12 @@ class ProductController extends Controller
             'name' => 'required|max:255',
             'description' => 'nullable|string',
             'price' => 'required|numeric',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
+
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('products', 'public');
+        }
 
         Product::create($validated);
         return redirect()->route('products.index')->with('success', 'Product created.');
@@ -46,7 +52,17 @@ class ProductController extends Controller
             'name' => 'required|max:255',
             'description' => 'nullable|string',
             'price' => 'required|numeric',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
+
+        if ($request->hasFile('image')) {
+            // Hapus image lama jika ada
+            if ($product->image && Storage::disk('public')->exists($product->image)) {
+                Storage::disk('public')->delete($product->image);
+            }
+
+            $validated['image'] = $request->file('image')->store('products', 'public');
+        }
 
         $product->update($validated);
         return redirect()->route('products.index')->with('success', 'Product updated.');
@@ -54,6 +70,11 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        // Hapus image dari storage jika ada
+        if ($product->image && Storage::disk('public')->exists($product->image)) {
+            Storage::disk('public')->delete($product->image);
+        }
+
         $product->delete();
         return redirect()->route('products.index')->with('success', 'Product deleted.');
     }
