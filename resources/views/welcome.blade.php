@@ -1543,7 +1543,7 @@
 
                         @if (Route::has('register'))
                             <a href="{{ route('register') }}"
-                                class="px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 transition-colors">
+                                class="px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 transition-transform hover:scale-105 shadow-lg">
                                 Register
                             </a>
                         @endif
@@ -1596,11 +1596,11 @@
                         kami rancang dengan memperhatikan detail terkecil, memadukan trend global dan sentuhan lokal.
                     </p>
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="p-4 bg-gray-50 dark:bg-[#2d2d2d] rounded-xl">
+                        <div class="p-4 bg-gray-100 dark:bg-[#2d2d2d] rounded-xl">
                             <h3 class="text-pink-600 font-semibold mb-2">10.000+</h3>
                             <p class="text-sm dark:text-gray-400">Pelanggan Bahagia</p>
                         </div>
-                        <div class="p-4 bg-gray-50 dark:bg-[#2d2d2d] rounded-xl">
+                        <div class="p-4 bg-gray-100 dark:bg-[#2d2d2d] rounded-xl">
                             <h3 class="text-pink-600 font-semibold mb-2">500+</h3>
                             <p class="text-sm dark:text-gray-400">Desain Eksklusif</p>
                         </div>
@@ -1619,7 +1619,7 @@
             </div>
 
             <div class="grid md:grid-cols-3 gap-8 text-center">
-                <div class="p-6 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm hover:shadow-lg transition-shadow">
+                <div class="p-6 bg-white dark:bg-[#1a1a1a] rounded-xl transition-transform hover:scale-105 shadow-lg">
                     <div
                         class="w-14 h-14 bg-pink-100 dark:bg-pink-900 rounded-lg mb-4 mx-auto flex items-center justify-center">
                         📍
@@ -1631,7 +1631,7 @@
                     </p>
                 </div>
 
-                <div class="p-6 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm hover:shadow-lg transition-shadow">
+                <div class="p-6 bg-white dark:bg-[#1a1a1a] rounded-xl transition-transform hover:scale-105 shadow-lg">
                     <div
                         class="w-14 h-14 bg-pink-100 dark:bg-pink-900 rounded-lg mb-4 mx-auto flex items-center justify-center">
                         📞
@@ -1643,7 +1643,7 @@
                     </p>
                 </div>
 
-                <div class="p-6 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm hover:shadow-lg transition-shadow">
+                <div class="p-6 bg-white dark:bg-[#1a1a1a] rounded-xl transition-transform hover:scale-105 shadow-lg">
                     <div
                         class="w-14 h-14 bg-pink-100 dark:bg-pink-900 rounded-lg mb-4 mx-auto flex items-center justify-center">
                         📧
@@ -1661,18 +1661,18 @@
     <footer class="bg-pink-600 dark:bg-[#1a1a1a] border-t border-gray-100 dark:border-[#3E3E3A]">
         <div class="container mx-auto px-4 lg:px-8 py-4">
             <div class="text-center">
-                <p class="black text-base dark:text-gray-400">&copy; 2025 Fashionku. All rights reserved.</p>
+                <p class="black text-base dark:text-white">&copy; 2025 Fashionku. All rights reserved.</p>
                 <div class="mt-4 flex justify-center space-x-4">
-                    <a href="#" class="black hover:text-white">Instagram</a>
-                    <a href="#" class="black hover:text-white">Facebook</a>
-                    <a href="#" class="black hover:text-white">TikTok</a>
+                    <a href="#" class="black hover:text-white dark:hover:text-black transition-transform hover:scale-105">Instagram</a>
+                    <a href="#" class="black hover:text-white dark:hover:text-black transition-transform hover:scale-105">Facebook</a>
+                    <a href="#" class="black hover:text-white dark:hover:text-black transition-transform hover:scale-105">TikTok</a>
                 </div>
             </div>
         </div>
     </footer>
     <div class="fixed bottom-6 right-6 z-50">
         <button @click="darkMode = !darkMode; localStorage.setItem('dark-mode', darkMode)"
-                class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-sm rounded-lg text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-sm rounded-lg text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 transition-transform hover:scale-105 shadow-lg">
             <span x-text="darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'"></span>
         </button>
     </div>
