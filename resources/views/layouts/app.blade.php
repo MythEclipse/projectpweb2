@@ -101,24 +101,6 @@ window.addEventListener('resize', () => {
         </div>
 
     </div>
-    <script>
-        document.addEventListener('turbo:load', () => {
-            if (window.Livewire) {
-                Livewire.start();
-            }
-        });
-
-        document.addEventListener('turbo:before-cache', () => {
-            if (window.Alpine) {
-                // Cleanup komponen Alpine
-                Alpine.dispose();
-            }
-            if (window.Livewire) {
-                // Hentikan Livewire dengan benar
-                Livewire.hooks.teardownComponents();
-            }
-        });
-    </script>
     {{-- @livewireScripts --}}
 
 </body>

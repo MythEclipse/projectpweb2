@@ -37,13 +37,31 @@
                     <x-slot name="trigger">
                         <button
                             class="flex items-center space-x-3 hover:bg-gray-100 dark:hover:bg-[#3E3E3A] px-4 py-2 rounded-lg transition-all duration-200">
-                            <div class="relative">
-                                <img src="https://asepharyana.cloud/api/imageproxy?url={{ urlencode(Auth::user()->avatar) }}"
-                                    alt="Avatar"
-                                    class="w-12 h-12 rounded-full border-2 border-pink-100 dark:border-[#3E3E3A] mr-3 object-cover"
-                                    onerror="this.onerror=null; this.src='{{ Auth::user()->avatar }}';" />
 
+                            <!--Profile-->
+                            @php
+                                $avatar = Auth::user()->avatar ?? '';
+                                $proxyAvatar = 'https://asepharyana.cloud/api/imageproxy?url=' . urlencode($avatar);
+                                $fallbackAvatar = $avatar;
+                                $loadingAvatar =
+                                    'https://ui-avatars.com/api/?name=' .
+                                    urlencode(Auth::user()->name) .
+                                    '&background=FFB6C1&color=fff';
+                            @endphp
+
+                            <div
+                                class="relative w-12 h-12 rounded-full border-2 border-pink-100 dark:border-[#3E3E3A] overflow-hidden">
+                                <!-- Loading Placeholder -->
+                                <img src="{{ $loadingAvatar }}" alt="Avatar placeholder"
+                                    class="w-full h-full object-cover absolute top-0 left-0" />
+                                <!-- Actual Avatar -->
+                                <img src="{{ $proxyAvatar }}" alt="Avatar {{ Auth::user()->name }}"
+                                    class="w-full h-full object-cover relative z-10" loading="lazy"
+                                    onerror="this.onerror=null; this.src='{{ $fallbackAvatar }}';" />
                             </div>
+                            <!--Profile-->
+
+
                             <div class="flex flex-col items-start">
                                 <span
                                     class="text-sm font-medium text-gray-700 dark:text-[#EDEDEC]">{{ Auth::user()->name }}</span>
