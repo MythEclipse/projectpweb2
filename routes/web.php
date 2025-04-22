@@ -15,7 +15,7 @@ Route::get('/aboutus', function () {
     return view('aboutus');
 })->name('aboutus');
 
-Route::get('/avatar/{userId}', [AvatarController::class, 'getAvatar'])->name('avatar');
+Route::get('/avatar/{userId}', [ProfileController::class, 'getAvatar'])->name('avatar');
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');

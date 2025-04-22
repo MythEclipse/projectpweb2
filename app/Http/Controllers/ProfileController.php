@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use App\Models\User;
 
 class ProfileController extends Controller
 {
@@ -103,5 +104,32 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
+    }
+    /**
+     * Get the user's avatar.
+     */
+    public function getAvatar($userId)
+    {
+        $user = User::find($userId);
+
+        if (!$user) {
+            abort(404, 'User not found.');
+        }
+
+        // Jika avatar berupa URL eksternal
+        if ($user->avatar && Str::startsWith($user->avatar, ['http://', 'https://'])) {
+            $proxyUrl = 'https://asepharyana.cloud/api/imageproxy?url=' . urlencode($user->avatar);
+            return redirect($proxyUrl);
+        }
+
+        // Ambil path apa adanya (tanpa nambah 'profile_images/' lagi)
+        $avatarPath = ltrim($user->avatar, '/');
+
+        if (Storage::disk('public')->exists($avatarPath)) {
+            $filePath = Storage::disk('public')->path($avatarPath);
+            return response()->file($filePath);
+        }
+
+        abort(404, 'Avatar not found.');
     }
 }
