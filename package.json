@@ -25,6 +25,7 @@
     },
     "dependencies": {
         "@alpinejs/collapse": "^3.14.9",
+        "@hotwired/turbo": "^8.0.13",
         "flowbite": "^3.1.2"
     }
 }

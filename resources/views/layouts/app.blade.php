@@ -9,17 +9,17 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{
     darkMode: localStorage.getItem('dark-mode') === 'true',
     sidebarOpen: window.innerWidth >= 768 // Buka sidebar default di desktop
-}" x-init="
-    darkMode ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark');
-    window.addEventListener('resize', () => {
-        sidebarOpen = window.innerWidth >= 768
-    })
-" x-bind:class="{ 'dark': darkMode }">
+}" x-init="darkMode ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark');
+window.addEventListener('resize', () => {
+    sidebarOpen = window.innerWidth >= 768
+})"
+    x-bind:class="{ 'dark': darkMode }">
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @livewireStyles
 
     <title>{{ config('app.name', 'Laravel') }}</title>
 
@@ -37,10 +37,8 @@
 
         @if ($isAdmin && $onAdminPage)
             <!-- Overlay for Mobile -->
-            <div x-show="sidebarOpen && window.innerWidth < 768"
-                 x-transition.opacity
-                 class="fixed inset-0 bg-black/50 z-40 md:hidden"
-                 @click="sidebarOpen = false"></div>
+            <div x-show="sidebarOpen && window.innerWidth < 768" x-transition.opacity
+                class="fixed inset-0 bg-black/50 z-40 md:hidden" @click="sidebarOpen = false"></div>
 
             <!-- Sidebar -->
             <aside :class="sidebarOpen ? 'w-64' : '-translate-x-full md:translate-x-0'"
@@ -50,11 +48,12 @@
                     <ul class="space-y-4 text-gray-700 dark:text-gray-300">
                         <li>
                             <a href="{{ route('products.index') }}"
-                               class="hover:text-pink-500 font-medium transition flex items-center gap-2">
-                               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                               </svg>
-                               Kelola Produk
+                                class="hover:text-pink-500 font-medium transition flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                </svg>
+                                Kelola Produk
                             </a>
                         </li>
                     </ul>
@@ -71,7 +70,8 @@
 
             <!-- Header -->
             @isset($header)
-                <header class="bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-sm shadow border-b border-gray-100 dark:border-[#3E3E3A]">
+                <header
+                    class="bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-sm shadow border-b border-gray-100 dark:border-[#3E3E3A]">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>
@@ -87,9 +87,7 @@
         @if ($isAdmin && $onAdminPage)
             <!-- Drawer Handle -->
             <div class="fixed left-0 top-1/2 transform md:hidden -translate-y-1/2 z-50">
-                <button
-                    @click="sidebarOpen = !sidebarOpen"
-                    x-show="window.innerWidth < 768 || !sidebarOpen"
+                <button @click="sidebarOpen = !sidebarOpen" x-show="window.innerWidth < 768 || !sidebarOpen"
                     class="w-3 h-16 bg-gray-800 dark:bg-gray-600 text-white rounded-r-lg cursor-pointer hover:bg-gray-700 transition-all shadow-lg">
                 </button>
             </div>
@@ -104,5 +102,8 @@
         </div>
 
     </div>
+    @livewireScripts
+
 </body>
+
 </html>
