@@ -10,10 +10,7 @@ class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::all(); // Atau gunakan all() jika tidak menggunakan paginasi
-
-        // Mengirimkan data produk ke view
-        return view('homepage', compact('products'));
+        // $products = Product::all(); // Atau gunakan all() jika tidak menggunakan paginasi
     }
 
     public function create()
