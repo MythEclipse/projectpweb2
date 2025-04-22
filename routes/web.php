@@ -21,8 +21,13 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/homepage', function () {
-    return view('homepage');
+    // Menggunakan paginate() untuk mengambil 12 produk per halaman
+    $products = \App\Models\Product::paginate(12);
+
+    // Mengirimkan data produk ke view
+    return view('homepage', compact('products'));
 })->middleware(['auth', 'verified'])->name('homepage');
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

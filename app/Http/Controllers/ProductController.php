@@ -10,7 +10,10 @@ class ProductController extends Controller
 {
     public function index()
     {
-        return redirect('/admin');
+        $products = Product::all(); // Atau gunakan all() jika tidak menggunakan paginasi
+
+        // Mengirimkan data produk ke view
+        return view('homepage', compact('products'));
     }
 
     public function create()
