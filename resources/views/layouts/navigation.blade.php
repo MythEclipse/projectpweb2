@@ -40,25 +40,29 @@
 
                             <!--Profile-->
                             @php
-                                $avatar = Auth::user()->avatar ?? '';
-                                $proxyAvatar = 'https://asepharyana.cloud/api/imageproxy?url=' . urlencode($avatar);
-                                $fallbackAvatar = $avatar;
-                                $loadingAvatar =
+                                // URL avatar dari route controller
+                                $avatarUrl = route('avatar', ['userId' => Auth::id()]);
+
+                                // Fallback avatar dari UI Avatars
+                                $fallbackAvatar =
                                     'https://ui-avatars.com/api/?name=' .
                                     urlencode(Auth::user()->name) .
                                     '&background=FFB6C1&color=fff';
                             @endphp
 
-                            <div
-                                class="relative w-12 h-12 rounded-full border-2 border-pink-100 dark:border-[#3E3E3A] overflow-hidden">
-                                <!-- Loading Placeholder -->
-                                <img src="{{ $loadingAvatar }}" alt="Avatar placeholder"
+                            <div id="user-avatar" data-turbo-permanent wire:ignore
+                                class="relative w-12 h-12 rounded-full overflow-hidden border-2 border-pink-100 dark:border-[#3E3E3A]">
+
+                                {{-- Placeholder/fallback avatar (di bawah) --}}
+                                <img src="{{ $fallbackAvatar }}" alt="Avatar placeholder"
                                     class="w-full h-full object-cover absolute top-0 left-0" />
-                                <!-- Actual Avatar -->
-                                <img src="{{ $proxyAvatar }}" alt="Avatar {{ Auth::user()->name }}"
+
+                                {{-- Avatar utama dari storage / proxy --}}
+                                <img src="{{ $avatarUrl }}" alt="Avatar {{ Auth::user()->name }}"
                                     class="w-full h-full object-cover relative z-10" loading="lazy"
                                     onerror="this.onerror=null; this.src='{{ $fallbackAvatar }}';" />
                             </div>
+
                             <!--Profile-->
 
 
@@ -139,10 +143,29 @@
         <!-- Responsive Settings Options -->
         <div class="pt-4 pb-2 border-t border-gray-100 dark:border-[#3E3E3A]">
             <div class="flex items-center px-4 mb-3">
-                <img src="https://asepharyana.cloud/api/imageproxy?url={{ urlencode(Auth::user()->avatar) }}"
-                    alt="Avatar"
-                    class="w-12 h-12 rounded-full border-2 border-pink-100 dark:border-[#3E3E3A] mr-3 object-cover"
-                    onerror="this.onerror=null; this.src='{{ Auth::user()->avatar }}';" />
+                @php
+                // URL avatar dari route controller
+                $avatarUrl = route('avatar', ['userId' => Auth::id()]);
+
+                // Fallback avatar dari UI Avatars
+                $fallbackAvatar =
+                    'https://ui-avatars.com/api/?name=' .
+                    urlencode(Auth::user()->name) .
+                    '&background=FFB6C1&color=fff';
+            @endphp
+
+            <div id="user-avatar" data-turbo-permanent wire:ignore
+                class="relative w-12 h-12 rounded-full overflow-hidden border-2 border-pink-100 dark:border-[#3E3E3A]">
+
+                {{-- Placeholder/fallback avatar (di bawah) --}}
+                <img src="{{ $fallbackAvatar }}" alt="Avatar placeholder"
+                    class="w-full h-full object-cover absolute top-0 left-0" />
+
+                {{-- Avatar utama dari storage / proxy --}}
+                <img src="{{ $avatarUrl }}" alt="Avatar {{ Auth::user()->name }}"
+                    class="w-full h-full object-cover relative z-10" loading="lazy"
+                    onerror="this.onerror=null; this.src='{{ $fallbackAvatar }}';" />
+            </div>
                 <div>
                     <div class="font-medium text-gray-800 dark:text-[#EDEDEC]">{{ Auth::user()->name }}</div>
                     <div class="text-sm text-gray-500 dark:text-[#3E3E3A]">{{ Auth::user()->email }}</div>

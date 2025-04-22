@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -37,6 +38,7 @@ class ProfileController extends Controller
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
+
     /**
      * Update the user's profile image.
      */
@@ -51,32 +53,36 @@ class ProfileController extends Controller
         if ($request->hasFile('image')) {
             $image = $request->file('image');
 
-            // Hash isi file
+            // Generate nama file unik berdasarkan hash isi file
             $imageHash = md5_file($image->getRealPath());
             $extension = $image->getClientOriginalExtension();
             $imageName = $imageHash . '.' . $extension;
 
-            $storagePath = 'public/profile_images/' . $imageName;
+            $storagePath = 'profile_images/' . $imageName;
 
-            // Simpan hanya jika belum ada
+            // Simpan file jika belum ada
             if (!Storage::exists($storagePath)) {
-                $image->storeAs('public/profile_images', $imageName);
+                $image->storeAs('profile_images', $imageName);
             }
 
-            // Hapus file lama jika beda
-            if ($user->avatar && $user->avatar !== '/storage/public/profile_images/' . $imageName) {
-                $oldFileName = str_replace('/storage/public/profile_images/', '', $user->avatar);
-                Storage::delete('public/profile_images/' . $oldFileName);
+            // Hapus avatar lama jika:
+            // - Tidak kosong
+            // - Tidak URL eksternal
+            // - Nama filenya beda dengan file baru
+            if ($user->avatar && !Str::startsWith($user->avatar, ['http://', 'https://'])) {
+                $oldFile = basename($user->avatar);
+                if ($oldFile !== $imageName) {
+                    Storage::delete('profile_images/' . $oldFile);
+                }
             }
 
-            // Simpan path dengan '/public' sesuai kebutuhanmu
-            $user->avatar = '/storage/public/profile_images/' . $imageName;
+            // Simpan path avatar tanpa "public" dan "storage/"
+            $user->avatar = 'profile_images/' . $imageName;
             $user->save();
         }
 
         return Redirect::route('profile.edit')->with('status', 'profile-image-updated');
     }
-
 
     /**
      * Delete the user's account.
