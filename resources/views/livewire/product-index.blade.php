@@ -1,0 +1,45 @@
+<div class="p-6 bg-white dark:bg-[#0a0a0a] shadow rounded-2xl">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-pink-600 dark:text-pink-400">Product List</h2>
+        <input type="text" wire:model="search" placeholder="Search products..."
+            class="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-500" />
+    </div>
+
+    <table class="min-w-full bg-white dark:bg-[#0a0a0a] text-sm text-left">
+        <thead>
+            <tr class="border-b border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300">
+                <th class="px-4 py-2">#</th>
+                <th class="px-4 py-2">Name</th>
+                <th class="px-4 py-2">Price</th>
+                <th class="px-4 py-2">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($products as $product)
+                <tr class="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-900">
+                    <td class="px-4 py-3">{{ $loop->iteration }}</td>
+                    <td class="px-4 py-3">{{ $product->name }}</td>
+                    <td class="px-4 py-3">{{ $product->price }}</td>
+                    <td class="px-4 py-3">
+                      <div class="flex gap-3">
+                        <a href="{{ route('products.show', $product) }}" class="text-blue-600 hover:underline">View</a>
+                        <a href="{{ route('products.edit', $product) }}" class="text-yellow-600 hover:underline">Edit</a>
+                        <form method="POST" action="{{ route('products.destroy', $product) }}" onsubmit="return confirm('Delete product?')">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="text-red-600 hover:underline">Delete</button>
+                        </form>
+                    </div>
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="4" class="text-center py-4 text-gray-500 dark:text-gray-400">No products found.</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    <div class="mt-4">
+        {{ $products->links() }}
+    </div>
+</div>

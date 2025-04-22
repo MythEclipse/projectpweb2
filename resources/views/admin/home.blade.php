@@ -1,15 +1,13 @@
 <x-app-layout>
-    <div class="flex min-h-screen bg-gray-100">
-        <!-- Sidebar -->
-        {{-- <x-sidebar/> --}}
+    <x-slot name="header">
+        <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 leading-tight">
+            {{ __('Products') }}
+        </h2>
+    </x-slot>
 
-        <!-- Main Content -->
-        <main class="flex-1 p-6">
-            <h1 class="text-2xl font-bold text-gray-800 mb-4">Manajemen Produk</h1>
-            <p class="text-gray-600">Gunakan menu di samping untuk mengelola produk, kategori, dan pesanan.</p>
-
-            {{-- Tempatkan konten halaman produk di sini --}}
-            @yield('content')
-        </main>
+    <div class="py-6">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            @livewire('product-index')
+        </div>
     </div>
 </x-app-layout>
