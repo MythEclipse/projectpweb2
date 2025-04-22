@@ -35,7 +35,7 @@ Route::middleware(['auth', IsAdmin::class])->group(function () {
     Route::get('/admin', function () {
         return view('admin.home');
     })->name('admin');
-    Route::get('/admin/products', [ProductController::class, 'index'])->name('admin.products.index');
+    // Route::get('/admin/products', [ProductController::class, 'index'])->name('admin.products.index');
 });
 
 

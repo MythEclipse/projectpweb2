@@ -1,4 +1,12 @@
-<div class="p-6 bg-white dark:bg-[#0a0a0a] shadow rounded-2xl">
+<div class="p-6 bg-white dark:bg-[#0a0a0a] shadow rounded-2xl" data-turbo="false">
+    <x-slot name="header">
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800">Product List</h2>
+            <a href="{{ route('products.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                + New Product
+            </a>
+        </div>
+    </x-slot>
     <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold text-pink-600 dark:text-pink-400">Product List</h2>
         <input type="text" wire:model="search" placeholder="Search products..."
