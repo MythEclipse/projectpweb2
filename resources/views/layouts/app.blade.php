@@ -19,7 +19,7 @@ window.addEventListener('resize', () => {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    @livewireStyles
+    {{-- @livewireStyles --}}
 
     <title>{{ config('app.name', 'Laravel') }}</title>
 
@@ -29,7 +29,6 @@ window.addEventListener('resize', () => {
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 
 <body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] dark:text-[#EDEDEC] font-sans antialiased min-h-screen">
@@ -102,7 +101,25 @@ window.addEventListener('resize', () => {
         </div>
 
     </div>
-    @livewireScripts
+    <script>
+        document.addEventListener('turbo:load', () => {
+            if (window.Livewire) {
+                Livewire.start();
+            }
+        });
+
+        document.addEventListener('turbo:before-cache', () => {
+            if (window.Alpine) {
+                // Cleanup komponen Alpine
+                Alpine.dispose();
+            }
+            if (window.Livewire) {
+                // Hentikan Livewire dengan benar
+                Livewire.hooks.teardownComponents();
+            }
+        });
+    </script>
+    {{-- @livewireScripts --}}
 
 </body>
 
