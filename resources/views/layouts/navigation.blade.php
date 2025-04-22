@@ -6,7 +6,7 @@
             <div class="flex items-center">
                 <!-- Logo -->
                 <div class="shrink-0">
-                    <a href="{{ route('dashboard') }}" class="flex items-center group">
+                    <a href="{{ route('homepage') }}" class="flex items-center group">
                         <x-application-logo
                             class="block h-9 w-auto text-pink-600 dark:text-pink-400 transition duration-300 group-hover:scale-105" />
                         <span
