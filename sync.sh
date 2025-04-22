@@ -1,6 +1,5 @@
 # Clone atau pull project
 git pull origin main
-
 # Install composer dependencies
 composer install --optimize-autoloader --no-dev
 
