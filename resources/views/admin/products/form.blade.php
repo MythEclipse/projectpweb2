@@ -1,9 +1,12 @@
-@props(['product'])
+@props(['product', 'sizes'])
 
 <form action="{{ isset($product) ? route('products.update', $product) : route('products.store') }}"
       method="POST"
       enctype="multipart/form-data"
-      class="space-y-6 p-6 transition-all">
+      class="space-y-6 p-6 transition-all"
+      x-data="{
+          selectedSizes: {{ Js::from(old('sizes', isset($product) ? $product->sizes->pluck('id')->toArray() : [])) }}
+      }">
     @csrf
     @if(isset($product)) @method('PUT') @endif
 
@@ -31,16 +34,37 @@
         <x-input-error :messages="$errors->get('price')" class="mt-2" />
     </div>
 
-    <!-- Size -->
+    <!-- Sizes & Stock Toggles -->
     <div>
-        <x-input-label for="size" value="Size" />
-        <select name="size" id="size" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2d2d2d] text-gray-900 dark:text-white shadow-sm focus:ring-pink-500 focus:border-pink-500">
-            <option value="">-- Select Size --</option>
-            @foreach(['s', 'm', 'l', 'xl', 'xxl'] as $size)
-                <option value="{{ $size }}" @selected(old('size', $product->size ?? '') === $size)>{{ strtoupper($size) }}</option>
+        <x-input-label for="sizes" value="Available Sizes & Stock" />
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
+            @foreach ($sizes as $size)
+                <div>
+                    <!-- Toggle Checkbox -->
+                    <label class="flex items-center space-x-2 text-gray-800 dark:text-gray-100">
+                        <input type="checkbox"
+                               name="sizes[]"
+                               value="{{ $size->id }}"
+                               @change="if($event.target.checked){ selectedSizes.push({{ $size->id }}) } else { selectedSizes = selectedSizes.filter(id => id !== {{ $size->id }}) }"
+                               :checked="selectedSizes.includes({{ $size->id }})"
+                               class="rounded border-gray-300 dark:border-gray-600 text-pink-600 shadow-sm focus:ring-pink-500" />
+                        <span>{{ strtoupper($size->name) }}</span>
+                    </label>
+
+                    <!-- Stock Input -->
+                    <div x-show="selectedSizes.includes({{ $size->id }})" x-transition>
+                        <input type="number"
+                               name="stocks[{{ $size->id }}]"
+                               id="stock_{{ $size->id }}"
+                               min="0"
+                               class="mt-2 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2d2d2d] text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500"
+                               value="{{ old('stocks.' . $size->id, isset($product) ? ($product->sizes->find($size->id)?->pivot->stock ?? 0) : 0) }}"
+                               placeholder="Stock {{ strtoupper($size->name) }}">
+                        <x-input-error :messages="$errors->get('stocks.' . $size->id)" class="mt-1" />
+                    </div>
+                </div>
             @endforeach
-        </select>
-        <x-input-error :messages="$errors->get('size')" class="mt-2" />
+        </div>
     </div>
 
     <!-- Color -->
@@ -49,14 +73,6 @@
         <x-text-input id="color" name="color" type="text" class="mt-1 block w-full"
                       value="{{ old('color', $product->color ?? '') }}" />
         <x-input-error :messages="$errors->get('color')" class="mt-2" />
-    </div>
-
-    <!-- Stock -->
-    <div>
-        <x-input-label for="stock" value="Stock Quantity" />
-        <x-text-input id="stock" name="stock" type="number" class="mt-1 block w-full"
-                      value="{{ old('stock', $product->stock ?? 0) }}" />
-        <x-input-error :messages="$errors->get('stock')" class="mt-2" />
     </div>
 
     <!-- Image Upload -->

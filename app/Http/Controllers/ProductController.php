@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Size;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -16,7 +17,8 @@ class ProductController extends Controller
 
     public function create()
     {
-        return view('admin.products.create');
+        $sizes = Size::all();
+        return view('admin.products.create', compact('sizes'));
     }
 
     public function store(Request $request)
@@ -25,17 +27,27 @@ class ProductController extends Controller
             'name' => 'required|max:255',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0|max:9999999999.99',
-            'size' => 'nullable|in:s,m,l,xl,xxl',
             'color' => 'nullable|string|max:50',
-            'stock' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'sizes' => 'required|array',
+            'sizes.*' => 'exists:sizes,id',
+            'stocks' => 'required|array',
+            'stocks.*' => 'integer|min:0',
         ]);
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('products', 'public');
         }
 
-        Product::create($validated);
+        // Buat produk
+        $product = Product::create($validated);
+
+        // Hubungkan ukuran dan stok
+        foreach ($request->sizes as $sizeId) {
+            $stock = $request->stocks[$sizeId] ?? 0;
+            $product->sizes()->attach($sizeId, ['stock' => $stock]);
+        }
+
         return redirect()->route('products.index')->with('success', 'Product created.');
     }
 
@@ -46,7 +58,8 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
-        return view('admin.products.edit', compact('product'));
+        $sizes = Size::all();
+        return view('admin.products.edit', compact('product', 'sizes'));
     }
 
     public function update(Request $request, Product $product)
@@ -55,10 +68,12 @@ class ProductController extends Controller
             'name' => 'required|max:255',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0|max:9999999999.99',
-            'size' => 'nullable|in:s,m,l,xl,xxl',
             'color' => 'nullable|string|max:50',
-            'stock' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'sizes' => 'required|array',
+            'sizes.*' => 'exists:sizes,id',
+            'stocks' => 'required|array',
+            'stocks.*' => 'integer|min:0',
         ]);
 
         if ($request->hasFile('image')) {
@@ -69,7 +84,17 @@ class ProductController extends Controller
             $validated['image'] = $request->file('image')->store('products', 'public');
         }
 
+        // Update data produk
         $product->update($validated);
+
+        // Sinkronisasi ukuran dan stok
+        $syncData = [];
+        foreach ($request->sizes as $sizeId) {
+            $stock = $request->stocks[$sizeId] ?? 0;
+            $syncData[$sizeId] = ['stock' => $stock];
+        }
+        $product->sizes()->sync($syncData);
+
         return redirect()->route('products.index')->with('success', 'Product updated.');
     }
 

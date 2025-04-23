@@ -21,17 +21,22 @@
                 Rp{{ number_format($product->price, 0, ',', '.') }}
             </p>
 
-            {{-- Size, Color, Stock --}}
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400 mt-4">
-                <div>
-                    <span class="font-semibold">Size:</span> {{ strtoupper($product->size ?? '-') }}
+            {{-- Sizes, Color, and Stock --}}
+            <div class="mt-4">
+                <p class="font-semibold text-gray-600 dark:text-gray-400">Available Sizes and Stock</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    @foreach($product->sizes as $size)
+                        <div>
+                            <span class="font-semibold">{{ strtoupper($size->name) }}:</span> {{ $size->pivot->stock ?? 0 }} in stock
+                        </div>
+                    @endforeach
                 </div>
-                <div>
-                    <span class="font-semibold">Color:</span> {{ $product->color ?? '-' }}
-                </div>
-                <div>
-                    <span class="font-semibold">Stock:</span> {{ $product->stock ?? 0 }}
-                </div>
+            </div>
+
+            {{-- Color --}}
+            <div class="mt-4">
+                <p class="font-semibold text-gray-600 dark:text-gray-400">Color:</p>
+                <p>{{ $product->color ?? '-' }}</p>
             </div>
 
             {{-- Actions --}}

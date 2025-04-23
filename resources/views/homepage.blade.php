@@ -19,7 +19,15 @@
                     </div>
                     <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">{{ $product->name }}</h3>
                     <p class="text-pink-600 dark:text-pink-400 font-bold mb-1">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Size: <span class="uppercase">{{ $product->size ?? '-' }}</span></p>
+
+                    {{-- Display sizes and stock --}}
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        Size(s):
+                        @foreach($product->sizes as $size)
+                            <span class="uppercase">{{ $size->name }}</span> ({{ $size->pivot->stock }} in stock)
+                        @endforeach
+                    </p>
+
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Color: {{ $product->color ?? '-' }}</p>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Stock: {{ $product->stock ?? 0 }}</p>
 
@@ -51,9 +59,18 @@
                                 Rp <span x-text="Number(product.price).toLocaleString('id-ID')"></span>
                             </span>
                         </p>
-                        <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">Size:
-                            <span class="text-gray-600 dark:text-gray-400 uppercase" x-text="product.size ?? '-'"></span>
-                        </p>
+
+                        {{-- Sizes and Stock per Size --}}
+                        <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">Sizes and Stock:</p>
+                        <ul class="text-sm text-gray-600 dark:text-gray-400">
+                            <template x-for="size in product.sizes" :key="size.name">
+                                <li>
+                                    <span class="uppercase" x-text="size.name"></span>:
+                                    <span x-text="size.pivot.stock"></span> in stock
+                                </li>
+                            </template>
+                        </ul>
+
                         <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">Color:
                             <span class="text-gray-600 dark:text-gray-400" x-text="product.color ?? '-'"></span>
                         </p>

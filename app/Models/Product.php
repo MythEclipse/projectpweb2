@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 
 class Product extends Model
 {
-    protected $fillable = ['name', 'slug', 'description', 'price', 'image',"size","color","stock"];
+    protected $fillable = ['name', 'slug', 'description', 'price', 'image'];
 
     public static function boot()
     {
@@ -34,6 +34,14 @@ class Product extends Model
         }
 
         return $slug;
+    }
+
+    // Relasi many-to-many dengan Size
+    public function sizes()
+    {
+        return $this->belongsToMany(Size::class)
+            ->withPivot('stock')  // Menyertakan kolom pivot 'stock'
+            ->withTimestamps();  // Menyertakan timestamps di pivot table
     }
 
     public function getRouteKeyName()

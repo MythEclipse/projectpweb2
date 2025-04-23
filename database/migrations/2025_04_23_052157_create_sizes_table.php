@@ -11,23 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('products', function (Blueprint $table) {
+        Schema::create('sizes', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('slug')->unique();
-            $table->text('description')->nullable();
-            $table->decimal('price', 15, 2)->notNull();
-            $table->string('image')->nullable();
+            // Mengubah kolom name menjadi enum
+            $table->enum('name', ['S', 'M', 'L', 'XL'])->unique(); // Enum untuk ukuran
             $table->timestamps();
         });
-    }
 
+    }
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('products');
+        Schema::dropIfExists('sizes');
     }
 };

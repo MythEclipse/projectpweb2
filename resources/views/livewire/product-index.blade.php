@@ -33,9 +33,24 @@
                         <td class="px-4 py-3">{{ $loop->iteration }}</td>
                         <td class="px-4 py-3">{{ $product->name }}</td>
                         <td class="px-4 py-3">Rp{{ number_format($product->price, 0, ',', '.') }}</td>
-                        <td class="px-4 py-3 uppercase">{{ $product->size ?? '-' }}</td>
-                        <td class="px-4 py-3">{{ $product->color ?? '-' }}</td>
-                        <td class="px-4 py-3">{{ $product->stock ?? 0 }}</td>
+
+                        {{-- Display Sizes and Stock --}}
+                        <td class="px-4 py-3">
+                            @foreach($product->sizes as $size)
+                                <div>{{ $size->name }}</div>
+                            @endforeach
+                        </td>
+
+                        <td class="px-4 py-3">
+                            {{ $product->color ?? '-' }}
+                        </td>
+
+                        <td class="px-4 py-3">
+                            @foreach($product->sizes as $size)
+                                <div>{{ $size->pivot->stock }} in stock ({{ $size->name }})</div>
+                            @endforeach
+                        </td>
+
                         <td class="px-4 py-3">
                             <div class="flex gap-3">
                                 <a href="{{ route('products.show', $product) }}" class="text-blue-600 hover:underline">View</a>
