@@ -19,9 +19,7 @@
     <div>
         <x-input-label for="description" value="Description" />
         <textarea name="description" id="description" rows="4"
-                  class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2d2d2d] text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500 transition">
-            {{ old('description', $product->description ?? '') }}
-        </textarea>
+                  class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2d2d2d] text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500 transition">{{ old('description', $product->description ?? '') }}</textarea>
         <x-input-error :messages="$errors->get('description')" class="mt-2" />
     </div>
 
@@ -31,6 +29,34 @@
         <x-text-input id="price" name="price" type="number" step="0.01" class="mt-1 block w-full"
                       value="{{ old('price', $product->price ?? '') }}" required />
         <x-input-error :messages="$errors->get('price')" class="mt-2" />
+    </div>
+
+    <!-- Size -->
+    <div>
+        <x-input-label for="size" value="Size" />
+        <select name="size" id="size" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2d2d2d] text-gray-900 dark:text-white shadow-sm focus:ring-pink-500 focus:border-pink-500">
+            <option value="">-- Select Size --</option>
+            @foreach(['s', 'm', 'l', 'xl', 'xxl'] as $size)
+                <option value="{{ $size }}" @selected(old('size', $product->size ?? '') === $size)>{{ strtoupper($size) }}</option>
+            @endforeach
+        </select>
+        <x-input-error :messages="$errors->get('size')" class="mt-2" />
+    </div>
+
+    <!-- Color -->
+    <div>
+        <x-input-label for="color" value="Color" />
+        <x-text-input id="color" name="color" type="text" class="mt-1 block w-full"
+                      value="{{ old('color', $product->color ?? '') }}" />
+        <x-input-error :messages="$errors->get('color')" class="mt-2" />
+    </div>
+
+    <!-- Stock -->
+    <div>
+        <x-input-label for="stock" value="Stock Quantity" />
+        <x-text-input id="stock" name="stock" type="number" class="mt-1 block w-full"
+                      value="{{ old('stock', $product->stock ?? 0) }}" />
+        <x-input-error :messages="$errors->get('stock')" class="mt-2" />
     </div>
 
     <!-- Image Upload -->

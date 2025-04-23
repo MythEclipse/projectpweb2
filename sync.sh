@@ -7,7 +7,7 @@ composer install --optimize-autoloader --no-dev
 php artisan migrate --force
 
 # Jalankan seeder kalau perlu
-php artisan db:seed
+# php artisan db:seed
 
 # Build asset frontend
 npm ci && npm run build

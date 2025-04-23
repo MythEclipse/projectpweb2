@@ -25,6 +25,9 @@ class ProductController extends Controller
             'name' => 'required|max:255',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0|max:9999999999.99',
+            'size' => 'nullable|in:s,m,l,xl,xxl',
+            'color' => 'nullable|string|max:50',
+            'stock' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
@@ -52,11 +55,13 @@ class ProductController extends Controller
             'name' => 'required|max:255',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0|max:9999999999.99',
+            'size' => 'nullable|in:s,m,l,xl,xxl',
+            'color' => 'nullable|string|max:50',
+            'stock' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         if ($request->hasFile('image')) {
-            // Hapus image lama jika ada
             if ($product->image && Storage::disk('public')->exists($product->image)) {
                 Storage::disk('public')->delete($product->image);
             }
@@ -70,7 +75,6 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
-        // Hapus image dari storage jika ada
         if ($product->image && Storage::disk('public')->exists($product->image)) {
             Storage::disk('public')->delete($product->image);
         }
