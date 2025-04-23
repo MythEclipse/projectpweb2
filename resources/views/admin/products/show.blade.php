@@ -4,7 +4,7 @@
     </x-slot>
 
     <div class="py-6">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 bg-white p-6 rounded shadow">
+        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8  bg-white dark:bg-[#1a1a1a] p-6 rounded shadow">
             @if($product->image)
                 <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-64 h-64 object-cover mb-4 rounded">
             @endif

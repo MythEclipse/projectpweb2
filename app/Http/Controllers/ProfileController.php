@@ -54,35 +54,32 @@ class ProfileController extends Controller
         if ($request->hasFile('image')) {
             $image = $request->file('image');
 
-            // Generate nama file unik berdasarkan hash isi file
+            // Buat nama unik dari isi file
             $imageHash = md5_file($image->getRealPath());
             $extension = $image->getClientOriginalExtension();
             $imageName = $imageHash . '.' . $extension;
 
             $storagePath = 'profile_images/' . $imageName;
 
-            // Simpan file jika belum ada
+            // Upload jika belum ada
             if (!Storage::exists($storagePath)) {
                 $image->storeAs('profile_images', $imageName);
             }
 
-            // Hapus avatar lama jika:
-            // - Tidak kosong
-            // - Tidak URL eksternal
-            // - Nama filenya beda dengan file baru
+            // Hapus file lama kalau bukan URL dan berbeda
             if ($user->avatar && !Str::startsWith($user->avatar, ['http://', 'https://'])) {
                 $oldFile = basename($user->avatar);
-                if ($oldFile !== $imageName) {
+                if ($oldFile !== $imageName && Storage::exists('profile_images/' . $oldFile)) {
                     Storage::delete('profile_images/' . $oldFile);
                 }
             }
 
-            // Simpan path avatar tanpa "public" dan "storage/"
+            // Simpan path relatif
             $user->avatar = 'profile_images/' . $imageName;
             $user->save();
         }
 
-        return Redirect::route('profile.edit')->with('status', 'profile-image-updated');
+        return redirect()->route('profile.edit')->with('status', 'profile-image-updated');
     }
 
     /**
