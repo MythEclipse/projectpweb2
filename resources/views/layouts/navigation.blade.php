@@ -68,8 +68,8 @@
 
                             <div class="flex flex-col items-start">
                                 <span
-                                    class="text-sm font-medium text-gray-700 dark:text-[#EDEDEC]">{{ Auth::user()->name }}</span>
-                                <span class="text-xs text-gray-500 dark:text-[#3E3E3A]">{{ Auth::user()->email }}</span>
+                                    class="text-sm font-medium text-black dark:text-[#EDEDEC]">{{ Auth::user()->name }}</span>
+                                <span class="text-xs text-gray-700 dark:text-[#EDEDEC]">{{ Auth::user()->email }}</span>
                             </div>
                             <svg class="w-4 h-4 text-gray-500 dark:text-[#EDEDEC] transform transition-transform"
                                 :class="{ 'rotate-180': isOpen }" fill="none" stroke="currentColor"

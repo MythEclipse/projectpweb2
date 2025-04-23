@@ -23,21 +23,17 @@
         <div
             class="w-full max-w-6xl mx-4 bg-white dark:bg-[#1a1a1a] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col min-h-[80vh]">
 
-            <div class="bg-gradient-to-r from-pink-600 to-purple-600 dark:from-[#2d2d2d] dark:to-[#3E3E3A] px-12 py-8">
+            <div class="bg-white dark:bg-gradient-to-r dark:from-[#2d2d2d] dark:to-[#3E3E3A] border-b border-gray-200 dark:border-[#3E3E3A] px-12 py-6">
                 <div class="flex items-center justify-between">
                     <a href="/"
                         class="flex items-center gap-4 group transform transition-all duration-300 hover:-translate-y-1">
                         <x-application-logo
-                            class="w-16 h-16 text-white dark:text-pink-400 transition-all group-hover:rotate-12" />
-                        <div>
-                            <h1 class="text-3xl font-bold text-white dark:text-pink-200">{{ config('app.name') }}</h1>
-                            <p class="text-white/90 dark:text-pink-100 text-sm mt-1">
-                                Elevating Your Style Experience
-                            </p>
-                        </div>
+                        class="block h-8 w-auto text-pink-600 dark:text-pink-400 transition duration-300 group-hover:scale-105" />
+                    <span
+                        class="ml-3 text-2xl font-bold text-pink-600 dark:text-pink-400 hidden md:block">Fashionku</span>
                     </a>
                     <div class="flex items-center gap-6">
-                        <div class="text-white/90 dark:text-pink-100 text-sm bg-black/10 px-4 py-2 rounded-full">
+                        <div class="text-black/90 dark:text-pink-100 text-sm bg-black/10 px-4 py-2 rounded-full">
                             📍 Kuningan, ID
                         </div>
                     </div>
