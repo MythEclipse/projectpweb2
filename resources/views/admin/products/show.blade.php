@@ -13,7 +13,6 @@
 
             <div class="mt-6">
                 <a href="{{ route('products.edit', $product) }}" class="text-blue-600 hover:underline mr-4">Edit</a>
-                <a href="{{ route('products.index') }}" class="text-gray-600 hover:underline">← Back to Products</a>
             </div>
         </div>
     </div>

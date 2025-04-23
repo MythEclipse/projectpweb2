@@ -29,14 +29,14 @@
                     <td class="px-4 py-3">{{ $product->name }}</td>
                     <td class="px-4 py-3">{{ $product->price }}</td>
                     <td class="px-4 py-3">
-                      <div class="flex gap-3">
-                        <a href="{{ route('products.show', $product) }}" class="text-blue-600 hover:underline">View</a>
-                        <a href="{{ route('products.edit', $product) }}" class="text-yellow-600 hover:underline">Edit</a>
-                        <form method="POST" action="{{ route('products.destroy', $product) }}" onsubmit="return confirm('Delete product?')">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:underline">Delete</button>
-                        </form>
-                    </div>
+                        <div class="flex gap-3">
+                            <a href="{{ route('products.show', $product) }}" class="text-blue-600 hover:underline">View</a>
+                            <a href="{{ route('products.edit', $product) }}" class="text-yellow-600 hover:underline">Edit</a>
+                            <form method="POST" action="{{ route('products.destroy', $product) }}" class="delete-form">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="text-red-600 hover:underline">Delete</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
             @empty
@@ -51,3 +51,27 @@
         {{ $products->links() }}
     </div>
 </div>
+
+@push('scripts')
+    <script>
+        // Menambahkan event listener untuk tombol delete
+        document.querySelectorAll('.delete-form').forEach(form => {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault(); // Mencegah form submit otomatis
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.submit(); // Submit form jika konfirmasi
+                    }
+                });
+            });
+        });
+    </script>
+@endpush
