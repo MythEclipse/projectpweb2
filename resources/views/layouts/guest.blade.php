@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>{{ config('app.name', 'FashionKu') }}</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -23,14 +23,15 @@
         <div
             class="w-full max-w-6xl mx-4 bg-white dark:bg-[#1a1a1a] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col min-h-[80vh]">
 
-            <div class="bg-white dark:bg-gradient-to-r dark:from-[#2d2d2d] dark:to-[#3E3E3A] border-b border-gray-200 dark:border-[#3E3E3A] px-12 py-6">
+            <div
+                class="bg-white dark:bg-gradient-to-r dark:from-[#2d2d2d] dark:to-[#3E3E3A] border-b border-gray-200 dark:border-[#3E3E3A] px-12 py-6">
                 <div class="flex items-center justify-between">
                     <a href="/"
                         class="flex items-center gap-4 group transform transition-all duration-300 hover:-translate-y-1">
                         <x-application-logo
-                        class="block h-8 w-auto text-pink-600 dark:text-pink-400 transition duration-300 group-hover:scale-105" />
-                    <span
-                        class="ml-3 text-2xl font-bold text-pink-600 dark:text-pink-400 hidden md:block">Fashionku</span>
+                            class="block h-8 w-auto text-pink-600 dark:text-pink-400 transition duration-300 group-hover:scale-105" />
+                        <span
+                            class="ml-3 text-2xl font-bold text-pink-600 dark:text-pink-400 hidden md:block">Fashionku</span>
                     </a>
                     <div class="flex items-center gap-6">
                         <div class="text-black/90 dark:text-pink-100 text-sm bg-black/10 px-4 py-2 rounded-full">
@@ -49,8 +50,10 @@
             <div class="border-t border-gray-200 dark:border-[#3E3E3A] px-12 py-6">
                 <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
                     <div class="flex gap-6">
-                        <a href="/aboutus" class="hover:text-pink-600 dark:hover:text-pink-400 transition-all">Tentang
-                            Kami</a>
+                        @unless (Route::is('aboutus'))
+                            <a href="{{ route('aboutus') }}"
+                                class="hover:text-pink-600 dark:hover:text-pink-400 transition-all">Tentang Kami</a>
+                        @endunless
                     </div>
                     <div class="flex items-center gap-4">
                         <span>🌐 Bahasa Indonesia</span>

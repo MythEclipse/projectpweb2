@@ -11,7 +11,7 @@
               <h3 class="mb-1 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                   <a href="#">Asep Haryana Saputra</a>
               </h3>
-              <p>20230810013</p>
+              <p>20230810043</p>
               <ul class="flex justify-center mt-4 space-x-4">
                   <!-- social icons -->
                   <li>
@@ -55,7 +55,7 @@
               <h3 class="mb-1 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                   <a href="#">Rian Putra Pratama</a>
               </h3>
-              <p>20230810043</p>
+              <p>20230810013</p>
               <ul class="flex justify-center mt-4 space-x-4">
                   <!-- social icons -->
                   <li>
