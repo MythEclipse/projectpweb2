@@ -21,6 +21,7 @@ window.addEventListener('resize', () => {
     <meta name="csrf-token" content="{{ csrf_token() }}">
     {{-- @livewireStyles --}}
 
+    <link rel="icon" type="image/png" href="{{ asset('icon.svg') }}">
     <title>{{ config('app.name', 'FashionKu') }}</title>
 
     <!-- Fonts -->
