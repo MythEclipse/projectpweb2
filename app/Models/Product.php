@@ -39,11 +39,17 @@ class Product extends Model
     // Relasi many-to-many dengan Size
     public function sizes()
     {
-        return $this->belongsToMany(Size::class)
-            ->withPivot('stock')  // Menyertakan kolom pivot 'stock'
-            ->withTimestamps();  // Menyertakan timestamps di pivot table
+        return $this->belongsToMany(Size::class, 'product_size_color')
+            ->withPivot('color_id', 'stock')
+            ->withTimestamps();
     }
 
+    public function colors()
+    {
+        return $this->belongsToMany(Color::class, 'product_size_color')
+            ->withPivot('size_id', 'stock')
+            ->withTimestamps();
+    }
     public function getRouteKeyName()
     {
         return 'slug';

@@ -1,4 +1,4 @@
-@props(['product', 'sizes'])
+@props(['product', 'sizes', 'colors'])
 
 <form action="{{ isset($product) ? route('products.update', $product) : route('products.store') }}"
       method="POST"
@@ -34,45 +34,44 @@
         <x-input-error :messages="$errors->get('price')" class="mt-2" />
     </div>
 
-    <!-- Sizes & Stock Toggles -->
+    <!-- Sizes & Colors with Stock Input -->
     <div>
-        <x-input-label for="sizes" value="Available Sizes & Stock" />
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
+        <x-input-label for="sizes_colors" value="Available Sizes, Colors & Stock" />
+        <div class="grid grid-cols-1 gap-4 mt-2">
             @foreach ($sizes as $size)
-                <div>
-                    <!-- Toggle Checkbox -->
-                    <label class="flex items-center space-x-2 text-gray-800 dark:text-gray-100">
+                <div class="border p-4 rounded-md">
+                    <!-- Size Selection -->
+                    <div class="flex items-center space-x-2 mb-4">
                         <input type="checkbox"
                                name="sizes[]"
                                value="{{ $size->id }}"
-                               @change="if($event.target.checked){ selectedSizes.push({{ $size->id }}) } else { selectedSizes = selectedSizes.filter(id => id !== {{ $size->id }}) }"
+                               @change="if($event.target.checked) { selectedSizes.push({{ $size->id }}) } else { selectedSizes = selectedSizes.filter(id => id !== {{ $size->id }}) }"
                                :checked="selectedSizes.includes({{ $size->id }})"
                                class="rounded border-gray-300 dark:border-gray-600 text-pink-600 shadow-sm focus:ring-pink-500" />
-                        <span>{{ strtoupper($size->name) }}</span>
-                    </label>
+                        <label class="text-gray-800 dark:text-gray-100 font-medium">{{ strtoupper($size->name) }}</label>
+                    </div>
 
-                    <!-- Stock Input -->
-                    <div x-show="selectedSizes.includes({{ $size->id }})" x-transition>
-                        <input type="number"
-                               name="stocks[{{ $size->id }}]"
-                               id="stock_{{ $size->id }}"
-                               min="0"
-                               class="mt-2 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2d2d2d] text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500"
-                               value="{{ old('stocks.' . $size->id, isset($product) ? ($product->sizes->find($size->id)?->pivot->stock ?? 0) : 0) }}"
-                               placeholder="Stock {{ strtoupper($size->name) }}">
-                        <x-input-error :messages="$errors->get('stocks.' . $size->id)" class="mt-1" />
+                    <!-- Colors for Selected Size -->
+                    <div class="ml-6 space-y-2">
+                        @foreach ($colors as $color)
+                            <div class="flex items-center space-x-4">
+                                <span class="text-gray-600 dark:text-gray-300">{{ strtoupper($color->name) }}</span>
+                                <div x-show="selectedSizes.includes({{ $size->id }})" x-transition class="flex-1">
+                                    <input type="number"
+                                           name="stocks[{{ $size->id }}-{{ $color->id }}]"
+                                           id="stock_{{ $size->id }}_{{ $color->id }}"
+                                           min="0"
+                                           class="block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2d2d2d] text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500"
+                                           value="{{ old('stocks.' . $size->id . '-' . $color->id, isset($product) ? ($product->sizes->find($size->id)?->pivot->colors->find($color->id)?->pivot->stock ?? 0) : 0) }}"
+                                           placeholder="Stock">
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
             @endforeach
         </div>
-    </div>
-
-    <!-- Color -->
-    <div>
-        <x-input-label for="color" value="Color" />
-        <x-text-input id="color" name="color" type="text" class="mt-1 block w-full"
-                      value="{{ old('color', $product->color ?? '') }}" />
-        <x-input-error :messages="$errors->get('color')" class="mt-2" />
+        <x-input-error :messages="$errors->get('stocks')" class="mt-2" />
     </div>
 
     <!-- Image Upload -->
