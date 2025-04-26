@@ -12,11 +12,28 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::paginate(10);
+        $search = $request->query('search');
+
+        // Ambil data produk dengan pencarian jika ada
+        $products = \App\Models\Product::with('sizes')
+            ->when($search, function ($query) use ($search) {
+                $query->where('name', 'like', '%' . $search . '%');
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString(); // Pertahankan query string seperti search di URL
+
+        // Mengecek jika request datang dari Turbo Frame
+        if ($request->header('Turbo-Frame') === 'products_frame') {
+            return view('admin.home._list', compact('products')); // Harus punya tag turbo-frame!
+        }
+
+        // Mengembalikan halaman lengkap jika tidak menggunakan Turbo Frame
         return view('admin.home', compact('products'));
     }
+
 
     public function create()
     {

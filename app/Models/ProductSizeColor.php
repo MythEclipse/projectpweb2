@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ProductSizeColor extends Model
 {
+    use HasFactory;
     protected $table = 'product_size_color';
     protected $fillable = ['product_id', 'size_id', 'color_id', 'stock'];
 
