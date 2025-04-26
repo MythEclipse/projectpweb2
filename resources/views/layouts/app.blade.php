@@ -6,20 +6,43 @@
 @endphp
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{
-    darkMode: localStorage.getItem('dark-mode') === 'true',
-    sidebarOpen: window.innerWidth >= 768 // Buka sidebar default di desktop
-}" x-init="darkMode ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark');
-window.addEventListener('resize', () => {
-    sidebarOpen = window.innerWidth >= 768
-})"
-    x-bind:class="{ 'dark': darkMode }">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+      x-data="{
+          darkMode: false,
+          sidebarOpen: window.innerWidth >= 768
+      }"
+      x-init="
+          // Set dark mode from localStorage
+          darkMode = localStorage.getItem('dark-mode') === 'true';
+
+          // Responsive sidebar
+          window.addEventListener('resize', () => {
+              sidebarOpen = window.innerWidth >= 768;
+          });
+
+          // Sync dark mode state
+          $watch('darkMode', value => {
+              localStorage.setItem('dark-mode', value);
+              document.documentElement.classList.toggle('dark', value);
+          });
+      ">
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     {{-- @livewireStyles --}}
+
+    <!-- Inline script untuk apply dark mode sebelum render -->
+    <script>
+        (function() {
+            const isDark = localStorage.getItem('dark-mode') === 'true';
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const darkMode = isDark !== null ? isDark : systemDark;
+            document.documentElement.classList.toggle('dark', darkMode);
+            localStorage.setItem('dark-mode', darkMode);
+        })();
+    </script>
 
     <link rel="icon" type="image/png" href="{{ asset('icon.svg') }}">
     <title>{{ config('app.name', 'FashionKu') }}</title>
@@ -48,7 +71,7 @@ window.addEventListener('resize', () => {
                     <ul class="space-y-4 text-gray-700 dark:text-gray-300">
                         <li>
                             <a href="{{ route('products.create') }}"
-                                class="hover:text-pink-500 font-medium transition flex items-center gap-2">
+                               class="hover:text-pink-500 font-medium transition flex items-center gap-2">
                                 Create Product
                             </a>
                         </li>
@@ -58,7 +81,7 @@ window.addEventListener('resize', () => {
         @endif
 
         <!-- Main Content -->
-        <div class="flex-1 transition-all duration-300 ">
+        <div class="flex-1 transition-all duration-300">
             <!-- Top Navigation -->
             @if (request()->path() !== '/')
                 @include('layouts.navigation')
@@ -66,8 +89,7 @@ window.addEventListener('resize', () => {
 
             <!-- Header -->
             @isset($header)
-                <header
-                    class="bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-sm shadow border-b border-gray-100 dark:border-[#3E3E3A]">
+                <header class="bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-sm shadow border-b border-gray-100 dark:border-[#3E3E3A]">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>
@@ -91,8 +113,8 @@ window.addEventListener('resize', () => {
 
         <!-- Dark Mode Toggle -->
         <div class="fixed bottom-6 right-6 z-50">
-            <button @click="darkMode = !darkMode; localStorage.setItem('dark-mode', darkMode)"
-                class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-sm rounded-lg text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200 shadow-lg">
+            <button @click="darkMode = !darkMode"
+                    class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-sm rounded-lg text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200 shadow-lg">
                 <span x-text="darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'"></span>
             </button>
         </div>
@@ -101,7 +123,5 @@ window.addEventListener('resize', () => {
     {{-- @livewireScripts --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @stack('scripts')
-
 </body>
-
 </html>
