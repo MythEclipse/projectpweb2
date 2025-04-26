@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Middleware\IsAdmin;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AvatarController;
+use App\Http\Controllers\HomePageController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -20,13 +21,7 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/homepage', function () {
-    // Menggunakan paginate() untuk mengambil 12 produk per halaman
-    $products = \App\Models\Product::paginate(24);
-
-    // Mengirimkan data produk ke view
-    return view('homepage', compact('products'));
-})->middleware(['auth', 'verified'])->name('homepage');
+Route::get('/homepage',[HomePageController::class,'index'])->middleware(['auth', 'verified'])->name('homepage');
 
 
 Route::middleware('auth')->group(function () {

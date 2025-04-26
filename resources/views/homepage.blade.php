@@ -34,8 +34,7 @@
                             @endif
                         </div>
 
-                        <h3 class="text-md font-semibold text-gray-800 dark:text-gray-100 mb-1">{{ $product->name }}
-                        </h3>
+                        <h3 class="text-md font-semibold text-gray-800 dark:text-gray-100 mb-1">{{ $product->name }}</h3>
 
                         <p class="text-pink-600 dark:text-pink-400 font-bold mb-1">
                             Rp {{ number_format($product->price, 0, ',', '.') }}
@@ -48,7 +47,7 @@
                         <!-- Tombol Aksi -->
                         <div class="mt-auto w-full flex space-x-2">
                             <button
-                                @click="open = true; product = JSON.parse(atob('{{ base64_encode(json_encode($product)) }}'))"
+                                @click="openModal(JSON.parse(atob('{{ base64_encode(json_encode($product)) }}')))"
                                 class="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-xl text-xs">
                                 Detail
                             </button>
@@ -66,15 +65,11 @@
                 @endforeach
             </div>
 
-
-
-
             <!-- Pagination -->
             <div class="flex flex-col md:flex-row items-center justify-between mt-6 space-y-4 md:space-y-0">
                 <div class="flex items-center space-x-1 text-gray-600 dark:text-gray-400">
                     @if ($products->onFirstPage())
-                        <span
-                            class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] opacity-50 cursor-not-allowed">&lt;</span>
+                        <span class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] opacity-50 cursor-not-allowed">&lt;</span>
                     @else
                         <a href="{{ $products->previousPageUrl() }}"
                             class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] hover:bg-gray-100 dark:hover:bg-[#1a1a1a]">&lt;</a>
@@ -82,8 +77,7 @@
 
                     @for ($i = 1; $i <= $products->lastPage(); $i++)
                         @if ($i == $products->currentPage())
-                            <span
-                                class="px-3 py-1 rounded-md bg-pink-500 text-white font-semibold">{{ $i }}</span>
+                            <span class="px-3 py-1 rounded-md bg-pink-500 text-white font-semibold">{{ $i }}</span>
                         @else
                             <a href="{{ $products->url($i) }}"
                                 class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] hover:bg-gray-100 dark:hover:bg-[#1a1a1a]">{{ $i }}</a>
@@ -94,18 +88,14 @@
                         <a href="{{ $products->nextPageUrl() }}"
                             class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] hover:bg-gray-100 dark:hover:bg-[#1a1a1a]">&gt;</a>
                     @else
-                        <span
-                            class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] opacity-50 cursor-not-allowed">&gt;</span>
+                        <span class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] opacity-50 cursor-not-allowed">&gt;</span>
                     @endif
                 </div>
 
                 <div class="text-sm text-gray-600 dark:text-gray-400 text-center md:text-right">
-                    Showing page <span
-                        class="font-semibold text-pink-600 dark:text-pink-400">{{ $products->currentPage() }}</span>
+                    Showing page <span class="font-semibold text-pink-600 dark:text-pink-400">{{ $products->currentPage() }}</span>
                     of <span class="font-semibold text-pink-600 dark:text-pink-400">{{ $products->lastPage() }}</span>
-                    (Total: <span
-                        class="font-semibold text-pink-600 dark:text-pink-400">{{ $products->total() }}</span>
-                    products)
+                    (Total: <span class="font-semibold text-pink-600 dark:text-pink-400">{{ $products->total() }}</span> products)
                 </div>
             </div>
 
@@ -116,10 +106,11 @@
                     <template x-if="selectedProduct">
                         <div>
                             <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Product Details</h3>
+
                             <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Name: <span class="text-pink-600 dark:text-pink-400"
-                                    x-text="selectedProduct.name"></span>
+                                Name: <span class="text-pink-600 dark:text-pink-400" x-text="selectedProduct.name"></span>
                             </p>
+
                             <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Price:
                                 <span class="text-pink-600 dark:text-pink-400">
@@ -129,8 +120,7 @@
 
                             <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">Sizes and Stock:</p>
                             <ul class="text-sm text-gray-600 dark:text-gray-400">
-                                <template x-for="combination in selectedProduct.stock_combinations"
-                                    :key="combination.id">
+                                <template x-for="combination in selectedProduct.stock_combinations" :key="combination.id">
                                     <li>
                                         <span x-text="combination.size.name"></span> -
                                         <span x-text="combination.color.name"></span>:
@@ -139,10 +129,9 @@
                                 </template>
                             </ul>
 
-                            <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <p class="font-medium text-gray-700 dark:text-gray-300 mt-2 mb-1">
                                 Description:
-                                <span class="text-gray-600 dark:text-gray-400"
-                                    x-text="selectedProduct.description"></span>
+                                <span class="text-gray-600 dark:text-gray-400" x-text="selectedProduct.description"></span>
                             </p>
 
                             <div class="mt-4">
@@ -169,6 +158,7 @@
                     </template>
                 </div>
             </div>
+
         </div>
     </turbo-frame>
 
