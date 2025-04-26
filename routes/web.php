@@ -22,7 +22,7 @@ Route::get('/dashboard', function () {
 
 Route::get('/homepage', function () {
     // Menggunakan paginate() untuk mengambil 12 produk per halaman
-    $products = \App\Models\Product::paginate(12);
+    $products = \App\Models\Product::paginate(24);
 
     // Mengirimkan data produk ke view
     return view('homepage', compact('products'));
