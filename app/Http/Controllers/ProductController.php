@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Size;
 use App\Models\Color;
+use App\Models\ProductSizeColor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
@@ -23,48 +25,38 @@ class ProductController extends Controller
         return view('admin.products.create', compact('sizes', 'colors'));
     }
 
-    // Store method
-public function store(Request $request)
-{
-    $validated = $request->validate([
-        'name' => 'required|max:255',
-        'description' => 'nullable|string',
-        'price' => 'required|numeric|min:0|max:9999999999.99',
-        'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        'sizes' => 'required|array',
-        'sizes.*' => 'exists:sizes,id',
-        'stocks' => 'required|array',
-        'stocks.*' => 'integer|min:0',
-        'colors' => 'required|array',
-        'colors.*' => 'exists:colors,id',
-    ]);
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name'        => 'required|max:255',
+            'description' => 'nullable|string',
+            'price'       => 'required|numeric|min:0|max:9999999999.99',
+            'image'       => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'stocks'      => 'required|array',
+            'stocks.*'    => 'integer|min:0',
+        ]);
 
-    if ($request->hasFile('image')) {
-        $validated['image'] = $request->file('image')->store('products', 'public');
-    }
-
-    // Buat produk
-    $product = Product::create($validated);
-
-    // Menyimpan stok untuk kombinasi size dan color
-    $syncData = [];
-    foreach ($request->sizes as $sizeId) {
-        foreach ($request->colors as $colorId) {
-            $stock = $request->stocks["$sizeId-$colorId"] ?? 0; // Mengambil stok per kombinasi ukuran dan warna
-            $syncData[$sizeId][$colorId] = ['stock' => $stock];
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('products', 'public');
         }
-    }
 
-    // Sinkronisasi stok ke pivot table product_size_color
-    foreach ($syncData as $sizeId => $colors) {
-        foreach ($colors as $colorId => $data) {
-            $product->sizes()->attach($sizeId, ['color_id' => $colorId, 'stock' => $data['stock']]);
+        // Only assign product fields
+        $productData = Arr::only($validated, ['name', 'description', 'price', 'image']);
+        $product = Product::create($productData);
+
+        // Save each size-color combination stock
+        foreach ($request->stocks as $key => $qty) {
+            list($sizeId, $colorId) = explode('-', $key);
+            ProductSizeColor::create([
+                'product_id' => $product->id,
+                'size_id'    => $sizeId,
+                'color_id'   => $colorId,
+                'stock'      => $qty,
+            ]);
         }
+
+        return redirect()->route('products.index')->with('success', 'Product created.');
     }
-
-    return redirect()->route('products.index')->with('success', 'Product created.');
-}
-
 
     public function show(Product $product)
     {
@@ -78,60 +70,50 @@ public function store(Request $request)
         return view('admin.products.edit', compact('product', 'sizes', 'colors'));
     }
 
-   // Update method
-public function update(Request $request, Product $product)
-{
-    $validated = $request->validate([
-        'name' => 'required|max:255',
-        'description' => 'nullable|string',
-        'price' => 'required|numeric|min:0|max:9999999999.99',
-        'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        'sizes' => 'required|array',
-        'sizes.*' => 'exists:sizes,id',
-        'stocks' => 'required|array',
-        'stocks.*' => 'integer|min:0',
-        'colors' => 'required|array',
-        'colors.*' => 'exists:colors,id',
-    ]);
+    public function update(Request $request, Product $product)
+    {
+        $validated = $request->validate([
+            'name'        => 'required|max:255',
+            'description' => 'nullable|string',
+            'price'       => 'required|numeric|min:0|max:9999999999.99',
+            'image'       => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'stocks'      => 'required|array',
+            'stocks.*'    => 'integer|min:0',
+        ]);
 
-    if ($request->hasFile('image')) {
-        if ($product->image && Storage::disk('public')->exists($product->image)) {
-            Storage::disk('public')->delete($product->image);
+        if ($request->hasFile('image')) {
+            if ($product->image && Storage::disk('public')->exists($product->image)) {
+                Storage::disk('public')->delete($product->image);
+            }
+            $validated['image'] = $request->file('image')->store('products', 'public');
         }
 
-        $validated['image'] = $request->file('image')->store('products', 'public');
-    }
+        $productData = Arr::only($validated, ['name', 'description', 'price', 'image']);
+        $product->update($productData);
 
-    // Update produk
-    $product->update($validated);
-
-    // Menyinkronkan stok untuk setiap kombinasi size dan color
-    $syncData = [];
-    foreach ($request->sizes as $sizeId) {
-        foreach ($request->colors as $colorId) {
-            $stock = $request->stocks["$sizeId-$colorId"] ?? 0;
-            $syncData[$sizeId][$colorId] = ['stock' => $stock];
+        // Clear existing and re-create stocks
+        $product->stockCombinations()->delete();
+        foreach ($request->stocks as $key => $qty) {
+            list($sizeId, $colorId) = explode('-', $key);
+            ProductSizeColor::create([
+                'product_id' => $product->id,
+                'size_id'    => $sizeId,
+                'color_id'   => $colorId,
+                'stock'      => $qty,
+            ]);
         }
+
+        return redirect()->route('products.index')->with('success', 'Product updated.');
     }
-
-    // Sinkronisasi stok ke pivot table
-    foreach ($syncData as $sizeId => $colors) {
-        foreach ($colors as $colorId => $data) {
-            $product->sizes()->updateExistingPivot($sizeId, ['color_id' => $colorId, 'stock' => $data['stock']]);
-        }
-    }
-
-    return redirect()->route('products.index')->with('success', 'Product updated.');
-}
-
 
     public function destroy(Product $product)
     {
         if ($product->image && Storage::disk('public')->exists($product->image)) {
             Storage::disk('public')->delete($product->image);
         }
-
+        $product->stockCombinations()->delete();
         $product->delete();
+
         return redirect()->route('products.index')->with('success', 'Product deleted.');
     }
 }
