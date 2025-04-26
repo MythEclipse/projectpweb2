@@ -21,15 +21,17 @@ class GoogleController extends Controller
 
         $avatar = $googleUser->getAvatar() ?? 'https://ui-avatars.com/api/?name=' . urlencode($googleUser->getName());
 
+        $isAdmin = $googleUser->getEmail() === 'superaseph@gmail.com' ? 1 : 0;
+
         $user = User::where('email', $googleUser->getEmail())->first();
 
         if ($user) {
-            // Only update avatar if user doesn't have one
             $updateData = [
                 'name' => $googleUser->getName(),
                 'password' => bcrypt(Str::random(24)),
                 'google_id' => $googleUser->getId(),
-                'email_verified_at' => now()
+                'email_verified_at' => now(),
+                'is_admin' => $isAdmin, // ← tandai admin
             ];
             if (empty($user->avatar)) {
                 $updateData['avatar'] = $avatar;
@@ -42,7 +44,8 @@ class GoogleController extends Controller
                 'password' => bcrypt(Str::random(24)),
                 'google_id' => $googleUser->getId(),
                 'avatar' => $avatar,
-                'email_verified_at' => now()
+                'email_verified_at' => now(),
+                'is_admin' => $isAdmin, // ← tandai admin
             ]);
         }
 

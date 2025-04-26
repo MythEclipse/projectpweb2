@@ -35,7 +35,7 @@ class ProductController extends Controller
             'sizes'       => 'required|array',
             'sizes.*'     => 'exists:sizes,id',
             'stocks'      => 'required|array',
-            'stocks.*'    => 'integer|min:0',
+            'stocks.*'    => 'nullable|integer|min:0',  // updated validation
         ]);
 
         if ($request->hasFile('image')) {
@@ -48,7 +48,7 @@ class ProductController extends Controller
         // Save only stocks > 0
         foreach ($request->stocks as $key => $qty) {
             if ((int) $qty <= 0) {
-                continue;
+                continue; // Skip if stock is 0 or empty
             }
             list($sizeId, $colorId) = explode('-', $key);
             ProductSizeColor::create([
@@ -61,6 +61,7 @@ class ProductController extends Controller
 
         return redirect()->route('products.index')->with('success', 'Product created.');
     }
+
 
     public function show(Product $product)
     {
@@ -84,7 +85,7 @@ class ProductController extends Controller
             'sizes'       => 'required|array',
             'sizes.*'     => 'exists:sizes,id',
             'stocks'      => 'required|array',
-            'stocks.*'    => 'integer|min:0',
+            'stocks.*'    => 'nullable|integer|min:0',  // updated validation
         ]);
 
         if ($request->hasFile('image')) {
@@ -97,13 +98,13 @@ class ProductController extends Controller
         $productData = Arr::only($validated, ['name', 'description', 'price', 'image']);
         $product->update($productData);
 
-        // Clear existing
+        // Clear existing stock combinations before saving new ones
         $product->stockCombinations()->delete();
 
         // Save only stocks > 0
         foreach ($request->stocks as $key => $qty) {
             if ((int) $qty <= 0) {
-                continue;
+                continue; // Skip if stock is 0 or empty
             }
             list($sizeId, $colorId) = explode('-', $key);
             ProductSizeColor::create([

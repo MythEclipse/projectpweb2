@@ -14,7 +14,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    {{-- <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script> --}}
     <!-- Styles / Scripts -->
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -1526,7 +1526,7 @@
 <body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] dark:text-[#EDEDEC] min-h-screen">
     <!-- Header Navigation -->
     <header
-        
+
         class="sticky top-0 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-sm z-50 border-b border-gray-100 dark:border-[#3E3E3A]">
         <nav class="container mx-auto px-4 lg:px-8 py-1 flex items-center justify-between">
             <div class="shrink-0">
@@ -1567,7 +1567,7 @@
     <section class="relative pt-20 pb-32 px-4 lg:px-8 bg-gradient-to-br from-pink-50 to-purple-50 dark:from-[#1a1a1a] dark:to-[#2d2d2d] overflow-hidden">
         <!-- Background Image -->
         <img src="{{ asset('img/Background.webp') }}" alt="Background" class="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-30">
-    
+
         <div class="container mx-auto max-w-4xl text-center relative z-10">
             <h1 class="text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6 animate-fade-in-up">
                 Temukan Gaya Terbaikmu
@@ -1581,7 +1581,7 @@
             </a>
         </div>
     </section>
-    
+
 
     <!-- Features Section -->
     <!-- Tentang Kami Section -->
