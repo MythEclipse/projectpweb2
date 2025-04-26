@@ -83,36 +83,38 @@
                         </span>
                     </label>
 
-                    {{-- Show colors + stock only if size selected --}}
-                    <div x-show="selectedSizes.includes({{ $size->id }})" x-transition class="ml-6 space-y-2">
-                        @foreach ($colors as $color)
-                            @php
-                                $rec = isset($product)
-                                    ? $product->stockCombinations
-                                        ->firstWhere(fn($c) =>
-                                            $c->size_id == $size->id &&
-                                            $c->color_id == $color->id
-                                        )
-                                    : null;
-                            @endphp
+                    {{-- Color grid --}}
+                    <div x-show="selectedSizes.includes({{ $size->id }})" x-transition class="ml-6">
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            @foreach ($colors as $color)
+                                @php
+                                    $rec = isset($product)
+                                        ? $product->stockCombinations
+                                            ->firstWhere(fn($c) =>
+                                                $c->size_id == $size->id &&
+                                                $c->color_id == $color->id
+                                            )
+                                        : null;
+                                @endphp
 
-                            <div class="flex items-center space-x-4">
-                                <span class="text-gray-600 dark:text-gray-300">
-                                    {{ strtoupper($color->name) }}
-                                </span>
-                                <input
-                                    type="number"
-                                    name="stocks[{{ $size->id }}-{{ $color->id }}]"
-                                    min="0"
-                                    class="block w-24 border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2d2d2d] text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500"
-                                    value="{{ old(
-                                        'stocks.' . $size->id . '-' . $color->id,
-                                        $rec?->stock ?? 0
-                                    ) }}"
-                                    placeholder="Stock"
-                                />
-                            </div>
-                        @endforeach
+                                <div class="space-y-2">
+                                    <span class="block text-sm text-gray-600 dark:text-gray-300">
+                                        {{ strtoupper($color->name) }}
+                                    </span>
+                                    <input
+                                        type="number"
+                                        name="stocks[{{ $size->id }}-{{ $color->id }}]"
+                                        min="0"
+                                        class="block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2d2d2d] text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500"
+                                        value="{{ old(
+                                            'stocks.' . $size->id . '-' . $color->id,
+                                            $rec?->stock ?? 0
+                                        ) }}"
+                                        placeholder="Stock"
+                                    />
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             @endforeach

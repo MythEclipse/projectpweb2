@@ -54,4 +54,8 @@ class Product extends Model
     {
         return 'slug';
     }
+    public function stockCombinations()
+    {
+        return $this->hasMany(ProductSizeColor::class);
+    }
 }
