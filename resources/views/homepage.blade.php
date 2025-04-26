@@ -19,30 +19,30 @@
             </div>
 
             <!-- Product List -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-6">
                 @foreach ($products as $product)
                     <div class="bg-white dark:bg-[#2d2d2d] rounded-2xl shadow p-4 flex flex-col items-start hover:shadow-lg transition w-full h-[400px]"
-                        x-show="filterProduct('{{ strtolower($product->name) }}')">
-                        <div class="h-40 w-full bg-gray-100 dark:bg-gray-800 rounded-xl mb-4 flex items-center justify-center text-gray-400">
+                    x-show="filterProduct('{{ strtolower($product->name) }}')">
+                        <div class="h-32 w-full bg-gray-100 dark:bg-gray-800 rounded-xl mb-4 flex items-center justify-center text-gray-400">
                             @if ($product->image)
-                                <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="object-cover h-full w-full rounded-xl">
+                                <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}"
+                                    class="object-cover h-full w-full rounded-xl">
                             @else
                                 <span>No Image</span>
                             @endif
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">{{ $product->name }}</h3>
-                        <p class="text-pink-600 dark:text-pink-400 font-bold mb-2">
-                            Rp {{ number_format($product->price, 0, ',', '.') }}
-                        </p>
+                        <h3 class="text-md font-semibold text-gray-800 dark:text-gray-100 mb-2">{{ $product->name }}</h3>
+                        <p class="text-pink-600 dark:text-pink-400 font-bold mb-2">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
 
                         <button
-                            @click="openModal({{ htmlspecialchars(json_encode($product), ENT_QUOTES, 'UTF-8') }})"
-                            class="mt-auto bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-xl text-sm">
+                            @click="open = true; product = JSON.parse(atob('{{ base64_encode(json_encode($product)) }}'))"
+                            class="mt-auto bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-xl text-xs">
                             View Detail
                         </button>
                     </div>
                 @endforeach
             </div>
+
 
             <!-- Pagination -->
             <div class="flex flex-col md:flex-row items-center justify-between mt-6 space-y-4 md:space-y-0">
