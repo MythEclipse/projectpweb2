@@ -21,9 +21,11 @@
             <!-- Product List -->
             <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-6">
                 @foreach ($products as $product)
-                    <div class="bg-white dark:bg-[#2d2d2d] rounded-2xl shadow p-4 flex flex-col items-start hover:shadow-lg transition w-full h-[400px]"
-                    x-show="filterProduct('{{ strtolower($product->name) }}')">
-                        <div class="h-32 w-full bg-gray-100 dark:bg-gray-800 rounded-xl mb-4 flex items-center justify-center text-gray-400">
+                    <div class="bg-white dark:bg-[#2d2d2d] rounded-2xl shadow p-4 flex flex-col items-start hover:shadow-lg transition w-full h-[300px]"
+                        x-show="filterProduct('{{ strtolower($product->name) }}')">
+
+                        <div
+                            class="h-32 w-full bg-gray-100 dark:bg-gray-800 rounded-xl mb-4 flex items-center justify-center text-gray-400">
                             @if ($product->image)
                                 <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}"
                                     class="object-cover h-full w-full rounded-xl">
@@ -31,24 +33,48 @@
                                 <span>No Image</span>
                             @endif
                         </div>
-                        <h3 class="text-md font-semibold text-gray-800 dark:text-gray-100 mb-2">{{ $product->name }}</h3>
-                        <p class="text-pink-600 dark:text-pink-400 font-bold mb-2">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
 
-                        <button
-                            @click="open = true; product = JSON.parse(atob('{{ base64_encode(json_encode($product)) }}'))"
-                            class="mt-auto bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-xl text-xs">
-                            View Detail
-                        </button>
+                        <h3 class="text-md font-semibold text-gray-800 dark:text-gray-100 mb-1">{{ $product->name }}
+                        </h3>
+
+                        <p class="text-pink-600 dark:text-pink-400 font-bold mb-1">
+                            Rp {{ number_format($product->price, 0, ',', '.') }}
+                        </p>
+
+                        <p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-4">
+                            {{ $product->description ?? 'No description' }}
+                        </p>
+
+                        <!-- Tombol Aksi -->
+                        <div class="mt-auto w-full flex space-x-2">
+                            <button
+                                @click="open = true; product = JSON.parse(atob('{{ base64_encode(json_encode($product)) }}'))"
+                                class="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-xl text-xs">
+                                Detail
+                            </button>
+
+                            <form method="POST" action="" class="flex-1">
+                                @csrf
+                                <button type="submit"
+                                    class="w-full bg-pink-600 hover:bg-pink-700 text-white px-3 py-2 rounded-xl text-xs">
+                                    Beli
+                                </button>
+                            </form>
+                        </div>
+
                     </div>
                 @endforeach
             </div>
+
+
 
 
             <!-- Pagination -->
             <div class="flex flex-col md:flex-row items-center justify-between mt-6 space-y-4 md:space-y-0">
                 <div class="flex items-center space-x-1 text-gray-600 dark:text-gray-400">
                     @if ($products->onFirstPage())
-                        <span class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] opacity-50 cursor-not-allowed">&lt;</span>
+                        <span
+                            class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] opacity-50 cursor-not-allowed">&lt;</span>
                     @else
                         <a href="{{ $products->previousPageUrl() }}"
                             class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] hover:bg-gray-100 dark:hover:bg-[#1a1a1a]">&lt;</a>
@@ -56,7 +82,8 @@
 
                     @for ($i = 1; $i <= $products->lastPage(); $i++)
                         @if ($i == $products->currentPage())
-                            <span class="px-3 py-1 rounded-md bg-pink-500 text-white font-semibold">{{ $i }}</span>
+                            <span
+                                class="px-3 py-1 rounded-md bg-pink-500 text-white font-semibold">{{ $i }}</span>
                         @else
                             <a href="{{ $products->url($i) }}"
                                 class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] hover:bg-gray-100 dark:hover:bg-[#1a1a1a]">{{ $i }}</a>
@@ -67,14 +94,18 @@
                         <a href="{{ $products->nextPageUrl() }}"
                             class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] hover:bg-gray-100 dark:hover:bg-[#1a1a1a]">&gt;</a>
                     @else
-                        <span class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] opacity-50 cursor-not-allowed">&gt;</span>
+                        <span
+                            class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] opacity-50 cursor-not-allowed">&gt;</span>
                     @endif
                 </div>
 
                 <div class="text-sm text-gray-600 dark:text-gray-400 text-center md:text-right">
-                    Showing page <span class="font-semibold text-pink-600 dark:text-pink-400">{{ $products->currentPage() }}</span>
+                    Showing page <span
+                        class="font-semibold text-pink-600 dark:text-pink-400">{{ $products->currentPage() }}</span>
                     of <span class="font-semibold text-pink-600 dark:text-pink-400">{{ $products->lastPage() }}</span>
-                    (Total: <span class="font-semibold text-pink-600 dark:text-pink-400">{{ $products->total() }}</span> products)
+                    (Total: <span
+                        class="font-semibold text-pink-600 dark:text-pink-400">{{ $products->total() }}</span>
+                    products)
                 </div>
             </div>
 
@@ -86,7 +117,8 @@
                         <div>
                             <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Product Details</h3>
                             <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Name: <span class="text-pink-600 dark:text-pink-400" x-text="selectedProduct.name"></span>
+                                Name: <span class="text-pink-600 dark:text-pink-400"
+                                    x-text="selectedProduct.name"></span>
                             </p>
                             <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Price:
@@ -97,7 +129,8 @@
 
                             <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">Sizes and Stock:</p>
                             <ul class="text-sm text-gray-600 dark:text-gray-400">
-                                <template x-for="combination in selectedProduct.stock_combinations" :key="combination.id">
+                                <template x-for="combination in selectedProduct.stock_combinations"
+                                    :key="combination.id">
                                     <li>
                                         <span x-text="combination.size.name"></span> -
                                         <span x-text="combination.color.name"></span>:
@@ -108,12 +141,14 @@
 
                             <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Description:
-                                <span class="text-gray-600 dark:text-gray-400" x-text="selectedProduct.description"></span>
+                                <span class="text-gray-600 dark:text-gray-400"
+                                    x-text="selectedProduct.description"></span>
                             </p>
 
                             <div class="mt-4">
                                 <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Image:</h4>
-                                <div class="h-40 w-full bg-gray-100 dark:bg-gray-800 rounded-xl mt-1 flex items-center justify-center text-gray-400">
+                                <div
+                                    class="h-40 w-full bg-gray-100 dark:bg-gray-800 rounded-xl mt-1 flex items-center justify-center text-gray-400">
                                     <template x-if="selectedProduct.image">
                                         <img :src="'/storage/' + selectedProduct.image.replace(/\\/g, '/')"
                                             :alt="selectedProduct.name" class="object-cover h-full w-full rounded-xl">
