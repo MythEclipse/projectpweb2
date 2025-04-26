@@ -32,6 +32,8 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'price'       => 'required|numeric|min:0|max:9999999999.99',
             'image'       => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'sizes'       => 'required|array',
+            'sizes.*'     => 'exists:sizes,id',
             'stocks'      => 'required|array',
             'stocks.*'    => 'integer|min:0',
         ]);
@@ -40,12 +42,14 @@ class ProductController extends Controller
             $validated['image'] = $request->file('image')->store('products', 'public');
         }
 
-        // Only assign product fields
         $productData = Arr::only($validated, ['name', 'description', 'price', 'image']);
         $product = Product::create($productData);
 
-        // Save each size-color combination stock
+        // Save only stocks > 0
         foreach ($request->stocks as $key => $qty) {
+            if ((int) $qty <= 0) {
+                continue;
+            }
             list($sizeId, $colorId) = explode('-', $key);
             ProductSizeColor::create([
                 'product_id' => $product->id,
@@ -77,6 +81,8 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'price'       => 'required|numeric|min:0|max:9999999999.99',
             'image'       => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'sizes'       => 'required|array',
+            'sizes.*'     => 'exists:sizes,id',
             'stocks'      => 'required|array',
             'stocks.*'    => 'integer|min:0',
         ]);
@@ -91,9 +97,14 @@ class ProductController extends Controller
         $productData = Arr::only($validated, ['name', 'description', 'price', 'image']);
         $product->update($productData);
 
-        // Clear existing and re-create stocks
+        // Clear existing
         $product->stockCombinations()->delete();
+
+        // Save only stocks > 0
         foreach ($request->stocks as $key => $qty) {
+            if ((int) $qty <= 0) {
+                continue;
+            }
             list($sizeId, $colorId) = explode('-', $key);
             ProductSizeColor::create([
                 'product_id' => $product->id,
