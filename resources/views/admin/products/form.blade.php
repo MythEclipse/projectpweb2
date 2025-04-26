@@ -65,61 +65,74 @@
 
     {{-- Sizes & Colors & Stock --}}
     <div>
-        <x-input-label value="Available Sizes, Colors & Stock" />
-        <div class="grid grid-cols-1 gap-4 mt-2">
-            @foreach ($sizes as $size)
-                <div class="border p-4 rounded-md">
-                    {{-- Size toggle --}}
-                    <label class="flex items-center space-x-2 mb-4">
-                        <input
-                            type="checkbox"
-                            name="sizes[]"
-                            x-model.number="selectedSizes"
-                            value="{{ $size->id }}"
-                            class="rounded border-gray-300 dark:border-gray-600 text-pink-600 shadow-sm focus:ring-pink-500"
-                        />
-                        <span class="font-medium text-gray-800 dark:text-gray-100">
-                            {{ strtoupper($size->name) }}
-                        </span>
-                    </label>
+      <x-input-label value="Available Sizes, Colors & Stock" />
 
-                    {{-- Color grid --}}
-                    <div x-show="selectedSizes.includes({{ $size->id }})" x-transition class="ml-6">
-                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            @foreach ($colors as $color)
-                                @php
-                                    $rec = isset($product)
-                                        ? $product->stockCombinations
-                                            ->firstWhere(fn($c) =>
-                                                $c->size_id == $size->id &&
-                                                $c->color_id == $color->id
-                                            )
-                                        : null;
-                                @endphp
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mt-2">
+        @foreach ($sizes as $size)
+          <label class="cursor-pointer">
+            <input
+              type="checkbox"
+              name="sizes[]"
+              x-model.number="selectedSizes"
+              value="{{ $size->id }}"
+              class="hidden"
+            />
 
-                                <div class="space-y-2">
-                                    <span class="block text-sm text-gray-600 dark:text-gray-300">
-                                        {{ strtoupper($color->name) }}
-                                    </span>
-                                    <input
-                                        type="number"
-                                        name="stocks[{{ $size->id }}-{{ $color->id }}]"
-                                        min="0"
-                                        class="block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2d2d2d] text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500"
-                                        value="{{ old(
-                                            'stocks.' . $size->id . '-' . $color->id,
-                                            $rec?->stock ?? 0
-                                        ) }}"
-                                        placeholder="Stock"
-                                    />
-                                </div>
-                            @endforeach
-                        </div>
+            <div
+              class="border p-3 rounded-lg transition-all"
+              :class="{
+                'border-pink-500 bg-pink-50 dark:bg-pink-900/20': selectedSizes.includes({{ $size->id }}),
+                'hover:border-pink-300 dark:hover:border-pink-600': !selectedSizes.includes({{ $size->id }})
+              }"
+            >
+              <div class="flex flex-col items-center space-y-1">
+                <span class="font-bold text-lg text-gray-800 dark:text-gray-200">
+                  {{ strtoupper($size->name) }}
+                </span>
+                <span
+                  class="text-xs text-pink-600 dark:text-pink-400"
+                  x-text="selectedSizes.includes({{ $size->id }}) ? 'Selected' : 'Click to select'"
+                ></span>
+              </div>
+
+              <div x-show="selectedSizes.includes({{ $size->id }})" x-transition class="mt-4">
+                <div class="grid grid-cols-2 gap-2">
+                  @foreach ($colors as $color)
+                    @php
+                      $rec = isset($product)
+                        ? $product->stockCombinations
+                            ->firstWhere(fn($c) =>
+                              $c->size_id == $size->id &&
+                              $c->color_id == $color->id
+                            )
+                        : null;
+                    @endphp
+
+                    <div class="space-y-1 text-center">
+                      <span class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                        {{ strtoupper($color->name) }}
+                      </span>
+                      <input
+                        type="number"
+                        name="stocks[{{ $size->id }}-{{ $color->id }}]"
+                        min="0"
+                        class="w-full px-2 py-1 text-sm text-center border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2d2d2d] rounded-md focus:ring-1 focus:ring-pink-500 focus:border-pink-500 transition"
+                        value="{{ old(
+                          'stocks.' . $size->id . '-' . $color->id,
+                          $rec?->stock ?? ''
+                        ) }}"
+                        placeholder="0"
+                      />
                     </div>
+                  @endforeach
                 </div>
-            @endforeach
-        </div>
-        <x-input-error :messages="$errors->get('stocks')" class="mt-2" />
+              </div>
+            </div>
+          </label>
+        @endforeach
+      </div>
+
+      <x-input-error :messages="$errors->get('stocks')" class="mt-2" />
     </div>
 
     {{-- Image --}}
