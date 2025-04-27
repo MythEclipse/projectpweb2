@@ -21,6 +21,7 @@ function productList() {
         openModal(product) {
             this.selectedProduct = product;
             this.modalOpen = true;
+            this.loadProductData(); // Panggil data produk ketika modal dibuka
         },
 
         // Method untuk tutup modal detail
@@ -35,7 +36,10 @@ function productList() {
 
             this.loading = true;
 
-            fetch(`/products/${this.selectedProduct}/options`)
+            // Ganti spasi dengan tanda minus (-) di nama produk
+            const productName = this.selectedProduct.name.replace(/\s+/g, '-');
+
+            fetch(`/products/${productName}/options`) // Gunakan nama produk yang sudah diganti
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Gagal mengambil data produk.');
@@ -55,5 +59,6 @@ function productList() {
                     this.loading = false;
                 });
         }
+
     }
 }

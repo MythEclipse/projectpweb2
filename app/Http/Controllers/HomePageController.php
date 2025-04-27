@@ -18,12 +18,9 @@ class HomePageController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        // if ($request->header('Turbo-Frame') === 'products_frame') {
-        //     return view('homepage._list', compact('products'));
-        // }
-
         return view('homepage', compact('products'));
     }
+
     public function purchase(Request $request, Product $product)
     {
         $validated = $request->validate([
@@ -49,28 +46,29 @@ class HomePageController extends Controller
 
         return back()->with('success', 'Pembelian berhasil!');
     }
+
     public function options(Product $product)
-{
-    $sizes = $product->stockCombinations->pluck('size')->unique('id')->values()->map(function($size) {
-        return [
-            'id' => $size->id,
-            'name' => $size->name,
-        ];
-    });
+    {
+        $sizes = $product->stockCombinations->pluck('size')->unique('id')->values()->map(function($size) {
+            return [
+                'id' => $size->id,
+                'name' => $size->name,
+            ];
+        });
 
-    $colors = $product->stockCombinations->pluck('color')->unique('id')->values()->map(function($color) {
-        return [
-            'id' => $color->id,
-            'name' => $color->name,
-        ];
-    });
+        $colors = $product->stockCombinations->pluck('color')->unique('id')->values()->map(function($color) {
+            return [
+                'id' => $color->id,
+                'name' => $color->name,
+            ];
+        });
 
-    $maxStock = $product->stockCombinations->max('stock') ?? 0;
+        $maxStock = $product->stockCombinations->max('stock') ?? 0;
 
-    return response()->json([
-        'sizes' => $sizes,
-        'colors' => $colors,
-        'max_stock' => $maxStock,
-    ]);
-}
+        return response()->json([
+            'sizes' => $sizes,
+            'colors' => $colors,
+            'max_stock' => $maxStock,
+        ]);
+    }
 }
