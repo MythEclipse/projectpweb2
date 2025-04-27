@@ -21,8 +21,10 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/homepage',[HomePageController::class,'index'])->middleware(['auth', 'verified'])->name('homepage');
-
+Route::get('/homepage', [HomePageController::class, 'index'])->middleware(['auth', 'verified'])->name('homepage');
+Route::post('/products/{product}/purchase', [HomePageController::class, 'purchase'])
+    ->name('products.purchase');
+Route::get('/products/{product}/options', [HomePageController::class, 'options']);
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -36,7 +38,7 @@ Route::middleware(['auth', IsAdmin::class])->group(function () {
 });
 
 
-Route::middleware(['auth',IsAdmin::class])->group(function () {
+Route::middleware(['auth', IsAdmin::class])->group(function () {
     Route::resource('products', ProductController::class);
 });
 
