@@ -60,4 +60,17 @@ class Product extends Model
     {
         return $this->hasMany(ProductSizeColor::class);
     }
+    public function getColorName($colorId)
+    {
+        return $this->colors()->where('color_id', $colorId)->first()->name ?? null;
+    }
+
+    public function getColorCode($colorId)
+    {
+        return $this->colors()->where('color_id', $colorId)->first()->code ?? null;
+    }
+    public function sizeColorStocks()
+{
+    return $this->hasMany(ProductSizeColor::class, 'product_id', 'id');
+}
 }

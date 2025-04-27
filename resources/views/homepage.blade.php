@@ -27,15 +27,14 @@
                         <div
                             class="h-32 w-full bg-gray-100 dark:bg-gray-800 rounded-xl mb-4 flex items-center justify-center text-gray-400">
                             @if ($product->image)
-                                <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}"
+                                <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }} "
                                     class="object-cover h-full w-full rounded-xl">
                             @else
                                 <span>No Image</span>
                             @endif
                         </div>
 
-                        <h3 class="text-md font-semibold text-gray-800 dark:text-gray-100 mb-1">{{ $product->name }}
-                        </h3>
+                        <h3 class="text-md font-semibold text-gray-800 dark:text-gray-100 mb-1">{{ $product->name }}</h3>
 
                         <p class="text-pink-600 dark:text-pink-400 font-bold mb-1">
                             Rp {{ number_format($product->price, 0, ',', '.') }}
@@ -47,7 +46,7 @@
 
                         <!-- Tombol Aksi -->
                         <div class="mt-auto w-full flex space-x-2">
-                            <button @click="openModal(JSON.parse(atob('{{ base64_encode(json_encode($product)) }}')))"
+                            <button @click="openModal({{ json_encode($product) }})"
                                 class="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-xl text-xs">
                                 Detail
                             </button>
@@ -126,37 +125,31 @@
                             </p>
 
                             <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">Sizes and Stock:</p>
-                            @foreach ($product->sizes as $size)
-                                <div class="flex items-center space-x-2">
-                                    <span class="px-2 py-1 rounded-md bg-pink-100 dark:bg-pink-900 text-xs font-medium">
-                                        {{ strtoupper($size->name) }}
-                                    </span>
+                            <template x-if="selectedProduct.stock_combinations">
+                                <div>
+                                    <template x-for="item in selectedProduct.stock_combinations" :key="item.id">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <span class="px-2 py-1 bg-pink-100 dark:bg-pink-900 text-xs rounded"
+                                                x-text="item.size.name.toUpperCase()"></span>
 
-                                    @php
-                                        // Mendapatkan color_id dari pivot untuk ukuran saat ini
-                                        $colorId = $size->pivot->color_id;
+                                            <span class="text-xs text-gray-500 dark:text-gray-400"
+                                                x-text="item.stock + ' pcs'"></span>
 
-                                        // Mendapatkan nama warna dan kode warna
-                                        $colorName = $size->getColorName($colorId);
-                                        $colorCode = $size->getColorCode($colorId);
-                                    @endphp
+                                            <template x-if="item.color">
+                                                <span class="text-xs text-gray-500 dark:text-gray-400"
+                                                    x-text="item.color.name"></span>
 
-                                    @if ($colorName && $colorCode)
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">
-                                            {{ $colorName }} <!-- Menampilkan nama warna -->
-                                        </span>
+                                                <span class="w-4 h-4 rounded-full border"
+                                                    :style="'background-color: ' + item.color.code"></span>
+                                            </template>
 
-                                        <span class="w-4 h-4 rounded-full"
-                                            style="background-color: {{ $colorCode }}"></span> <!-- Kotak warna -->
-                                    @else
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">
-                                            No color available
-                                        </span>
-                                    @endif
+                                            <template x-if="!item.color">
+                                                <span class="text-xs text-gray-400">No Color</span>
+                                            </template>
+                                        </div>
+                                    </template>
                                 </div>
-                            @endforeach
-
-
+                            </template>
 
                             <p class="font-medium text-gray-700 dark:text-gray-300 mt-2 mb-1">
                                 Description:
@@ -204,7 +197,6 @@
                 },
 
                 openModal(product) {
-                    // console.log(product);
                     this.selectedProduct = product;
                     this.modalOpen = true;
                 },

@@ -25,4 +25,5 @@ class ProductSizeColor extends Model
     {
         return $this->belongsTo(Color::class);
     }
+
 }

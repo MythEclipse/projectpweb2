@@ -1,7 +1,9 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Product;
 
 class HomePageController extends Controller
 {
@@ -9,21 +11,17 @@ class HomePageController extends Controller
     {
         $search = $request->query('search');
 
-        // Ambil data produk dengan pencarian jika ada
-        $products = \App\Models\Product::with('sizes')
-            ->when($search, function ($query) use ($search) {
-                $query->where('name', 'like', '%' . $search . '%');
-            })
+        $products = Product::with('stockCombinations.size', 'stockCombinations.color')
+            ->when($search, fn($query) => $query->where('name', 'like', '%' . $search . '%'))
             ->orderBy('created_at', 'desc')
-            ->paginate(24)
-            ->withQueryString(); // Pertahankan query string seperti search di URL
+            ->paginate(10)
+            ->withQueryString();
 
-        // Mengecek jika request datang dari Turbo Frame
         // if ($request->header('Turbo-Frame') === 'products_frame') {
-        //     return view('admin.home._list', compact('products')); // Harus punya tag turbo-frame!
+        //     return view('homepage._list', compact('products'));
         // }
 
-        // Mengembalikan halaman lengkap jika tidak menggunakan Turbo Frame
         return view('homepage', compact('products'));
     }
+
 }

@@ -16,29 +16,24 @@ class ProductController extends Controller
     {
         $search = $request->query('search');
 
-        // Ambil data produk dengan pencarian jika ada
-        $products = \App\Models\Product::with('sizes')
-            ->when($search, function ($query) use ($search) {
-                $query->where('name', 'like', '%' . $search . '%');
-            })
+        $products = Product::with('stockCombinations.size', 'stockCombinations.color')
+            ->when($search, fn($query) => $query->where('name', 'like', '%' . $search . '%'))
             ->orderBy('created_at', 'desc')
             ->paginate(10)
-            ->withQueryString(); // Pertahankan query string seperti search di URL
+            ->withQueryString();
 
-        // Mengecek jika request datang dari Turbo Frame
         if ($request->header('Turbo-Frame') === 'products_frame') {
-            return view('admin.home._list', compact('products')); // Harus punya tag turbo-frame!
+            return view('admin.home._list', compact('products'));
         }
 
-        // Mengembalikan halaman lengkap jika tidak menggunakan Turbo Frame
         return view('admin.home', compact('products'));
     }
-
 
     public function create()
     {
         $sizes = Size::all();
         $colors = Color::all();
+
         return view('admin.products.create', compact('sizes', 'colors'));
     }
 
@@ -52,43 +47,43 @@ class ProductController extends Controller
             'sizes'       => 'required|array',
             'sizes.*'     => 'exists:sizes,id',
             'stocks'      => 'required|array',
-            'stocks.*'    => 'nullable|integer|min:0',  // updated validation
+            'stocks.*'    => 'nullable|integer|min:0',
         ]);
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('products', 'public');
         }
 
-        $productData = Arr::only($validated, ['name', 'description', 'price', 'image']);
-        $product = Product::create($productData);
+        $product = Product::create(Arr::only($validated, ['name', 'description', 'price', 'image']));
 
-        // Save only stocks > 0
         foreach ($request->stocks as $key => $qty) {
-            if ((int) $qty <= 0) {
-                continue; // Skip if stock is 0 or empty
+            if ((int) $qty > 0) {
+                [$sizeId, $colorId] = explode('-', $key);
+                ProductSizeColor::create([
+                    'product_id' => $product->id,
+                    'size_id'    => $sizeId,
+                    'color_id'   => $colorId,
+                    'stock'      => $qty,
+                ]);
             }
-            list($sizeId, $colorId) = explode('-', $key);
-            ProductSizeColor::create([
-                'product_id' => $product->id,
-                'size_id'    => $sizeId,
-                'color_id'   => $colorId,
-                'stock'      => $qty,
-            ]);
         }
 
         return redirect()->route('products.index')->with('success', 'Product created.');
     }
 
-
     public function show(Product $product)
     {
+        $product->load('stockCombinations.size', 'stockCombinations.color');
+
         return view('admin.products.show', compact('product'));
     }
 
     public function edit(Product $product)
     {
+        $product->load('stockCombinations.size', 'stockCombinations.color');
         $sizes = Size::all();
         $colors = Color::all();
+
         return view('admin.products.edit', compact('product', 'sizes', 'colors'));
     }
 
@@ -102,7 +97,7 @@ class ProductController extends Controller
             'sizes'       => 'required|array',
             'sizes.*'     => 'exists:sizes,id',
             'stocks'      => 'required|array',
-            'stocks.*'    => 'nullable|integer|min:0',  // updated validation
+            'stocks.*'    => 'nullable|integer|min:0',
         ]);
 
         if ($request->hasFile('image')) {
@@ -112,24 +107,22 @@ class ProductController extends Controller
             $validated['image'] = $request->file('image')->store('products', 'public');
         }
 
-        $productData = Arr::only($validated, ['name', 'description', 'price', 'image']);
-        $product->update($productData);
+        $product->update(Arr::only($validated, ['name', 'description', 'price', 'image']));
 
-        // Clear existing stock combinations before saving new ones
+        // Clear old stock combinations
         $product->stockCombinations()->delete();
 
-        // Save only stocks > 0
+        // Save new stock combinations
         foreach ($request->stocks as $key => $qty) {
-            if ((int) $qty <= 0) {
-                continue; // Skip if stock is 0 or empty
+            if ((int) $qty > 0) {
+                [$sizeId, $colorId] = explode('-', $key);
+                ProductSizeColor::create([
+                    'product_id' => $product->id,
+                    'size_id'    => $sizeId,
+                    'color_id'   => $colorId,
+                    'stock'      => $qty,
+                ]);
             }
-            list($sizeId, $colorId) = explode('-', $key);
-            ProductSizeColor::create([
-                'product_id' => $product->id,
-                'size_id'    => $sizeId,
-                'color_id'   => $colorId,
-                'stock'      => $qty,
-            ]);
         }
 
         return redirect()->route('products.index')->with('success', 'Product updated.');
@@ -140,6 +133,7 @@ class ProductController extends Controller
         if ($product->image && Storage::disk('public')->exists($product->image)) {
             Storage::disk('public')->delete($product->image);
         }
+
         $product->stockCombinations()->delete();
         $product->delete();
 
