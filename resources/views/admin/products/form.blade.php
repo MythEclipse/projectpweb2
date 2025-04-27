@@ -44,6 +44,7 @@
             name="description"
             rows="4"
             class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2d2d2d] text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500 transition"
+            required
         >{{ old('description', $product->description ?? '') }}</textarea>
         <x-input-error :messages="$errors->get('description')" class="mt-2" />
     </div>
@@ -56,6 +57,7 @@
             name="price"
             type="number"
             step="0.01"
+            min="0"
             class="mt-1 block w-full"
             value="{{ old('price', $product->price ?? '') }}"
             required
@@ -131,7 +133,9 @@
                                                 $rec?->stock ?? ''
                                             ) }}"
                                             placeholder="0"
+                                            required
                                         />
+                                        <x-input-error :messages="$errors->get('stocks.' . $size->id . '-' . $color->id)" class="mt-1 text-xs" />
                                     </div>
                                 @endforeach
                             </div>
@@ -141,13 +145,14 @@
             @endforeach
         </div>
 
+        <x-input-error :messages="$errors->get('sizes')" class="mt-2" />
         <x-input-error :messages="$errors->get('stocks')" class="mt-2" />
     </div>
 
     {{-- Image --}}
     <div>
         <x-input-label for="image" value="Product Image" />
-        <x-input-file id="image" name="image" label="Choose Image" />
+        <x-input-file id="image" name="image" label="Choose Image" :required="!isset($product)" />
         <x-input-error :messages="$errors->get('image')" class="mt-2" />
 
         @if(isset($product) && $product->image)
