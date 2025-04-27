@@ -23,7 +23,7 @@
             class="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-xl text-xs">
             Detail
         </button>
-        <button @click="showBuyModal = true"
+        <button @click="openBuyModal({{ json_encode($product) }})"
             class="bg-pink-600 hover:bg-pink-700 text-white text-xs rounded-lg transition-transform hover:scale-105">
             Beli Sekarang
         </button>
