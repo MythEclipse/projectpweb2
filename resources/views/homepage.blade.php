@@ -34,7 +34,8 @@
                             @endif
                         </div>
 
-                        <h3 class="text-md font-semibold text-gray-800 dark:text-gray-100 mb-1">{{ $product->name }}</h3>
+                        <h3 class="text-md font-semibold text-gray-800 dark:text-gray-100 mb-1">{{ $product->name }}
+                        </h3>
 
                         <p class="text-pink-600 dark:text-pink-400 font-bold mb-1">
                             Rp {{ number_format($product->price, 0, ',', '.') }}
@@ -51,13 +52,10 @@
                                 Detail
                             </button>
 
-                            <form method="POST" action="" class="flex-1">
-                                @csrf
-                                <button type="submit"
-                                    class="w-full bg-pink-600 hover:bg-pink-700 text-white px-3 py-2 rounded-xl text-xs">
-                                    Beli
-                                </button>
-                            </form>
+                            <button @click="showBuyModal = true"
+                                class="bg-pink-600 hover:bg-pink-700 text-white text-xs rounded-lg transition-transform hover:scale-105">
+                                Beli Sekarang
+                            </button>
                         </div>
 
                     </div>
@@ -103,8 +101,110 @@
                     products)
                 </div>
             </div>
+            <!-- Modal buy -->
+            <div x-cloak x-show="showBuyModal"
+                class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 transition-all">
+                <div class="bg-white dark:bg-[#2d2d2d] rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                    @click.away="showBuyModal = false">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Pilih Varian</h3>
 
-            <!-- Modal -->
+                    <div x-data="{ selectedSize: null, selectedColor: null }">
+                        <!-- Size Selection -->
+                        <div class="mb-8">
+                            <h4 class="text-sm font-medium text-gray-900 dark:text-gray-200 mb-4">Pilih Ukuran</h4>
+                            <div class="grid grid-cols-3 md:grid-cols-4 gap-3">
+                                @foreach ($product->stockCombinations->unique('size_id') as $sizeCombo)
+                                    @php
+                                        $size = $sizeCombo->size;
+                                        $hasStock =
+                                            $product->stockCombinations->where('size_id', $size->id)->sum('stock') > 0;
+                                    @endphp
+
+                                    <button type="button" @click="selectedSize = {{ $size->id }}"
+                                        :class="{
+                                            'border-pink-500 bg-pink-50 dark:bg-pink-900/20': selectedSize ===
+                                                {{ $size->id }},
+                                            'border-gray-300 dark:border-gray-600 hover:border-pink-300': {{ $hasStock }},
+                                            'opacity-50 cursor-not-allowed': !{{ $hasStock }}
+                                        }"
+                                        class="border p-3 rounded-lg text-center transition-all"
+                                        {{ !$hasStock ? 'disabled' : '' }}>
+                                        <span class="font-medium text-gray-900 dark:text-gray-200">
+                                            {{ strtoupper($size->name) }}
+                                        </span>
+                                        @if (!$hasStock)
+                                            <span class="block text-xs text-red-500 mt-1">Stok Habis</span>
+                                        @endif
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <!-- Color Selection -->
+                        <div x-show="selectedSize" x-transition>
+                            <h4 class="text-sm font-medium text-gray-900 dark:text-gray-200 mb-4">Pilih Warna</h4>
+                            <div class="grid grid-cols-3 md:grid-cols-4 gap-3">
+                                @foreach ($product->stockCombinations->where('size_id', $sizeCombo->size_id)->unique('color_id') as $colorCombo)
+                                    @php
+                                        $color = $colorCombo->color;
+                                        $stock = $product->stockCombinations
+                                            ->where('size_id', $sizeCombo->size_id)
+                                            ->where('color_id', $color->id)
+                                            ->first()->stock;
+                                    @endphp
+
+                                    <button type="button" @click="selectedColor = {{ $color->id }}"
+                                        :class="{
+                                            'border-pink-500 bg-pink-50 dark:bg-pink-900/20': selectedColor ===
+                                                {{ $color->id }},
+                                            'border-gray-300 dark:border-gray-600 hover:border-pink-300': {{ $stock }} >
+                                                0,
+                                            'opacity-50 cursor-not-allowed': {{ $stock }} <= 0
+                                        }"
+                                        class="border p-3 rounded-lg transition-all relative"
+                                        {{ $stock <= 0 ? 'disabled' : '' }}>
+                                        <div class="flex flex-col items-center">
+                                            <span
+                                                class="w-6 h-6 rounded-full border-2 border-white dark:border-gray-800 shadow-sm mb-2"
+                                                style="background-color: {{ $color->code }}"></span>
+                                            <span class="text-xs font-medium text-gray-900 dark:text-gray-200">
+                                                {{ strtoupper($color->name) }}
+                                            </span>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                Tersedia: {{ $stock }}
+                                            </span>
+                                        </div>
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="mt-8 flex justify-end gap-3" x-show="selectedSize && selectedColor" x-transition>
+                            <button type="button" @click="showBuyModal = false"
+                                class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">
+                                Batal
+                            </button>
+                            <form
+                                action="
+                            {{-- {{ route('cart.add', $product) }} --}}
+                             "
+                                method="POST">
+                                @csrf
+                                <input type="hidden" name="size_id" x-bind:value="selectedSize">
+                                <input type="hidden" name="color_id" x-bind:value="selectedColor">
+                                <button type="submit"
+                                    class="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-transform hover:scale-105">
+                                    Tambah ke Keranjang
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- ModalDetail -->
             <div x-show="modalOpen" @click.away="closeModal" x-transition.opacity
                 class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
                 <div class="bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 w-96 max-w-full">
@@ -127,7 +227,8 @@
                             <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">Sizes and Stock:</p>
                             <template x-if="selectedProduct.stock_combinations">
                                 <div>
-                                    <template x-for="item in selectedProduct.stock_combinations" :key="item.id">
+                                    <template x-for="item in selectedProduct.stock_combinations"
+                                        :key="item.id">
                                         <div class="flex items-center gap-2 mb-2">
                                             <span class="px-2 py-1 bg-pink-100 dark:bg-pink-900 text-xs rounded"
                                                 x-text="item.size.name.toUpperCase()"></span>
