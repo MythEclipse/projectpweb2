@@ -11,8 +11,8 @@ services:
     ports:
       - "4095:8000"
     environment:
-      APP_ENV: local
-      APP_DEBUG: true
       APP_KEY: base64:Aj6SOBBldGGCNgqLWFnoZiVIWj7nhxDivtHC1tmMWes=
       APP_URL: http://localhost:8000
       APP_SERVE: octane
+    env_file:
+      - .env
