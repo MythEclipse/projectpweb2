@@ -1,6 +1,16 @@
-@props(['disabled' => false])
+@props([
+    'disabled' => false,
+    'min' => null,
+    'max' => null,
+    'step' => null,
+    'type' => 'text',
+])
 
 <input
+    type="{{ $type }}"
+    @if(!is_null($min)) min="{{ $min }}" @endif
+    @if(!is_null($max)) max="{{ $max }}" @endif
+    @if(!is_null($step)) step="{{ $step }}" @endif
     @disabled($disabled)
     {{ $attributes->merge([
         'class' => '

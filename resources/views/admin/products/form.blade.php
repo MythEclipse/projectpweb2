@@ -133,7 +133,6 @@
                                                 $rec?->stock ?? ''
                                             ) }}"
                                             placeholder="0"
-                                            required
                                         />
                                         <x-input-error :messages="$errors->get('stocks.' . $size->id . '-' . $color->id)" class="mt-1 text-xs" />
                                     </div>

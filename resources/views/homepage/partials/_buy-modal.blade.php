@@ -60,8 +60,8 @@
                 <!-- Jumlah -->
                 <div class="mb-4">
                     <label class="block mb-2">Jumlah</label>
-                    <input type="number" name="quantity" class="w-full p-2 border rounded" min="1"
-                        :max="maxStock" required>
+                    <x-text-input type="number" name="quantity" class="w-full p-2 border rounded" min="1"
+                        max="maxStock" required/>
                 </div>
 
                 <div class="flex justify-end gap-2">
