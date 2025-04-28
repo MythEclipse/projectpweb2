@@ -113,9 +113,110 @@
 
         <!-- Dark Mode Toggle -->
         <div class="fixed bottom-6 right-6 z-50">
-            <button @click="darkMode = !darkMode"
-                    class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-sm rounded-lg text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200 shadow-lg">
-                <span x-text="darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'"></span>
+            <button
+            @click="darkMode = !darkMode"
+            x-data="{
+                hover: false,
+                press: false,
+                cosmicPulse: false
+            }"
+            @mouseenter="hover = true"
+            @mouseleave="hover = false"
+            @mousedown="press = true"
+            @mouseup="press = false"
+            class="relative w-10 h-10 md:w-20 md:h-20 rounded-3xl shadow-stellar transition-all duration-1000 ease-[cubic-bezier(0.25,0.1,0.25,1)] overflow-hidden"
+            :class="{
+                'bg-gradient-to-br from-[#001220] to-[#003049]': darkMode,
+                'bg-gradient-to-br from-[#ffd89b] to-[#ff6b6b]': !darkMode,
+                'scale-90': press,
+                'shadow-galaxy': hover && darkMode,
+                'shadow-sunburst': hover && !darkMode
+            }"
+            style="transform-style: preserve-3d; perspective: 1000px;">
+
+            <!-- Cosmic Particles -->
+            <div class="absolute inset-0 pointer-events-none">
+                <template x-for="i in 30">
+                <div class="absolute w-0.5 h-0.5 animate-twinkle opacity-0"
+                     :class="{
+                    'bg-yellow-400': !darkMode,
+                    'bg-blue-400': darkMode
+                     }"
+                     :style="`
+                    left: ${Math.random()*100}%;
+                    top: ${Math.random()*100}%;
+                    animation-delay: ${Math.random()*3000}ms;
+                     `">
+                </div>
+                </template>
+            </div>
+
+            <!-- Celestial Body Container -->
+            <div class="relative w-full h-full flex items-center justify-center overflow-hidden">
+                <!-- Sun Core -->
+                <div class="absolute w-6 h-6 md:w-12 md:h-12 transition-all duration-1000 origin-center"
+                 :class="{
+                    'scale-0 opacity-0': darkMode,
+                    'scale-100 opacity-100': !darkMode
+                 }">
+                <div class="absolute inset-0 bg-gradient-to-br from-[#ffd700] to-[#ff8c00] rounded-full
+                       shadow-[0_0_40px_10px_rgba(255,215,0,0.3)] animate-pulse-slow"></div>
+
+                <!-- Solar Flares -->
+                <div class="absolute inset-0 animate-rotate-slow">
+                    <template x-for="i in 8">
+                    <div class="absolute w-2 h-0.5 md:w-4 md:h-1.5 bg-yellow-500/40 origin-left"
+                         :style="`transform: rotate(${i*45}deg) translateX(${window.innerWidth < 768 ? 14 : 28}px);`">
+                    </div>
+                    </template>
+                </div>
+                </div>
+
+                <!-- Moon Core -->
+                <div class="absolute w-6 h-6 md:w-12 md:h-12 transition-all duration-1000 origin-center"
+                 :class="{
+                    'scale-0 opacity-0': !darkMode,
+                    'scale-100 opacity-100': darkMode
+                 }">
+                <div class="absolute inset-0 bg-gradient-to-br from-[#e2e8f0] to-[#94a3b8] rounded-full
+                       shadow-[0_0_40px_10px_rgba(148,163,184,0.2)]"></div>
+
+                <!-- Moon Craters -->
+                <div class="absolute inset-0 animate-float">
+                    <div class="absolute w-2 h-2 md:w-4 md:h-4 bg-gray-500/30 rounded-full top-1/4 left-1/4"></div>
+                    <div class="absolute w-1.5 h-1.5 md:w-3 md:h-3 bg-gray-600/40 rounded-full top-3/4 left-1/3"></div>
+                    <div class="absolute w-2.5 h-2.5 md:w-5 md:h-5 bg-gray-400/20 rounded-full top-1/3 right-1/4"></div>
+                </div>
+                </div>
+
+                <!-- Orbital Particles -->
+                <div class="absolute w-12 h-12 md:w-24 md:h-24 animate-rotate-slow-reverse">
+                <template x-for="i in 6">
+                    <div class="absolute w-1 h-1 md:w-2 md:h-2 rounded-full origin-[50%_200%]"
+                     :class="{
+                        'bg-amber-500/50': !darkMode,
+                        'bg-blue-400/50': darkMode
+                     }"
+                     :style="`
+                        transform: rotate(${i*60}deg) translateY(${window.innerWidth < 768 ? 20 : 40}px);
+                        ${!darkMode ? 'animation: pulse-orbit 2s infinite' : 'animation: sparkle-orbit 3s infinite'};
+                        animation-delay: ${i*200}ms;
+                     `">
+                    </div>
+                </template>
+                </div>
+            </div>
+
+                <!-- Atmospheric Distortion -->
+                <div class="absolute inset-0 bg-gradient-to-br from-transparent via-white/10 to-transparent
+                           opacity-0 transition-opacity duration-500 mix-blend-overlay"
+                     :class="{'opacity-30': hover}">
+                </div>
+
+                <!-- Transition Burst -->
+                <div class="absolute inset-0 bg-white/10 animate-ripple opacity-0"
+                     :class="{'animate-ripple': press}">
+                </div>
             </button>
         </div>
 
