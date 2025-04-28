@@ -139,7 +139,7 @@ class ProductController extends Controller
 
         return redirect()->route('products.index')->with('success', 'Product deleted.');
     }
-    public function apiGetProduct(Product $product)
+        public function apiGetProduct(Product $product)
     {
         $product->load('stockCombinations.size', 'stockCombinations.color');
 

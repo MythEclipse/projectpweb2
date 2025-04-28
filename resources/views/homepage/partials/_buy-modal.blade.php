@@ -58,7 +58,7 @@
                 </div>
 
                 <!-- Jumlah -->
-                <div class="mb-4">
+                <div x-data="{ quantity: 1 }" class="mb-4">
                     <label class="block mb-2 dark:text-text-light">Jumlah</label>
                     <x-text-input
                         type="number"
@@ -66,9 +66,13 @@
                         class="w-full p-2 border dark:border-dark-border rounded dark:bg-dark-subcard dark:text-text-light"
                         min="1"
                         max="maxStock"
+                        x-model.number="quantity"
+                        x-bind:value="quantity"
+                        @input="if (quantity > maxStock) quantity = maxStock; else if (quantity < 1) quantity = 1;"
                         required
                     />
                 </div>
+
 
                 <div class="flex justify-end gap-2">
                     <button
