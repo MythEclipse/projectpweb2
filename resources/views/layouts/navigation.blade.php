@@ -1,7 +1,7 @@
 <nav x-data="{ open: false, isOpen: false }"
     class="sticky top-0 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-sm border-b border-gray-100 dark:border-[#3E3E3A] z-50">
     <!-- Primary Navigation Menu -->
-    <div class="container mx-auto px-4 lg:px-8">
+    <div class="container mx-auto px-4 lg:px-8 z-50">
         <div class="flex justify-between h-16">
             <div class="flex items-center">
                 <!-- Logo -->

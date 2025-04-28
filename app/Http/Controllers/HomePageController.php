@@ -19,7 +19,7 @@ class HomePageController extends Controller
         $products = Product::with('stockCombinations.size', 'stockCombinations.color')
             ->when($search, fn($query) => $query->where('name', 'like', '%' . $search . '%'))
             ->orderBy('created_at', 'desc')
-            ->paginate(10)
+            ->paginate(24)
             ->withQueryString();
 
         return view('homepage', compact('products'));

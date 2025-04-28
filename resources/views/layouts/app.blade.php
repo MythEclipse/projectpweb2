@@ -65,7 +65,7 @@
 
             <!-- Sidebar -->
             <aside :class="sidebarOpen ? 'w-64' : '-translate-x-full md:translate-x-0'"
-                class="bg-white dark:bg-[#1a1a1a] shadow-lg transition-all duration-300 mt-14 overflow-hidden z-50 fixed md:relative min-h-screen md:w-64">
+                class="bg-white dark:bg-[#1a1a1a] shadow-lg transition-all duration-300 mt-14 lg:mt-0 overflow-hidden z-40 fixed md:relative min-h-screen md:w-64">
                 <div class="p-6">
                     <h2 class="text-2xl font-semibold text-pink-600 dark:text-pink-400 mb-6">Menu Admin</h2>
                     <ul class="space-y-4 text-gray-700 dark:text-gray-300">
