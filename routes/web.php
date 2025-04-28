@@ -41,9 +41,11 @@ Route::middleware(['auth', IsAdmin::class])->group(function () {
 Route::middleware(['auth', IsAdmin::class])->group(function () {
     Route::resource('products', ProductController::class);
 });
-
+//api
+Route::get('/api/products', [ProductController::class, 'apiGetProduct']);
 
 Route::get('/auth/google/redirect', [GoogleController::class, 'redirect'])->name('google.redirect');
 Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
 
 require __DIR__ . '/auth.php';
+

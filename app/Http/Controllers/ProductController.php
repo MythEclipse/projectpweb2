@@ -139,4 +139,31 @@ class ProductController extends Controller
 
         return redirect()->route('products.index')->with('success', 'Product deleted.');
     }
+    public function apiGetProduct(Product $product)
+    {
+        $product->load('stockCombinations.size', 'stockCombinations.color');
+
+        return response()->json([
+            'id' => $product->id,
+            'name' => $product->name,
+            'description' => $product->description,
+            'price' => $product->price,
+            'stock_combinations' => $product->stockCombinations->map(function ($combination) {
+                return [
+                    'id' => $combination->id,
+                    'size' => [
+                        'id' => $combination->size->id,
+                        'name' => $combination->size->name,
+                    ],
+                    'color' => [
+                        'id' => $combination->color->id,
+                        'name' => $combination->color->name,
+                    ],
+                    'stock' => $combination->stock,
+                ];
+            }),
+            'created_at' => $product->created_at,
+            'updated_at' => $product->updated_at,
+        ]);
+    }
 }
