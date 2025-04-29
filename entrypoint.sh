@@ -1,13 +1,13 @@
 #!/bin/bash
 
 echo "🛠️  Fixing Laravel permissions..."
+composer require laravel/octane
 
 # Ganti owner ke www-data untuk semua yang relevan
 chown -R www-data:www-data * || true
 
 # Pastikan Laravel bisa menulis ke storage & cache
 chmod -R 775 storage bootstrap/cache
-composer require laravel/octane
 # Pastikan file .env bisa dibaca
 chmod 644 .env || true
 
