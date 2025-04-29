@@ -28,7 +28,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy semua file ke dalam container
+# Copy semua file ke dalam containera
 COPY . .
 
 # Ubah permission storage & bootstrap
