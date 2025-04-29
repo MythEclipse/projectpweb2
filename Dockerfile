@@ -34,5 +34,5 @@ COPY . .
 # Ubah permission storage & bootstrap
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Jalankan perintah default (bisa diganti pakai docker-compose)
+# Jalankan perintah default (bisa diganti pakai docker-compose)a
 CMD ["apache2-foreground"]
