@@ -102,7 +102,7 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
     && chmod -R ug+rwx /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Bersihkan cache Laravel
-RUN php artisan optimize:clear
+# RUN php artisan optimize:clear
 
 # (Penting) storage:link biasanya dijalankan di container *setelah* start jika pakai volume mount
 # Jika tidak pakai volume mount untuk production, bisa dijalankan di sini:
