@@ -70,9 +70,9 @@ WORKDIR /var/www/html
 # Salin composer files
 COPY composer.json composer.lock ./
 
-# Install Composer dependencies (sesuaikan --no-dev jika perlu)
+# Install Composer dependencies (Install all deps first, including dev, but no scripts yet)
 # --prefer-dist lebih cepat, --no-scripts/--no-autoloader untuk nanti
-RUN composer install --prefer-dist --no-interaction --no-scripts --no-progress --no-dev --optimize-autoloader
+RUN composer install --prefer-dist --no-interaction --no-scripts --no-progress --optimize-autoloader
 
 # Salin package files
 COPY package.json package-lock.json ./
@@ -86,8 +86,12 @@ RUN npm ci --no-audit --no-fund --no-update-notifier
 # Harusnya setelah install dependency agar cache lebih efektif
 COPY . .
 
-# Jalankan composer dump-autoload lagi setelah semua kode ada
-RUN composer dump-autoload --optimize --no-dev
+# Add git safe directory config to avoid ownership errors
+RUN git config --global --add safe.directory /var/www/html
+
+# Install only production dependencies and run scripts (like package:discover)
+# This removes dev dependencies and generates the optimized autoloader
+RUN composer install --optimize-autoloader --no-dev
 
 # Jalankan build asset (sesuaikan 'build' dengan script di package.json Anda)
 RUN npm run build
