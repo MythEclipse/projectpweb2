@@ -46,7 +46,8 @@ WORKDIR /var/www/html
 
 # Copy and install dependencies
 COPY . .
-
+# Salin php.ini dari folder lokal ke direktori konfigurasi PHP di container
+COPY docker/php.ini /usr/local/etc/php/php.ini
 RUN composer install --optimize-autoloader --no-dev
 RUN npm install && npm run build
 
