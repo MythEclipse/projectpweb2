@@ -1,18 +1,34 @@
 <x-app-layout>
-    <turbo-frame id="products_frame">
-        <!-- Modal Component -->
+    {{-- Gunakan ID yang konsisten untuk frame --}}
+    <turbo-frame id="products_list_frame">
+
+        <!-- Modal Notifikasi (Sukses/Error) -->
         @if (session('success') || session('error'))
-            <div x-data="{ showModal: true }" x-show="showModal" x-transition
-                class="fixed inset-0 flex items-center justify-center z-50 bg-black/50" style="display: none;">
-                <div class="bg-white dark:bg-dark-card rounded-2xl p-6 w-80 max-w-full shadow-lg dark:border dark:border-dark-border"
+            {{-- x-init untuk menampilkan modal saat halaman load jika ada session --}}
+            <div x-data="{ showModal: true }" x-init="$nextTick(() => { showModal = true })" x-show="showModal"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 scale-90"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-90"
+                class="fixed inset-0 flex items-center justify-center z-50 bg-black/70" {{-- Latar belakang lebih gelap --}}
+                style="display: none;" {{-- display:none penting untuk Turbo agar tidak flicker --}}>
+
+                <div class="bg-white dark:bg-dark-card rounded-2xl p-6 w-80 max-w-full shadow-xl dark:border dark:border-dark-border"
                     @click.away="showModal = false">
-                    <h2 class="text-lg font-semibold text-text-dark dark:text-text-light mb-4">
-                        @if (session('success'))
-                            Sukses
-                        @elseif (session('error'))
-                            Gagal
-                        @endif
-                    </h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold text-text-dark dark:text-text-light">
+                            @if (session('success'))
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i> Sukses {{-- Tambah ikon (Pastikan FontAwesome ada) --}}
+                            @elseif (session('error'))
+                                <i class="fas fa-times-circle text-red-500 mr-2"></i> Gagal {{-- Tambah ikon (Pastikan FontAwesome ada) --}}
+                            @endif
+                        </h2>
+                        <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
 
                     <p class="text-text-dark dark:text-text-light mb-6">
                         @if (session('success'))
@@ -24,7 +40,7 @@
 
                     <div class="flex justify-end">
                         <button @click="showModal = false"
-                            class="px-4 py-2 bg-pink-brand text-white rounded hover:bg-pink-brand-dark transition-colors">
+                            class="px-4 py-2 bg-pink-brand text-white rounded-lg hover:bg-pink-brand-dark transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-card">
                             Tutup
                         </button>
                     </div>
@@ -33,282 +49,373 @@
         @endif
 
 
-        <div class="p-6 bg-white dark:bg-[#0a0a0a] rounded-2xl" x-data="productList()">
-            <!-- search -->
-            <div class="relative mb-4">
-                <form @submit.prevent class="flex">
-                    <input type="text" x-model="search"
-                        class="w-full border border-gray-300 dark:border-[#3E3E3A] rounded-md py-2 pl-4 pr-10 focus:ring-pink-500 focus:border-pink-500 dark:bg-[#0a0a0a] dark:text-white"
-                        placeholder="Search products...">
-                    <button type="submit"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-pink-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-4.35-4.35M16.65 16.65a7 7 0 1 0-9.9-9.9 7 7 0 0 0 9.9 9.9z" />
-                        </svg>
-                    </button>
-                </form>
-            </div>
-            <!-- search -->
+        {{-- Kontainer Utama Produk --}}
+        <div class="p-4 sm:p-6 bg-white dark:bg-dark-card rounded-2xl shadow-sm" x-data="productList()">
+            <!-- Pencarian Server-Side -->
+            <form method="GET" action="{{ url()->current() }}" class="relative mb-6">
+                <input type="text" name="search" value="{{ request('search') }}" {{-- Tampilkan query search yg aktif --}}
+                    class="w-full border border-gray-300 dark:border-dark-border rounded-lg py-2.5 pl-4 pr-12 focus:ring-2 focus:ring-pink-brand/50 focus:border-pink-brand dark:bg-dark-subcard dark:text-text-light placeholder-gray-400 dark:placeholder-gray-500"
+                    placeholder="Cari produk...">
+                <button type="submit"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-pink-brand dark:hover:text-pink-brand-dark transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-4.35-4.35M16.65 16.65a7 7 0 1 0-9.9-9.9 7 7 0 0 0 9.9 9.9z" />
+                    </svg>
+                </button>
+            </form>
+            <!-- /Pencarian Server-Side -->
 
-            <!-- Product List -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-6">
-                @foreach ($products as $product)
-                    <div class="bg-white dark:bg-dark-subcard rounded-2xl shadow p-4 flex flex-col items-start hover:shadow-lg transition w-full h-[300px]"
-                        x-show="filterProduct('{{ strtolower($product->name) }}')">
-
-                        <div
-                            class="h-32 w-full bg-gray-100 dark:bg-dark-border rounded-xl mb-4 flex items-center justify-center text-gray-400">
+            <!-- Daftar Produk -->
+            <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
+                @forelse ($products as $product)
+                    {{-- Pastikan $product->slug ada dari controller --}}
+                    <div class="bg-white dark:bg-dark-subcard rounded-xl shadow-md overflow-hidden flex flex-col group transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                        {{-- Gambar Produk --}}
+                        <div class="h-40 w-full bg-gray-100 dark:bg-dark-border flex items-center justify-center text-gray-400 overflow-hidden">
                             @if ($product->image)
                                 <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}"
-                                    class="object-cover h-full w-full rounded-xl">
+                                    class="object-cover h-full w-full group-hover:scale-105 transition-transform duration-300 ease-in-out">
                             @else
-                                <span>No Image</span>
+                                {{-- Placeholder Image SVG --}}
+                                <svg class="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                             @endif
                         </div>
 
-                        <h3 class="text-md font-semibold text-text-dark dark:text-text-light mb-1">{{ $product->name }}
-                        </h3>
-                        <p class="text-pink-brand dark:text-pink-brand-dark font-bold mb-1">
-                            Rp {{ number_format($product->price, 0, ',', '.') }}
-                        </p>
-                        <p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-4">
-                            {{ $product->description ?? 'No description' }}
-                        </p>
+                        {{-- Konten Detail Produk --}}
+                        <div class="p-4 flex flex-col flex-grow">
+                            <h3 class="text-sm sm:text-md font-semibold text-text-dark dark:text-text-light mb-1 truncate" title="{{ $product->name }}">
+                                {{ $product->name }}
+                            </h3>
+                            <p class="text-pink-brand dark:text-pink-brand-dark font-bold text-md mb-2">
+                                Rp {{ number_format($product->price, 0, ',', '.') }}
+                            </p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-3 flex-grow">
+                                {{ $product->description ?? 'Tidak ada deskripsi.' }}
+                            </p>
 
-                        <div class="mt-auto w-full flex space-x-2">
-                            <button @click="openModal({{ json_encode($product) }})"
-                                class="flex-1 bg-gray-200 dark:bg-dark-border hover:bg-gray-300 dark:hover:bg-dark-card text-text-dark dark:text-text-light px-3 py-2 rounded-xl text-xs">
-                                Detail
-                            </button>
-                            <button @click="openBuyModal({{ json_encode($product) }})"
-                                class="bg-pink-brand hover:bg-pink-brand-dark text-white text-xs rounded-lg px-3 py-2 transition-transform hover:scale-105">
-                                Beli Sekarang
-                            </button>
+                            {{-- Tombol Aksi --}}
+                            <div class="mt-auto flex space-x-2">
+                                <button @click="openModal({{ json_encode($product) }})"
+                                    class="flex-1 bg-gray-100 dark:bg-dark-border hover:bg-gray-200 dark:hover:bg-dark-card text-text-dark dark:text-text-light px-3 py-1.5 rounded-lg text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-dark-subcard">
+                                    Detail
+                                </button>
+                                <button @click="openBuyModal({{ json_encode($product) }})"
+                                    class="bg-pink-brand hover:bg-pink-brand-dark text-white text-xs font-medium rounded-lg px-3 py-1.5 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-subcard">
+                                    Beli
+                                </button>
+                            </div>
                         </div>
                     </div>
-                @endforeach
-            </div>
-            <!-- Pagination -->
-            <div class="flex flex-col md:flex-row items-center justify-between mt-6 space-y-4 md:space-y-0">
-                <div class="flex items-center space-x-1 text-gray-600 dark:text-gray-400">
-                    @if ($products->onFirstPage())
-                        <span
-                            class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] opacity-50 cursor-not-allowed">&lt;</span>
-                    @else
-                        <a href="{{ $products->previousPageUrl() }}"
-                            class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] hover:bg-gray-100 dark:hover:bg-[#1a1a1a]">&lt;</a>
-                    @endif
-
-                    @for ($i = 1; $i <= $products->lastPage(); $i++)
-                        @if ($i == $products->currentPage())
-                            <span
-                                class="px-3 py-1 rounded-md bg-pink-500 text-white font-semibold">{{ $i }}</span>
-                        @else
-                            <a href="{{ $products->url($i) }}"
-                                class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] hover:bg-gray-100 dark:hover:bg-[#1a1a1a]">{{ $i }}</a>
+                @empty
+                    {{-- Tampilan jika tidak ada produk --}}
+                    <div class="col-span-full text-center py-12">
+                         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                          <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-200">Produk tidak ditemukan</h3>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            @if(request('search'))
+                                Tidak ada produk yang cocok dengan pencarian "{{ request('search') }}".
+                            @else
+                                Belum ada produk yang tersedia.
+                            @endif
+                        </p>
+                        {{-- Tombol untuk clear search jika ada --}}
+                        @if(request('search'))
+                        <div class="mt-6">
+                          <a href="{{ url()->current() }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-pink-brand hover:bg-pink-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 dark:focus:ring-offset-dark-main">
+                            Lihat Semua Produk
+                          </a>
+                        </div>
                         @endif
-                    @endfor
-
-                    @if ($products->hasMorePages())
-                        <a href="{{ $products->nextPageUrl() }}"
-                            class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] hover:bg-gray-100 dark:hover:bg-[#1a1a1a]">&gt;</a>
-                    @else
-                        <span
-                            class="px-3 py-1 rounded-md border border-gray-300 dark:border-[#3E3E3A] opacity-50 cursor-not-allowed">&gt;</span>
-                    @endif
-                </div>
-
-                <div class="text-sm text-gray-600 dark:text-gray-400 text-center md:text-right">
-                    Showing page <span
-                        class="font-semibold text-pink-600 dark:text-pink-400">{{ $products->currentPage() }}</span>
-                    of <span class="font-semibold text-pink-600 dark:text-pink-400">{{ $products->lastPage() }}</span>
-                    (Total: <span
-                        class="font-semibold text-pink-600 dark:text-pink-400">{{ $products->total() }}</span>
-                    products)
-                </div>
+                    </div>
+                @endforelse
             </div>
-            <!-- Pagination -->
-            <!-- buy-modal -->
-            <div x-show="showBuyModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.away="closeBuyModal">
-                <div class="bg-white dark:bg-dark-card rounded-2xl p-6 w-96 max-w-full border dark:border-dark-border" @click.stop>
-                    <h2 class="text-xl font-semibold text-text-dark dark:text-text-light mb-4">Beli Produk</h2>
+            <!-- /Daftar Produk -->
 
+            <!-- Pagination -->
+            <div class="mt-8">
+                {{-- Gunakan view pagination default Laravel (akan menggunakan Tailwind jika terinstal) --}}
+                {{ $products->links() }}
+            </div>
+            <!-- /Pagination -->
+
+            <!-- Modal Beli -->
+            <div x-show="showBuyModal"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+                style="display: none;">
+
+                <div x-show="showBuyModal"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 scale-95"
+                    x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-200"
+                    x-transition:leave-start="opacity-100 scale-100"
+                    x-transition:leave-end="opacity-0 scale-95"
+                    class="bg-white dark:bg-dark-card rounded-2xl p-5 sm:p-6 w-full max-w-md shadow-xl border dark:border-dark-border"
+                    @click.away="closeBuyModal">
+
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-text-dark dark:text-text-light">Form Pembelian</h2>
+                        <button @click="closeBuyModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+
+                    {{-- Loading Spinner --}}
                     <template x-if="loading">
                         <div class="text-center py-10">
-                            <span class="text-gray-500 dark:text-text-light/70">Memuat...</span>
+                            <svg class="animate-spin h-8 w-8 text-pink-brand mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            <p class="mt-2 text-sm text-gray-500 dark:text-text-light/70">Menyiapkan pilihan...</p>
                         </div>
                     </template>
 
+                    {{-- Form Pembelian --}}
                     <template x-if="!loading && selectedProduct">
-                        <form method="POST" :action="`/products/${selectedProduct.name.replace(/\s+/g, '-').toLowerCase()}/purchase`">
+                         {{-- Pastikan selectedProduct.slug tersedia --}}
+                        <form method="POST" :action="selectedProduct && selectedProduct.slug ? `/products/${selectedProduct.slug}/purchase` : '#'" x-ref="buyForm">
                             @csrf
+                            {{-- product_id tidak lagi diperlukan di form jika menggunakan route model binding dengan slug --}}
+                            {{-- <input type="hidden" name="product_id" :value="selectedProduct.id"> --}}
 
-                            <!-- Ukuran dan Stok -->
-                            <p class="font-medium text-text-dark dark:text-text-light mb-1">Ukuran dan Stok:</p>
-                            <template x-if="selectedProduct.stock_combinations && selectedProduct.stock_combinations.length > 0">
-                                <div>
-                                    <template x-for="item in selectedProduct.stock_combinations" :key="item.id">
-                                        <div class="flex items-center gap-2 mb-2">
-                                            <span class="px-2 py-1 bg-pink-100 dark:bg-pink-brand-dark/30 text-xs rounded"
-                                                x-text="item.size.name.toUpperCase()"></span>
+                            {{-- Ringkasan Produk --}}
+                            <div class="mb-4 p-3 bg-gray-50 dark:bg-dark-subcard/50 rounded-lg border dark:border-dark-border">
+                                <p class="font-medium text-text-dark dark:text-text-light mb-2 text-sm">Detail Produk:</p>
+                                <div class="flex items-center space-x-3">
+                                    {{-- Gunakan placeholder jika image null --}}
+                                    <img :src="selectedProduct.image ? ('/storage/' + selectedProduct.image) : 'https://via.placeholder.com/150/EEEEEE/AAAAAA?text=No+Image'"
+                                         :alt="selectedProduct.name" class="w-12 h-12 rounded-md object-cover bg-gray-200 dark:bg-dark-border">
+                                    <div>
+                                        <p class="text-sm font-semibold text-text-dark dark:text-text-light" x-text="selectedProduct.name"></p>
+                                        <p class="text-sm text-pink-brand dark:text-pink-brand-dark font-bold">Rp <span x-text="Number(selectedProduct.price).toLocaleString('id-ID')"></span></p>
+                                    </div>
+                                </div>
+                            </div>
 
-                                            <span class="text-xs text-gray-500 dark:text-text-light/70" x-text="item.stock + ' pcs'"></span>
-
-                                            <template x-if="item.color">
-                                                <span class="text-xs text-gray-500 dark:text-text-light/70" x-text="item.color.name"></span>
-                                                <span class="w-4 h-4 rounded-full border dark:border-dark-border"
-                                                    :style="'background-color: ' + item.color.code"></span>
-                                            </template>
-
-                                            <template x-if="!item.color">
-                                                <span class="text-xs text-gray-400 dark:text-text-light/50">Tanpa Warna</span>
-                                            </template>
-                                        </div>
+                            {{-- Detail Stok Tersedia --}}
+                            <details class="mb-4 group">
+                                <summary class="cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400 group-open:mb-2 list-none flex items-center justify-between">
+                                    <span>Lihat Stok Tersedia</span>
+                                    <svg class="w-4 h-4 transform transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </summary>
+                                <div class="text-xs space-y-1.5 max-h-28 overflow-y-auto p-2.5 border dark:border-dark-border rounded-md bg-gray-50 dark:bg-dark-subcard/30 mt-1">
+                                    {{-- Gunakan properti yg ditambahkan di controller: size_name, color_name, color_code --}}
+                                    <template x-if="selectedProduct.stock_combinations && selectedProduct.stock_combinations.length > 0">
+                                        <template x-for="item in selectedProduct.stock_combinations" :key="item.id">
+                                            <div class="flex items-center gap-2">
+                                                <span class="px-1.5 py-0.5 bg-gray-200 dark:bg-dark-border text-[10px] rounded font-medium" x-text="item.size_name ? item.size_name.toUpperCase() : 'N/A'"></span>
+                                                <template x-if="item.color_code">
+                                                    <span class="w-3 h-3 rounded-full border dark:border-dark-border inline-block" :style="'background-color: ' + item.color_code" :title="item.color_name"></span>
+                                                </template>
+                                                 <template x-if="!item.color_code">
+                                                    <span class="text-[10px] text-gray-400 dark:text-text-light/50 italic">(-)</span>
+                                                </template>
+                                                <span class="text-[10px] text-gray-500 dark:text-text-light/70 ml-auto" x-text="item.stock + ' pcs'"></span>
+                                            </div>
+                                        </template>
+                                    </template>
+                                     <template x-if="!selectedProduct.stock_combinations || selectedProduct.stock_combinations.length === 0">
+                                        <span class="text-gray-400 italic">Informasi stok tidak tersedia.</span>
                                     </template>
                                 </div>
-                            </template>
+                            </details>
 
-                            <!-- Pilih Ukuran -->
+                            {{-- Pilih Ukuran --}}
                             <div class="mb-4">
-                                <label class="block mb-2 dark:text-text-light">Pilih Ukuran</label>
-                                <select name="size_id" class="w-full p-2 border dark:border-dark-border rounded dark:bg-dark-subcard dark:text-text-light" required>
+                                <label for="buy-size" class="block text-sm font-medium mb-1 text-text-dark dark:text-text-light">Pilih Ukuran</label>
+                                <select id="buy-size" name="size_id" x-model="selectedSizeId" @change="updateAvailableColors(); updateMaxStock();"
+                                        class="w-full p-2 border border-gray-300 dark:border-dark-border rounded-lg dark:bg-dark-subcard dark:text-text-light focus:ring-pink-brand focus:border-pink-brand" required>
+                                    <option value="">-- Pilih Ukuran --</option>
                                     <template x-for="size in availableSizes" :key="size.id">
                                         <option :value="size.id" x-text="size.name"></option>
                                     </template>
                                 </select>
+                                @error('size_id') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                             </div>
 
-                            <!-- Pilih Warna -->
+                            {{-- Pilih Warna --}}
                             <div class="mb-4">
-                                <label class="block mb-2 dark:text-text-light">Pilih Warna</label>
-                                <select name="color_id" class="w-full p-2 border dark:border-dark-border rounded dark:bg-dark-subcard dark:text-text-light" required>
+                                <label for="buy-color" class="block text-sm font-medium mb-1 text-text-dark dark:text-text-light">Pilih Warna</label>
+                                <select id="buy-color" name="color_id" x-model="selectedColorId" @change="updateAvailableSizes(); updateMaxStock();"
+                                        class="w-full p-2 border border-gray-300 dark:border-dark-border rounded-lg dark:bg-dark-subcard dark:text-text-light focus:ring-pink-brand focus:border-pink-brand" required>
+                                    <option value="">-- Pilih Warna --</option>
                                     <template x-for="color in availableColors" :key="color.id">
                                         <option :value="color.id" x-text="color.name"></option>
                                     </template>
                                 </select>
+                                @error('color_id') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                             </div>
 
-                            <!-- Jumlah -->
-                            <div x-data="{ quantity: 1 }" class="mb-4">
-                                <label class="block mb-2 dark:text-text-light">Jumlah</label>
-                                <x-text-input
-                                    type="number"
-                                    name="quantity"
-                                    class="w-full p-2 border dark:border-dark-border rounded dark:bg-dark-subcard dark:text-text-light"
-                                    min="1"
-                                    max="maxStock"
-                                    x-model.number="quantity"
-                                    x-bind:value="quantity"
-                                    @input="if (quantity > maxStock) quantity = maxStock; else if (quantity < 1) quantity = 1;"
-                                    required
-                                />
+                            {{-- Jumlah --}}
+                            <div class="mb-6">
+                                <label for="buy-quantity" class="block text-sm font-medium mb-1 text-text-dark dark:text-text-light">Jumlah</label>
+                                <div class="flex items-center">
+                                     <input id="buy-quantity"
+                                        type="number"
+                                        name="quantity"
+                                        class="w-full p-2 border border-gray-300 dark:border-dark-border rounded-lg dark:bg-dark-subcard dark:text-text-light focus:ring-pink-brand focus:border-pink-brand"
+                                        min="1"
+                                        :max="maxStock > 0 ? maxStock : 1" {{-- Set max ke 1 jika maxStock 0 --}}
+                                        x-model.number="quantity"
+                                        @input="validateQuantity()" {{-- Panggil fungsi validasi JS --}}
+                                        required
+                                        :disabled="!selectedSizeId || !selectedColorId || maxStock <= 0" {{-- Disable jika size/color belum dipilih atau stok 0 --}}
+                                    />
+                                    <span x-show="selectedSizeId && selectedColorId && maxStock > 0" class="ml-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                        (Max: <span x-text="maxStock"></span>)
+                                    </span>
+                                    <span x-show="selectedSizeId && selectedColorId && maxStock <= 0" class="ml-2 text-xs text-red-500 whitespace-nowrap">
+                                        (Stok Habis)
+                                    </span>
+                                </div>
+                                <p x-show="!selectedSizeId || !selectedColorId" class="mt-1 text-xs text-orange-500">Pilih ukuran dan warna terlebih dahulu.</p>
+                                @error('quantity') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                             </div>
 
-
-                            <div class="flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    @click="closeBuyModal"
-                                    class="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-text-light/70 dark:hover:text-pink-brand-dark"
-                                >
+                            {{-- Tombol Aksi Modal --}}
+                            <div class="flex justify-end gap-3">
+                                <button type="button" @click="closeBuyModal"
+                                    class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-dark-border rounded-lg hover:bg-gray-200 dark:hover:bg-dark-card transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-dark-card">
                                     Batal
                                 </button>
-                                <button
-                                    type="submit"
-                                    class="px-4 py-2 bg-pink-brand text-white rounded hover:bg-pink-brand-dark transition-colors"
-                                >
-                                    Beli
+                                <button type="submit"
+                                    :disabled="!selectedSizeId || !selectedColorId || !quantity || quantity < 1 || quantity > maxStock || maxStock <= 0" {{-- Disable jika tidak valid --}}
+                                    class="px-4 py-2 text-sm font-medium bg-pink-brand text-white rounded-lg hover:bg-pink-brand-dark transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-card disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Beli Sekarang
                                 </button>
                             </div>
                         </form>
                     </template>
+
+                     {{-- Pesan Fallback --}}
+                    <template x-if="!loading && !selectedProduct">
+                         <p class="text-center text-gray-500 dark:text-gray-400 py-8">Gagal memuat detail produk.</p>
+                    </template>
                 </div>
             </div>
+            <!-- /Modal Beli -->
 
-            <!-- buy-modal -->
-            <!-- detail-modal -->
-            <div x-show="modalOpen" @click.away="closeModal" x-transition.opacity
-                class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-                <div class="bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 w-96 max-w-full">
+            <!-- Modal Detail -->
+             <div x-show="modalOpen"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4"
+                @click.away="closeModal"
+                style="display: none;">
+
+                <div x-show="modalOpen"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 scale-95"
+                    x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-200"
+                    x-transition:leave-start="opacity-100 scale-100"
+                    x-transition:leave-end="opacity-0 scale-95"
+                    class="bg-white dark:bg-dark-card rounded-2xl p-5 sm:p-6 w-full max-w-lg shadow-xl dark:border dark:border-dark-border"
+                    @click.stop> {{-- @click.stop mencegah @click.away di parent --}}
+
                     <template x-if="selectedProduct">
                         <div>
-                            <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Product Details</h3>
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-xl font-semibold text-text-dark dark:text-text-light">Detail Produk</h3>
+                                <button @click="closeModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                            </div>
 
-                            <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Name: <span class="text-pink-600 dark:text-pink-400"
-                                    x-text="selectedProduct.name"></span>
-                            </p>
+                            <div class="md:flex md:space-x-6">
+                                {{-- Kolom Gambar --}}
+                                <div class="md:w-1/2 mb-4 md:mb-0">
+                                     <div class="aspect-square bg-gray-100 dark:bg-dark-border rounded-xl flex items-center justify-center text-gray-400 overflow-hidden">
+                                        <template x-if="selectedProduct.image">
+                                            <img :src="'/storage/' + selectedProduct.image"
+                                                :alt="selectedProduct.name" class="object-cover h-full w-full">
+                                        </template>
+                                        <template x-if="!selectedProduct.image">
+                                             <svg class="w-16 h-16 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        </template>
+                                    </div>
+                                </div>
 
-                            <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Price:
-                                <span class="text-pink-600 dark:text-pink-400">
-                                    Rp <span x-text="Number(selectedProduct.price).toLocaleString('id-ID')"></span>
-                                </span>
-                            </p>
+                                {{-- Kolom Detail Teks --}}
+                                <div class="md:w-1/2 space-y-3 text-sm">
+                                    <h4 class="text-lg font-semibold text-text-dark dark:text-text-light" x-text="selectedProduct.name"></h4>
 
-                            <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">Sizes and Stock:</p>
-                            <template x-if="selectedProduct.stock_combinations">
-                                <div>
-                                    <template x-for="item in selectedProduct.stock_combinations"
-                                        :key="item.id">
-                                        <div class="flex items-center gap-2 mb-2">
-                                            <span class="px-2 py-1 bg-pink-100 dark:bg-pink-900 text-xs rounded"
-                                                x-text="item.size.name.toUpperCase()"></span>
+                                    <p class="text-xl font-bold text-pink-brand dark:text-pink-brand-dark">
+                                        Rp <span x-text="Number(selectedProduct.price).toLocaleString('id-ID')"></span>
+                                    </p>
 
-                                            <span class="text-xs text-gray-500 dark:text-gray-400"
-                                                x-text="item.stock + ' pcs'"></span>
-
-                                            <template x-if="item.color">
-                                                <span class="text-xs text-gray-500 dark:text-gray-400"
-                                                    x-text="item.color.name"></span>
-
-                                                <span class="w-4 h-4 rounded-full border"
-                                                    :style="'background-color: ' + item.color.code"></span>
+                                    <div>
+                                        <p class="font-medium text-text-dark dark:text-text-light mb-1">Ukuran & Stok Tersedia:</p>
+                                        <div class="text-xs space-y-1.5 max-h-28 overflow-y-auto p-2.5 border dark:border-dark-border rounded-md bg-gray-50 dark:bg-dark-subcard/30">
+                                             {{-- Gunakan properti yg ditambahkan di controller: size_name, color_name, color_code --}}
+                                            <template x-if="selectedProduct.stock_combinations && selectedProduct.stock_combinations.length > 0">
+                                                <template x-for="item in selectedProduct.stock_combinations" :key="item.id">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="px-1.5 py-0.5 bg-gray-200 dark:bg-dark-border text-[10px] rounded font-medium" x-text="item.size_name ? item.size_name.toUpperCase() : 'N/A'"></span>
+                                                        <template x-if="item.color_code">
+                                                             <span class="w-3 h-3 rounded-full border dark:border-dark-border inline-block" :style="'background-color: ' + item.color_code" :title="item.color_name"></span>
+                                                             <span class="text-[10px] text-gray-600 dark:text-text-light/80" x-text="item.color_name"></span>
+                                                        </template>
+                                                        <template x-if="!item.color_code">
+                                                            <span class="text-[10px] text-gray-400 dark:text-text-light/50 italic">Tanpa Warna</span>
+                                                        </template>
+                                                        <span class="text-[10px] text-gray-500 dark:text-text-light/70 ml-auto" x-text="item.stock + ' pcs'"></span>
+                                                    </div>
+                                                </template>
                                             </template>
-
-                                            <template x-if="!item.color">
-                                                <span class="text-xs text-gray-400">No Color</span>
+                                            <template x-if="!selectedProduct.stock_combinations || selectedProduct.stock_combinations.length === 0">
+                                                <span class="text-gray-400 italic">Informasi stok tidak tersedia.</span>
                                             </template>
                                         </div>
-                                    </template>
-                                </div>
-                            </template>
+                                    </div>
 
-                            <p class="font-medium text-gray-700 dark:text-gray-300 mt-2 mb-1">
-                                Description:
-                                <span class="text-gray-600 dark:text-gray-400"
-                                    x-text="selectedProduct.description"></span>
-                            </p>
-
-                            <div class="mt-4">
-                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Image:</h4>
-                                <div
-                                    class="h-40 w-full bg-gray-100 dark:bg-gray-800 rounded-xl mt-1 flex items-center justify-center text-gray-400">
-                                    <template x-if="selectedProduct.image">
-                                        <img :src="'/storage/' + selectedProduct.image.replace(/\\/g, '/')"
-                                            :alt="selectedProduct.name" class="object-cover h-full w-full rounded-xl">
-                                    </template>
-                                    <template x-if="!selectedProduct.image">
-                                        <span class="text-gray-500 dark:text-gray-400">No Image</span>
-                                    </template>
+                                    <div>
+                                        <p class="font-medium text-text-dark dark:text-text-light mb-1">Deskripsi:</p>
+                                        <p class="text-gray-600 dark:text-gray-400 leading-relaxed" x-text="selectedProduct.description || 'Tidak ada deskripsi.'"></p>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="mt-6">
+                            {{-- Tombol Tutup --}}
+                            <div class="mt-6 text-right">
                                 <button @click="closeModal"
-                                    class="w-full bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-xl">
-                                    Close
+                                    class="px-5 py-2 bg-pink-brand hover:bg-pink-brand-dark text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-card">
+                                    Tutup
                                 </button>
                             </div>
                         </div>
                     </template>
+                    {{-- Fallback jika selectedProduct null --}}
+                    <template x-if="!selectedProduct">
+                         <p class="text-center text-gray-500 dark:text-gray-400 py-8">Gagal memuat detail produk.</p>
+                    </template>
                 </div>
             </div>
+            <!-- /Modal Detail -->
 
-            <!-- detail-modal -->
-        </div>
+        </div> {{-- End Kontainer Utama Produk --}}
     </turbo-frame>
-    <script src="/js/productList.js"></script>
+
+    @push('scripts')
+      {{-- Pastikan file ini ada dan berisi logika AlpineJS --}}
+      <script src="{{ asset('js/productList.js') }}"></script>
+      {{-- Jika menggunakan FontAwesome untuk ikon (opsional) --}}
+      {{-- <script src="https://kit.fontawesome.com/YOUR_KIT_ID.js" crossorigin="anonymous"></script> --}}
+    @endpush
+
 </x-app-layout>

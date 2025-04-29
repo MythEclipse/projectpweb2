@@ -23,6 +23,7 @@ Route::get('/dashboard', function () {
 
 Route::get('/homepage', [HomePageController::class, 'index'])->middleware(['auth', 'verified'])->name('homepage');
 Route::post('/products/{product}/purchase', [HomePageController::class, 'purchase'])
+    ->middleware('auth') // Pastikan hanya user terautentikasi yang bisa membeli
     ->name('products.purchase');
 Route::get('/products/{product}/options', [HomePageController::class, 'options']);
 
@@ -48,4 +49,3 @@ Route::get('/auth/google/redirect', [GoogleController::class, 'redirect'])->name
 Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
 
 require __DIR__ . '/auth.php';
-
