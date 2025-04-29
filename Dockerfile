@@ -112,4 +112,11 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 EXPOSE 80
 
 # Jalankan Apache di foreground
-CMD ["apache2-foreground"]
+# Salin entrypoint.sh
+COPY entrypoint.sh /entrypoint.sh
+
+# Beri permission agar bisa dieksekusi
+RUN chmod +x /entrypoint.sh
+
+# Gunakan entrypoint custom
+ENTRYPOINT ["/entrypoint.sh"]
