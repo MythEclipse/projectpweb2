@@ -1,5 +1,5 @@
 # Gunakan image PHP 8.3 resmi dengan Apache (Laravel 12 requires >= 8.2)
-FROM php:8.3-apache
+FROM php:8.4-apache
 
 # Set variabel lingkungan untuk non-interactive install
 ENV DEBIAN_FRONTEND=noninteractive
