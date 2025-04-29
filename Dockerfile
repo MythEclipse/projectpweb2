@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y \
         xsl \
         opcache \
         exif \
+        pcntl \
     && pecl install swoole \
     && docker-php-ext-enable swoole \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
