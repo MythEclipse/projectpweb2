@@ -3,14 +3,7 @@
 echo "🛠️  Fixing Laravel permissions..."
 
 # Ganti owner ke www-data untuk semua yang relevan
-chown -R www-data:www-data \
-    storage \
-    bootstrap/cache \
-    vendor \
-    public \
-    resources \
-    routes \
-    .env || true
+chown -R www-data:www-data * || true
 
 # Pastikan Laravel bisa menulis ke storage & cache
 chmod -R 775 storage bootstrap/cache
