@@ -53,7 +53,7 @@ RUN npm install && npm run build
 RUN chown -R www-data:www-data storage bootstrap/cache && chmod -R 775 storage bootstrap/cache
 
 # Expose Laravel Octane port (default 8000)
-EXPOSE 800
+EXPOSE 80
 
 # Start Laravel Octane (Swoole) on container boot
 # Jalankan Apache di foreground
