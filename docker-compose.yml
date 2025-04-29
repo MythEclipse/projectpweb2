@@ -5,14 +5,37 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: laravel_octane_app
-    volumes:
-      - .:/var/www
+    container_name: laravel
     ports:
-      - "4095:8000"
+      - "4095:80"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
     environment:
       APP_KEY: base64:Aj6SOBBldGGCNgqLWFnoZiVIWj7nhxDivtHC1tmMWes=
-      APP_URL: http://localhost:8000
-      APP_SERVE: octane
+      APP_URL: https://toko.asepharyana.cloud
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: laravel
+      DB_USERNAME: laravel
+      DB_PASSWORD: secret
     env_file:
       - .env
+
+  db:
+    image: mariadb:10.11
+    container_name: mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: secret
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+
+volumes:
+  mariadb_data:
