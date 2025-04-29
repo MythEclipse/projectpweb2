@@ -1,16 +1,11 @@
-# Gunakan image PHP 8.3 resmi dengan Apache (Laravel 12 requires >= 8.2)
-FROM php:8.4-apache
+FROM php:8.4-cli
 
-# Set variabel lingkungan untuk non-interactive install
+# Set environment
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install dependency OS & PHP extension Laravel
-# Gabungkan RUN untuk mengurangi layer
-RUN apt-get update && apt-get upgrade -y && apt-get install -y \
-    git \
-    unzip \
-    zip \
-    curl \
+# Install OS and PHP deps
+# Install PHP extensions (lanjutan)
+RUN apt-get update && apt-get install -y \
     libzip-dev \
     libpng-dev \
     libonig-dev \
@@ -20,7 +15,10 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     libicu-dev \
     libpq-dev \
     libxslt-dev \
-    # libsqlite3-dev (Hanya jika menggunakan SQLite) \
+    git \
+    unzip \
+    zip \
+    curl \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
         pdo_mysql \
@@ -31,86 +29,33 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
         xsl \
         opcache \
         exif \
-    # Sering dibutuhkan untuk image handling
-    # Bersihkan cache apt
+    && pecl install swoole \
+    && docker-php-ext-enable swoole \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Install Composer globally
+
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Install Node.js LTS (via NodeSource)
-RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
-    && apt-get install -y nodejs \
-    && npm install -g npm@latest # Update npm ke versi terbaru
+# Install Node.js
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs
 
-# Konfigurasi Apache
-# Aktifkan mod_rewrite
-RUN a2enmod rewrite expires headers
-
-# Ubah DocumentRoot ke public/
-RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf \
-    && sed -i 's|/var/www/html/public|/var/www/html/public|g' /etc/apache2/apache2.conf # Pastikan path di Directory utama juga benar jika ada
-
-# Tambahkan konfigurasi directory agar .htaccess dan routing Laravel bisa jalan
-RUN { \
-        echo '<Directory /var/www/html/public>'; \
-        echo '    Options Indexes FollowSymLinks MultiViews'; \
-        echo '    AllowOverride All'; \
-        echo '    Require all granted'; \
-        echo '</Directory>'; \
-    } >> /etc/apache2/apache2.conf
-
-# (Opsional) Salin konfigurasi PHP kustom jika ada
-# COPY ./docker/php/custom.ini /usr/local/etc/php/conf.d/custom.inia
-
-# Set working directory
+# Set working dir
 WORKDIR /var/www/html
 
-# --- Build Cache Optimization ---
-# Salin composer files
-COPY composer.json composer.lock ./
-
-# Install Composer dependencies (Install all deps first, including dev, but no scripts yet)
-# --prefer-dist lebih cepat, --no-scripts/--no-autoloader untuk nanti
-RUN composer install --prefer-dist --no-interaction --no-scripts --no-progress --optimize-autoloader
-
-# Salin package files
-COPY package.json package-lock.json ./
-
-# Install NPM dependencies menggunakan npm ci (lebih cepat jika lock file ada)
-RUN npm ci --no-audit --no-fund --no-update-notifier
-
-# --- End Build Cache Optimization ---
-
-# Salin semua file aplikasi ke container
-# Harusnya setelah install dependency agar cache lebih efektif
+# Copy and install dependencies
 COPY . .
 
-# Add git safe directory config to avoid ownership errors
-RUN git config --global --add safe.directory /var/www/html
-
-# Install only production dependencies and run scripts (like package:discover)
-# This removes dev dependencies and generates the optimized autoloader
 RUN composer install --optimize-autoloader --no-dev
+RUN npm install && npm run build
 
-# Jalankan build asset (sesuaikan 'build' dengan script di package.json Anda)
-RUN npm run build
+# Set permissions
+RUN chown -R www-data:www-data storage bootstrap/cache && chmod -R 775 storage bootstrap/cache
 
-# Ubah ownership agar Apache (www-data) bisa menulis
-# Pastikan www-data ada dan gunakan ID yang sesuai jika perlu (misal: 33 untuk Debian/Ubuntu)
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R ug+rwx /var/www/html/storage /var/www/html/bootstrap/cache
+# Expose Laravel Octane port (default 8000)
+EXPOSE 800
 
-# Bersihkan cache Laravel
-# RUN php artisan optimize:clear
-
-# (Penting) storage:link biasanya dijalankan di container *setelah* start jika pakai volume mount
-# Jika tidak pakai volume mount untuk production, bisa dijalankan di sini:s
-# RUN php artisan storage:link
-
-# Buka port 80 yang digunakan Apache
-EXPOSE 80
-
+# Start Laravel Octane (Swoole) on container boot
 # Jalankan Apache di foreground
 # Salin entrypoint.sh
 COPY entrypoint.sh /entrypoint.sh

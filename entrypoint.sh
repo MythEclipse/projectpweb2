@@ -7,12 +7,12 @@ chown -R www-data:www-data * || true
 
 # Pastikan Laravel bisa menulis ke storage & cache
 chmod -R 775 storage bootstrap/cache
-
+composer require laravel/octane
 # Pastikan file .env bisa dibaca
 chmod 644 .env || true
 
 echo "✅ Permissions set."
 
-# Jalankan Apache
-echo "🚀 Starting Apache..."
-exec apache2-foreground
+# Jalankan Laravel Octane (Swoole)
+echo "🚀 Starting Laravel Octane (Swoole)..."
+exec php artisan octane:start --server=swoole --host=0.0.0.0 --port=80
