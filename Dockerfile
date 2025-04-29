@@ -61,7 +61,7 @@ RUN { \
     } >> /etc/apache2/apache2.conf
 
 # (Opsional) Salin konfigurasi PHP kustom jika ada
-# COPY ./docker/php/custom.ini /usr/local/etc/php/conf.d/custom.ini
+# COPY ./docker/php/custom.ini /usr/local/etc/php/conf.d/custom.inia
 
 # Set working directory
 WORKDIR /var/www/html
