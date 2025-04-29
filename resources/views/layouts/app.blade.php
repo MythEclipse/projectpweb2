@@ -83,9 +83,9 @@
         <!-- Main Content -->
         <div class="flex-1 transition-all duration-300">
             <!-- Top Navigation -->
-            @if (request()->path() !== '/')
+            {{-- @if (request()->path() !== '/') --}}
                 @include('layouts.navigation')
-            @endif
+            {{-- @endif --}}
 
             <!-- Header -->
             @isset($header)
