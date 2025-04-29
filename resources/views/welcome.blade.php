@@ -14,7 +14,7 @@
                 Koleksi eksklusif baju kekinian dengan kualitas premium dan harga terjangkau. Tampil percaya diri dengan
                 gaya terkini!
             </p>
-            <a href="{{ route('login') }}"
+            <a href="{{ route('homepage') }}"
                 class="inline-block bg-pink-600 hover:bg-pink-700 text-white px-8 py-4 rounded-lg text-lg font-medium transition-transform hover:scale-105 shadow-lg">
                 Jelajahi Koleksi
             </a>

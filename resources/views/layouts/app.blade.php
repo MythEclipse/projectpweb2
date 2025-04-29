@@ -71,9 +71,9 @@
                     <h2 class="text-2xl font-semibold text-pink-600 dark:text-pink-400 mb-6">Menu Admin</h2>
                     <ul class="space-y-4 text-gray-700 dark:text-gray-300">
                         <li>
-                            <a href="{{ route('products.create') }}"
+                            <a href="{{ route('products.index') }}"
                                class="hover:text-pink-500 font-medium transition flex items-center gap-2">
-                                Create Product
+                               Product
                             </a>
                         </li>
                     </ul>

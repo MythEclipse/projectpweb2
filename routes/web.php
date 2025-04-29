@@ -7,6 +7,8 @@ use App\Http\Middleware\IsAdmin;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AvatarController;
 use App\Http\Controllers\HomePageController;
+use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -34,10 +36,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/update-image', [ProfileController::class, 'updateImage'])->name('profile.updateImage');
 });
 
-Route::middleware(['auth', IsAdmin::class])->group(function () {
-    Route::get('/admin', [ProductController::class, 'index'])->name('admin');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/admin', [AdminTransactionController::class, 'index'])->name('admin')->middleware(IsAdmin::class);
 });
-
+Route::middleware(['auth'])->group(function () {
+    Route::resource('transactions', TransactionController::class)->only(['index', 'create', 'store']);
+});
 
 Route::middleware(['auth', IsAdmin::class])->group(function () {
     Route::resource('products', ProductController::class);

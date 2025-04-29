@@ -16,6 +16,21 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     libxslt-dev \
     git \
+    php-curl \
+    php-mbstring \
+    php-mysqli \
+    php-openssl \
+    php-pdo_mysql \
+    php-sockets \
+    php-bcmath \
+    php-exif \
+    php-gd \
+    php-intl \
+    php-pcntl \
+    php-sodium \
+    php-xml \
+    php-zip \
+    php-fileinfo \
     unzip \
     zip \
     curl \

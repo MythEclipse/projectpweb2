@@ -23,10 +23,10 @@ class ProductController extends Controller
             ->withQueryString();
 
         if ($request->header('Turbo-Frame') === 'products_frame') {
-            return view('admin.home._list', compact('products'));
+            return view('admin.products._list', compact('products'));
         }
 
-        return view('admin.home', compact('products'));
+        return view('admin.products.home', compact('products'));
     }
 
     public function create()
