@@ -105,7 +105,7 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # RUN php artisan optimize:clear
 
 # (Penting) storage:link biasanya dijalankan di container *setelah* start jika pakai volume mount
-# Jika tidak pakai volume mount untuk production, bisa dijalankan di sini:
+# Jika tidak pakai volume mount untuk production, bisa dijalankan di sini:s
 # RUN php artisan storage:link
 
 # Buka port 80 yang digunakan Apache
