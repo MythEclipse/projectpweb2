@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AvatarController;
 use App\Http\Controllers\HomePageController;
 use App\Http\Controllers\TransactionController;
-use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
+use App\Http\Controllers\Admin\AdminController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -25,7 +25,7 @@ Route::get('/dashboard', function () {
 
 Route::get('/homepage', [HomePageController::class, 'index'])->middleware(['auth', 'verified'])->name('homepage');
 Route::post('/products/{product}/purchase', [HomePageController::class, 'purchase'])
-    ->middleware('auth') // Pastikan hanya user terautentikasi yang bisa membeli
+    ->middleware('auth')
     ->name('products.purchase');
 Route::get('/products/{product}/options', [HomePageController::class, 'options']);
 
@@ -37,9 +37,9 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/admin', [AdminTransactionController::class, 'index'])->name('admin')->middleware(IsAdmin::class);
+    Route::get('/admin', [AdminController::class, 'index'])->name('admin')->middleware(IsAdmin::class);
 });
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', IsAdmin::class])->group(function () {
     Route::resource('transactions', TransactionController::class)->only(['index', 'create', 'store']);
 });
 

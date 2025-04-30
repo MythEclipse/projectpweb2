@@ -17,6 +17,13 @@ class CreateTransactionsTable extends Migration
             $table->decimal('price', 10, 2); // harga per unit
             $table->decimal('total', 10, 2); // total harga transaksi
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); // jika ada autentikasi
+            $table->string('status')->default('pending'); // status transaksi
+            $table->string('payment_method')->nullable(); // metode pembayaran
+            $table->string('payment_status')->default('unpaid'); // status pembayaran
+            $table->string('shipping_address')->nullable(); // alamat pengiriman
+            $table->string('tracking_number')->nullable(); // nomor resi pengiriman
+            $table->string('shipping_status')->default('pending'); // status pengiriman
+            $table->string('notes')->nullable(); // catatan tambahan
             $table->timestamps();
         });
     }

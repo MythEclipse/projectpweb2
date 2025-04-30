@@ -14,12 +14,12 @@ class TransactionController extends Controller
     public function index()
     {
         $transactions = Transaction::with(['product', 'size', 'color', 'user'])->latest()->get();
-        return view('transactions.index', compact('transactions'));
+        return view('admin.transactions.index', compact('transactions'));
     }
 
     public function create()
     {
-        return view('transactions.create', [
+        return view('admin.transactions.create', [
             'products' => Product::all(),
             'sizes' => Size::all(),
             'colors' => Color::all(),

@@ -17,6 +17,13 @@ class Transaction extends Model
         'price',
         'total',
         'user_id',
+        'status',
+        'payment_method',
+        'payment_status',
+        'shipping_address',
+        'tracking_number',
+        'shipping_status',
+        'notes',
     ];
 
     // Relasi dengan tabel produk

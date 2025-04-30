@@ -2,7 +2,7 @@
 
 @php
     $isAdmin = auth()->check() && auth()->user()->is_admin;
-    $onAdminPage = request()->is('products*') || request()->is('admin*');
+    $onAdminPage = request()->is('products*') || request()->is('admin*') || request()->is('transactions*');
 @endphp
 
 <!DOCTYPE html>
@@ -73,7 +73,13 @@
                         <li>
                             <a href="{{ route('products.index') }}"
                                class="hover:text-pink-500 font-medium transition flex items-center gap-2">
-                               Product
+                               Products
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('transactions.index') }}"
+                               class="hover:text-pink-500 font-medium transition flex items-center gap-2">
+                               transactions
                             </a>
                         </li>
                     </ul>
