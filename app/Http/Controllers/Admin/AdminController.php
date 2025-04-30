@@ -63,7 +63,7 @@ class AdminController extends Controller
         // --- Pass Data to the View ---
 
         // Return the admin dashboard view and pass the fetched data as variables
-        return view('admin.home', [
+        return view('admin.index', [
             'totalProducts'     => $totalProducts,
             'newOrdersCount'    => $newOrdersCount,
             'totalCustomers'    => $totalCustomers,

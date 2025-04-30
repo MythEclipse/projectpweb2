@@ -68,7 +68,7 @@ class ProductController extends Controller
             }
         }
 
-        return redirect()->route('products.index')->with('success', 'Product created.');
+        return redirect()->route('admin.products.index')->with('success', 'Product created.');
     }
 
     public function show(Product $product)
@@ -125,7 +125,7 @@ class ProductController extends Controller
             }
         }
 
-        return redirect()->route('products.index')->with('success', 'Product updated.');
+        return redirect()->route('admin.products.index')->with('success', 'Product updated.');
     }
 
     public function destroy(Product $product)
@@ -137,7 +137,7 @@ class ProductController extends Controller
         $product->stockCombinations()->delete();
         $product->delete();
 
-        return redirect()->route('products.index')->with('success', 'Product deleted.');
+        return redirect()->route('admin.products.index')->with('success', 'Product deleted.');
     }
         public function apiGetProduct(Product $product)
     {

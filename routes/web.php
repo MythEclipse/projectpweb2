@@ -1,55 +1,86 @@
 <?php
 
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Auth\GoogleController;
-use App\Http\Middleware\IsAdmin;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AvatarController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\HomePageController;
 use App\Http\Controllers\TransactionController;
-use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminController; // Pastikan namespace benar
+use App\Http\Controllers\Auth\GoogleController;
+use App\Http\Middleware\IsAdmin; // Pastikan middleware di-import
 
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
+
+// == Public Routes ==
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('welcome'); // Beri nama jika belum
 
 Route::get('/aboutus', function () {
     return view('aboutus');
 })->name('aboutus');
 
+// Avatar Route (Diasumsikan public)
 Route::get('/avatar/{userId}', [ProfileController::class, 'getAvatar'])->name('avatar');
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/homepage', [HomePageController::class, 'index'])->middleware(['auth', 'verified'])->name('homepage');
-Route::post('/products/{product}/purchase', [HomePageController::class, 'purchase'])
-    ->middleware('auth')
-    ->name('products.purchase');
-Route::get('/products/{product}/options', [HomePageController::class, 'options']);
+// Google OAuth Routes
+Route::get('/auth/google/redirect', [GoogleController::class, 'redirect'])->name('google.redirect');
+Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
 
-Route::middleware('auth')->group(function () {
+// == Authenticated User Routes ==
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard', function () {
+        // Pertimbangkan untuk redirect ke 'homepage' jika itu dashboard utama Anda
+        return view('dashboard');
+    })->name('dashboard');
+
+    // Homepage dan interaksi produk user
+    Route::get('/homepage', [HomePageController::class, 'index'])->name('homepage');
+    Route::post('/products/{product}/purchase', [HomePageController::class, 'purchase'])->name('products.purchase');
+    Route::get('/products/{product}/options', [HomePageController::class, 'options'])->name('products.options'); // Beri nama jika belum
+
+    // Profile Routes (Bisa dipisah ke grup 'auth' saja jika verifikasi email tidak wajib untuk edit profile)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/profile/update-image', [ProfileController::class, 'updateImage'])->name('profile.updateImage');
 });
 
-Route::middleware(['auth'])->group(function () {
-    Route::get('/admin', [AdminController::class, 'index'])->name('admin')->middleware(IsAdmin::class);
-});
-Route::middleware(['auth', IsAdmin::class])->group(function () {
-    Route::resource('transactions', TransactionController::class)->only(['index', 'create', 'store']);
+
+// == Admin Routes ==
+Route::middleware(['auth', 'verified', IsAdmin::class]) // Terapkan semua middleware di grup
+    ->prefix('admin') // Tambahkan prefix URL '/admin'
+    ->name('admin.') // Tambahkan prefix nama route 'admin.'
+    ->group(function () {
+
+        Route::get('/', [AdminController::class, 'index'])->name('index'); // Nama route menjadi 'admin.index'
+
+        // Kelola Produk (Resource Controller)
+        Route::resource('products', ProductController::class); // URL: /admin/products, Nama: admin.products.*
+
+        // Kelola Transaksi (Resource Controller - Asumsi perlu semua action)
+        // Jika memang hanya butuh index, create, store, kembalikan ->only([...])
+        Route::resource('transactions', TransactionController::class); // URL: /admin/transactions, Nama: admin.transactions.*
+
+        // Tambahkan route admin lainnya di sini jika ada...
 });
 
-Route::middleware(['auth', IsAdmin::class])->group(function () {
-    Route::resource('products', ProductController::class);
-});
-//api
-Route::get('/api/products', [ProductController::class, 'apiGetProduct']);
 
-Route::get('/auth/google/redirect', [GoogleController::class, 'redirect'])->name('google.redirect');
-Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
+// == API Routes (Sebaiknya di routes/api.php) ==
+// Route ini akan menggunakan middleware group 'web' jika diletakkan di sini.
+// Pindahkan ke routes/api.php untuk menggunakan middleware 'api' (stateless, dll).
+Route::get('/api/products', [ProductController::class, 'apiGetProduct'])
+      ->name('api.products.index'); // Beri nama untuk API
 
+
+// == Authentication Routes (dari Laravel Breeze/UI) ==
 require __DIR__ . '/auth.php';

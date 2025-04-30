@@ -27,7 +27,7 @@
                         </a>
 
                         @if (Auth::user()->is_admin)
-                        <a href="{{ route('admin') }}"
+                        <a href="{{ route('admin.index') }}"
                            class="relative inline-flex items-center px-4 pt-1 text-sm font-medium leading-5 text-gray-700 dark:text-[#EDEDEC] focus:outline-none transition duration-150 ease-in-out group {{ request()->routeIs('admin') ? 'border-b-2 border-pink-500 dark:border-pink-400 text-pink-600 dark:text-pink-400 font-semibold' : 'border-b-2 border-transparent hover:text-pink-600 dark:hover:text-pink-400' }}">
                             {{ __('Admin') }}
                             <span class="absolute bottom-0 left-0 w-full h-0.5 bg-pink-600 dark:bg-pink-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out origin-left {{ request()->routeIs('admin') ? 'scale-x-100' : '' }}"></span>
@@ -147,7 +147,7 @@
                     {{ __('Dashboard') }}
                 </x-responsive-nav-link>
                 @if (Auth::user()->is_admin)
-                    <x-responsive-nav-link :href="route('admin')" :active="request()->routeIs('admin')"
+                    <x-responsive-nav-link :href="route('admin.index')" :active="request()->routeIs('admin')"
                      class="pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('admin') ? 'border-pink-400 text-pink-700 bg-pink-50 dark:bg-[#3E3E3A] dark:text-pink-300' : 'border-transparent text-gray-600 dark:text-[#EDEDEC] hover:text-gray-800 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] hover:border-gray-300 dark:hover:text-gray-200' }} focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out block font-medium">
                         {{ __('Admin') }}
                     </x-responsive-nav-link>
