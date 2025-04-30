@@ -12,7 +12,7 @@
 
         <!-- Search Form -->
         <div class="relative">
-            <form method="GET" action="{{ route('products.index') }}" class="flex items-center">
+            <form method="GET" action="{{ route('admin.products.index') }}" class="flex items-center">
                 <input type="text" name="search" value="{{ request('search') }}"
                        class="flex-grow border border-gray-300 dark:border-[#3E3E3A] rounded-md py-2 pl-4 pr-10 focus:ring-pink-500 focus:border-pink-500 dark:bg-[#0a0a0a] dark:text-white"
                        placeholder="Search products...">
@@ -99,13 +99,13 @@
                             </td>
                             <td class="px-4 py-4">
                                 <div class="flex gap-2 flex-wrap">
-                                    <a href="{{ route('products.show', $product) }}" class="text-blue-600 dark:text-blue-400 hover:underline text-sm" data-turbo="false">
+                                    <a href="{{ route('admin.products.show', $product) }}" class="text-blue-600 dark:text-blue-400 hover:underline text-sm" data-turbo="false">
                                         View
                                     </a>
-                                    <a href="{{ route('products.edit', $product) }}" class="text-yellow-600 dark:text-yellow-400 hover:underline text-sm" data-turbo="false">
+                                    <a href="{{ route('admin.products.edit', $product) }}" class="text-yellow-600 dark:text-yellow-400 hover:underline text-sm" data-turbo="false">
                                         Edit
                                     </a>
-                                    <form method="POST" action="{{ route('products.destroy', $product) }}" class="inline delete-form">
+                                    <form method="POST" action="{{ route('admin.products.destroy', $product) }}" class="inline delete-form">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="text-red-600 dark:text-red-400 hover:underline text-sm" data-turbo="false">
                                             Delete

@@ -3,7 +3,7 @@
     <div class="p-6">
         <div class="flex justify-between items-center mb-4">
             <h1 class="text-xl font-bold text-text-dark dark:text-text-light">Daftar Transaksi</h1>
-            <a href="{{ route('transactions.create') }}"
+            <a href="{{ route('admin.transactions.create') }}"
                class="bg-pink-brand hover:bg-pink-brand-dark text-white px-4 py-2 rounded inline-block text-sm transition duration-150 ease-in-out">
                 Tambah Transaksi
             </a>
@@ -96,24 +96,24 @@
                             <td class="p-3 whitespace-nowrap text-gray-500 dark:text-gray-400">{{ $tx->created_at->format('d M Y H:i') }}</td>
                             <td class="p-3 whitespace-nowrap text-center">
                                 {{-- Tombol Aksi (Detail - pakai pink-brand) --}}
-                                <a href="{{ route('transactions.show', $tx->id) }}"
+                                <a href="{{ route('admin.transactions.show', $tx->id) }}"
                                    class="text-pink-brand hover:text-pink-brand-dark dark:text-pink-brand dark:hover:text-pink-500 mr-2 transition duration-150 ease-in-out" title="Lihat Detail">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 {{-- Tombol Aksi (Edit - pakai warna kuning) --}}
-                                <a href="{{ route('transactions.edit', $tx->id) }}"
+                                <a href="{{ route('admin.transactions.edit', $tx->id) }}"
                                    class="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300 mr-2 transition duration-150 ease-in-out" title="Edit">
                                      <i class="fas fa-edit"></i>
                                 </a>
                                 {{-- Tombol Aksi (Hapus - pakai warna merah) --}}
-                                <form action="{{ route('transactions.destroy', $tx->id) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus transaksi ini?');">
+                                {{-- <form action="{{ route('admin.transactions.destroy', $tx->id) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus transaksi ini?');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit"
                                             class="text-red-600 hover:text-red-900 dark:text-red-500 dark:hover:text-red-400 transition duration-150 ease-in-out" title="Hapus">
                                          <i class="fas fa-trash"></i>
                                     </button>
-                                </form>
+                                </form> --}}
                             </td>
                         </tr>
                         @empty

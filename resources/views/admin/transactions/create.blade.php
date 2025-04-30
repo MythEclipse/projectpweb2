@@ -2,7 +2,7 @@
     <div class="p-6 max-w-xl mx-auto">
         <h1 class="text-xl font-bold mb-4">Tambah Transaksi</h1>
 
-        <form method="POST" action="{{ route('transactions.store') }}">
+        <form method="POST" action="{{ route('admin.transactions.store') }}">
             @csrf
 
             <div class="mb-4">

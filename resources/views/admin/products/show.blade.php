@@ -70,7 +70,7 @@
 
                 {{-- Action Button --}}
                 <div class="flex justify-center">
-                    <a href="{{ route('products.edit', $product) }}"
+                    <a href="{{ route('admin.products.edit', $product) }}"
                        class="px-6 py-3 bg-pink-600 hover:bg-pink-700 text-white font-medium rounded-xl shadow-md transition-transform hover:scale-105">
                         ✏️ Edit Produk
                     </a>

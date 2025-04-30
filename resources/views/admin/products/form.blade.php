@@ -2,8 +2,8 @@
 
 <form
     action="{{ isset($product)
-        ? route('products.update', $product)
-        : route('products.store') }}"
+        ? route('admin.products.update', $product)
+        : route('admin.products.store') }}"
     method="POST"
     enctype="multipart/form-data"
     class="space-y-6 p-6 transition-all"

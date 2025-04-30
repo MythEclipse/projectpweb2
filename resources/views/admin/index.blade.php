@@ -48,7 +48,7 @@
                             {{ $newOrdersCount }}
                         </p>
                     </div>
-                    <a href="{{ route('transactions.index') }}"
+                    <a href="{{ route('admin.transactions.index') }}"
                        class="mt-4 text-sm text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 font-medium">
                         Lihat Pesanan →
                     </a>

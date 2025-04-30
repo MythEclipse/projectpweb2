@@ -5,11 +5,11 @@
                 Detail Transaksi #{{ $transaction->id }}
             </h1>
             <div>
-                <a href="{{ route('transactions.index') }}"
+                <a href="{{ route('admin.transactions.index') }}"
                    class="text-sm bg-gray-200 hover:bg-gray-300 dark:bg-dark-subcard dark:hover:bg-dark-border text-text-dark dark:text-text-light px-4 py-2 rounded mr-2 transition duration-150 ease-in-out">
                     Kembali
                 </a>
-                <a href="{{ route('transactions.edit', $transaction->id) }}"
+                <a href="{{ route('admin.transactions.edit', $transaction->id) }}"
                    class="text-sm bg-yellow-500 hover:bg-yellow-600 dark:bg-yellow-600 dark:hover:bg-yellow-700 text-white px-4 py-2 rounded transition duration-150 ease-in-out">
                     Edit Transaksi
                 </a>

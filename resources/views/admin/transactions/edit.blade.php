@@ -4,7 +4,7 @@
             <h1 class="text-2xl font-bold text-text-dark dark:text-text-light">
                 Edit Transaksi #{{ $transaction->id }}
             </h1>
-            <a href="{{ route('transactions.index') }}"
+            <a href="{{ route('admin.transactions.index') }}"
                class="text-sm bg-gray-200 hover:bg-gray-300 dark:bg-dark-subcard dark:hover:bg-dark-border text-text-dark dark:text-text-light px-4 py-2 rounded transition duration-150 ease-in-out">
                 Batal
             </a>
@@ -23,7 +23,7 @@
             </div>
         @endif
 
-        <form action="{{ route('transactions.update', $transaction->id) }}" method="POST">
+        <form action="{{ route('admin.transactions.update', $transaction->id) }}" method="POST">
             @csrf
             @method('PUT') {{-- atau PATCH --}}
 
@@ -186,7 +186,7 @@
 
                  {{-- Tombol Aksi --}}
                 <div class="md:col-span-2 mt-6 flex justify-end">
-                     <a href="{{ route('transactions.index') }}"
+                     <a href="{{ route('admin.transactions.index') }}"
                         class="bg-gray-200 hover:bg-gray-300 dark:bg-dark-subcard dark:hover:bg-dark-border text-text-dark dark:text-text-light py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 mr-3 transition duration-150 ease-in-out">
                          Batal
                      </a>
