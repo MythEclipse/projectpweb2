@@ -1,5 +1,5 @@
 <x-app-layout>
-    <!-- Hero Section -->
+    <!-- Hero Sectiaon -->
     <section
         class="relative pt-20 pb-32 px-4 lg:px-8 bg-gradient-to-br from-pink-50 to-purple-50 dark:from-[#1a1a1a] dark:to-[#2d2d2d] overflow-hidden">
         <!-- Background Image -->
