@@ -67,67 +67,7 @@
             </div>
 
             {{-- 2. Section: Quick Access (Gaya card disamakan) --}}
-            <div class="bg-white dark:bg-[#1a1a1a] overflow-hidden shadow-lg sm:rounded-xl">
-                 <div class="p-6 md:p-8">
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
-                        {{ __("Quick Access") }} {{-- Judul lebih deskriptif --}}
-                    </h3>
 
-                    {{-- Contoh Link Cards (Gaya disamakan dengan Contact Card di homepage) --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"> {{-- Potensial 3 kolom di layar besar --}}
-
-                        {{-- Card Link 1: My Orders --}}
-                        <a href="#" class="block p-6 bg-gray-50 dark:bg-[#2d2d2d] rounded-xl transition-all duration-300 hover:scale-[1.03] shadow-md hover:shadow-lg group">
-                            <div class="flex items-center space-x-4 mb-3">
-                                <div class="flex-shrink-0 w-12 h-12 bg-pink-100 dark:bg-pink-900/80 rounded-lg flex items-center justify-center">
-                                    <svg class="h-6 w-6 text-pink-600 dark:text-pink-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                      <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25m-17.25 4.5h14.813M6 14.25h12M6 14.25a2.25 2.25 0 01-2.25-2.25V7.5a2.25 2.25 0 012.25-2.25h12a2.25 2.25 0 012.25 2.25v4.5A2.25 2.25 0 0118 14.25H6M6 14.25v-3.75a.75.75 0 01.75-.75h10.5a.75.75 0 01.75.75v3.75m-12 0v-3.75" />
-                                    </svg>
-                                </div>
-                                <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-100 group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">{{ __('My Orders') }}</h4>
-                            </div>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                                {{ __('Track your purchases, view order history, and manage returns.') }}
-                            </p>
-                        </a>
-
-                         {{-- Card Link 2: My Wishlist --}}
-                        <a href="#" class="block p-6 bg-gray-50 dark:bg-[#2d2d2d] rounded-xl transition-all duration-300 hover:scale-[1.03] shadow-md hover:shadow-lg group">
-                             <div class="flex items-center space-x-4 mb-3">
-                                <div class="flex-shrink-0 w-12 h-12 bg-pink-100 dark:bg-pink-900/80 rounded-lg flex items-center justify-center">
-                                    <svg class="h-6 w-6 text-pink-600 dark:text-pink-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-                                    </svg>
-                                 </div>
-                                <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-100 group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">{{ __('My Wishlist') }}</h4>
-                            </div>
-                             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                                {{ __('Keep track of items you love and save them for later purchase.') }}
-                            </p>
-                        </a>
-
-                        {{-- Card Link 3: Saved Addresses (Contoh) --}}
-                        <a href="#" class="block p-6 bg-gray-50 dark:bg-[#2d2d2d] rounded-xl transition-all duration-300 hover:scale-[1.03] shadow-md hover:shadow-lg group">
-                             <div class="flex items-center space-x-4 mb-3">
-                                <div class="flex-shrink-0 w-12 h-12 bg-pink-100 dark:bg-pink-900/80 rounded-lg flex items-center justify-center">
-                                    <svg class="h-6 w-6 text-pink-600 dark:text-pink-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                                      <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                                    </svg>
-                                 </div>
-                                <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-100 group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">{{ __('Addresses') }}</h4>
-                            </div>
-                             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                                {{ __('Manage your saved shipping and billing addresses.') }}
-                            </p>
-                        </a>
-
-                        {{-- Tambahkan card link lain sesuai kebutuhan (Payment Methods, Settings, dll.) --}}
-
-                    </div>
-
-                 </div>
-            </div>
 
              {{-- Tambahkan section lain jika diperlukan, misal Notifikasi, dll. --}}
              {{-- <div class="bg-white dark:bg-[#1a1a1a] overflow-hidden shadow-lg sm:rounded-xl p-6 md:p-8">

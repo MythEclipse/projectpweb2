@@ -24,7 +24,10 @@ use App\Http\Middleware\IsAdmin; // Pastikan middleware di-import
 Route::get('/', function () {
     return view('welcome');
 })->name('welcome'); // Beri nama jika belum
-
+Route::post('/session/clear-flash', function () {
+    session()->forget(['success', 'error']);
+    return response()->json(['status' => 'cleared']);
+})->name('session.clear.flash');
 Route::get('/aboutus', function () {
     return view('aboutus');
 })->name('aboutus');
