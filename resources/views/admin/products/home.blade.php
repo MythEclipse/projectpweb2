@@ -2,7 +2,7 @@
     <div class="max-w-6xl mx-auto p-4 sm:p-6 bg-[#FDFDFC] dark:bg-dark-bg shadow rounded-2xl">
         <x-slot name="header">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-                <h2 class="text-2xl font-bold text-pink-brand dark:text-pink-brand-dark">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">
                     Product List
                 </h2>
                 <a href="{{ route('admin.products.create') }}"

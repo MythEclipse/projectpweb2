@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-2xl text-pink-600 dark:text-pink-400">
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">
             {{ $product->name }}
         </h2>
     </x-slot>
