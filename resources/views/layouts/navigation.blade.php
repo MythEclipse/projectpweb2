@@ -8,7 +8,7 @@
             <div class="flex items-center">
                 <!-- Logo -->
                 <div class="shrink-0">
-                    <a href="{{ route('homepage') }}" class="flex items-center group">
+                    <a href="{{ route('homepage') }}"  class="flex items-center group" data-turbo="false>
                         <x-application-logo
                             class="block h-9 w-auto text-pink-600 dark:text-pink-400 transition-transform duration-300 ease-out group-hover:scale-110" />
                         <span
