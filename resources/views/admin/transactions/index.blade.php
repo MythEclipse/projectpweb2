@@ -2,9 +2,14 @@
 <x-app-layout>
     {{-- Header Title --}}
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Daftar Transaksi') }}
-        </h2>
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">
+                Daftar Transaksi
+            </h2>
+            <a href="{{ route('admin.transactions.create') }}"  class="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 bg-pink-brand hover:bg-pink-brand-dark text-white rounded-lg shadow-md transition-transform transform hover:scale-105">
+                Tambah Transaksi
+            </a>
+        </div>
     </x-slot>
 
     <div class="py-12">
@@ -40,12 +45,7 @@
                     @endif
                 </div>
 
-                 {{-- Tombol Tambah --}}
-                 <div class="flex-shrink-0">
-                    <a href="{{ route('admin.transactions.create') }}" class="inline-flex items-center px-4 py-2 bg-pink-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-pink-600 focus:outline-none focus:border-pink-700 focus:ring focus:ring-pink-300 disabled:opacity-25 transition dark:bg-pink-600 dark:hover:bg-pink-700">
-                        Tambah Transaksi
-                    </a>
-                 </div>
+
              </div>
 
 
