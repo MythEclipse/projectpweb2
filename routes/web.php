@@ -59,7 +59,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 
-// == Admin Routes ==
 Route::middleware(['auth', 'verified', IsAdmin::class]) // Terapkan semua middleware di grup
     ->prefix('admin') // Tambahkan prefix URL '/admin'
     ->name('admin.') // Tambahkan prefix nama route 'admin.'
@@ -70,13 +69,16 @@ Route::middleware(['auth', 'verified', IsAdmin::class]) // Terapkan semua middle
         // Kelola Produk (Resource Controller)
         Route::resource('products', ProductController::class); // URL: /admin/products, Nama: admin.products.*
 
-        // Kelola Transaksi (Resource Controller - Asumsi perlu semua action)
-        // Jika memang hanya butuh index, create, store, kembalikan ->only([...])
+        // Kelola Transaksi (Resource Controller)
         Route::resource('transactions', TransactionController::class); // URL: /admin/transactions, Nama: admin.transactions.*
+
+        // ===> ADD THIS LINE <===
+        // Route custom untuk quick update transaksi (harus didefinisikan terpisah dari resource)
+        Route::patch('transactions/{transaction}/quick-update', [TransactionController::class, 'quickUpdate'])
+             ->name('transactions.quick_update'); // Nama route menjadi 'admin.transactions.quick_update'
 
         // Tambahkan route admin lainnya di sini jika ada...
 });
-
 
 // == API Routes (Sebaiknya di routes/api.php) ==
 // Route ini akan menggunakan middleware group 'web' jika diletakkan di sini.
