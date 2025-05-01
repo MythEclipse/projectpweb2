@@ -14,6 +14,7 @@ use Illuminate\View\View; // Import View
 use Illuminate\Http\RedirectResponse; // Import RedirectResponse
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log; // Import Log untuk error handling
+use Illuminate\Support\Facades\Validator; // Import Validator untuk validasi manual
 
 class TransactionController extends Controller
 {
@@ -109,50 +110,97 @@ class TransactionController extends Controller
         return redirect()->route('admin.transactions.index')
             ->with('success', 'Transaksi berhasil ditambahkan.');
     }
-    public function quickUpdate(Request $request, Transaction $transaction): JsonResponse
+    public function quickUpdate(Request $request, Transaction $transaction)
     {
-        // 1. Define updatable fields and their validation rules
-        $allowedFields = [
-            'payment_status' => ['required', Rule::in(['paid', 'unpaid'])],
-            'shipping_status' => ['required', Rule::in(['not_shipped', 'shipped', 'delivered'])],
-            // Add other fields if needed, e.g.:
-            // 'status' => ['required', Rule::in(['pending', 'processing', 'completed', 'cancelled'])],
-        ];
-
-        // 2. Validate which field is being updated
-        $validatedField = $request->validate([
-            'field' => ['required', 'string', Rule::in(array_keys($allowedFields))],
+        $validator = Validator::make($request->all(), [
+            // ... (validation rules remain the same) ...
+             'field' => ['required', 'string', Rule::in(['payment_status', 'shipping_status'])],
+             'value' => ['required', function ($attribute, $value, $fail) use ($request) {
+                 if ($request->input('field') === 'payment_status') {
+                     if (!in_array($value, ['paid', 'unpaid'])) {
+                         $fail('Nilai status pembayaran tidak valid.');
+                     }
+                 } elseif ($request->input('field') === 'shipping_status') {
+                     if (!in_array($value, ['not_shipped', 'shipped', 'delivered'])) {
+                         $fail('Nilai status pengiriman tidak valid.');
+                     }
+                 }
+             }],
         ]);
-        $fieldToUpdate = $validatedField['field'];
 
-        // 3. Validate the new value based on the field being updated
-        $validatedValue = $request->validate([
-            'value' => $allowedFields[$fieldToUpdate], // Use the rules defined above
-        ]);
-        $newValue = $validatedValue['value'];
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Validasi gagal.', 'errors' => $validator->errors()], 422);
+        }
 
-        // 4. Perform the update
+        $field = $request->input('field');
+        $value = $request->input('value');
+
         try {
-            $transaction->update([$fieldToUpdate => $newValue]);
+            $originalMainStatus = $transaction->status; // Store original status
 
-            // 5. Return success response
+            // --- Revised Status Logic ---
+
+            // 1. Never automatically change status IF it's 'cancelled'
+            if ($originalMainStatus === 'cancelled') {
+                 // If cancelled, only update the specific field requested
+                 $transaction->{$field} = $value;
+                 $mainStatusChanged = false; // Main status deliberately not changed
+
+                 // Optional: Depending on business rules, you might prevent *any* updates.
+                 // If so, return early:
+                 // return response()->json([
+                 //     'success' => false, // Or true, depending if updating the field is allowed
+                 //     'message' => 'Transaksi yang dibatalkan tidak dapat diubah.',
+                 //     // ... potentially include current values ...
+                 // ]);
+
+            } else {
+                 // 2. Apply the requested change to the specific field first (in memory)
+                 $transaction->{$field} = $value;
+
+                 // 3. Determine the NEW target main status based on CURRENT payment/shipping state
+                 $newTargetStatus = 'pending'; // Default status if no other condition matches
+
+                 if ($transaction->payment_status == 'paid') {
+                     if ($transaction->shipping_status == 'delivered') {
+                         $newTargetStatus = 'completed';
+                     } else { // Paid, but not delivered (shipped or not_shipped)
+                         $newTargetStatus = 'processing';
+                     }
+                 } else { // Payment is unpaid
+                     $newTargetStatus = 'pending';
+                 }
+
+                 // 4. Update the main status field IF the calculated status is different
+                 if ($newTargetStatus !== $originalMainStatus) {
+                     $transaction->status = $newTargetStatus;
+                     $mainStatusChanged = true;
+                 } else {
+                     $mainStatusChanged = false;
+                 }
+            }
+
+            // 5. Save the transaction (persists changes to $field and potentially $status)
+            $transaction->save();
+
+            // --- End Revised Status Logic ---
+
+            // Return the outcome, including the *final* main status
             return response()->json([
                 'success' => true,
-                'message' => ucfirst(str_replace('_', ' ', $fieldToUpdate)) . ' updated successfully.',
-                'new_value' => $newValue, // Send back the confirmed new value
-                'transaction_id' => $transaction->id
+                'message' => 'Status berhasil diperbarui.',
+                'updated_field' => $field,
+                'new_value' => $value,
+                'main_status_updated' => $mainStatusChanged, // True if status actually changed
+                'new_main_status' => $transaction->status   // The current status from the DB
             ]);
-        } catch (\Exception $e) {
-            Log::error("Quick update failed for transaction {$transaction->id}: " . $e->getMessage()); // Log the error
 
-            // 6. Return error response
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update status. Please try again.',
-                // 'error_details' => $e->getMessage() // Optionally include details in development
-            ], 500); // Use appropriate HTTP status code for server error
+        } catch (\Exception $e) {
+            Log::error("Error updating transaction {$transaction->id}: " . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan pada server.'], 500);
         }
     }
+
     /**
      * Menampilkan detail transaksi spesifik.
      *

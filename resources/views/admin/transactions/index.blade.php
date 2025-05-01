@@ -58,16 +58,17 @@
                                 <td class="p-3 whitespace-nowrap align-top">{{ $tx->user->name ?? 'N/A' }}</td>
 
                                 {{-- === Kolom Status Transaksi === --}}
-                                <td class="p-3 whitespace-nowrap align-top">
-                                    <span class="block px-2 py-0.5 text-xs leading-5 font-semibold rounded-full w-fit
-                                        @switch($tx->status)
-                                            @case('pending') bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 @break
-                                            @case('processing') bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 @break
-                                            @case('completed') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 @break
-                                            @case('cancelled') bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 @break
-                                            @default bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200
-                                        @endswitch
-                                    ">
+                                <td class="p-3 whitespace-nowrap align-top" data-transaction-id="{{ $tx->id }}"> {{-- Optional: Add data-id here too --}}
+                                    <span
+                                        class="transaction-status-badge-{{ $tx->id }} block px-2 py-0.5 text-xs leading-5 font-semibold rounded-full w-fit
+                                            @switch($tx->status)
+                                                @case('pending') bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 @break
+                                                @case('processing') bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 @break
+                                                @case('completed') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 @break
+                                                @case('cancelled') bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 @break
+                                                @default bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200
+                                            @endswitch
+                                        ">
                                         {{ ucfirst($tx->status ?? 'N/A') }}
                                     </span>
                                 </td>
@@ -161,24 +162,60 @@
     {{-- The existing JavaScript should work as is because indicator targeting is relative --}}
     @push('scripts')
     <script>
-        // Paste the SAME JavaScript code from the previous correct answer here.
-        // No changes are required for the JavaScript logic itself.
-         document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function () {
             const tableBody = document.getElementById('transaction-table-body');
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             const indicatorTimeouts = {};
 
+            // --- Helper function to map status names to Tailwind classes ---
+            // Keep this function updated if your Tailwind classes change
+             function getStatusBadgeClasses(status) {
+                 switch (status) {
+                    case 'pending':    return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+                    case 'processing': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+                    case 'completed':  return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+                    case 'cancelled':  return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+                    default:           return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+                 }
+             }
+
+             // --- Helper function to update the main status badge ---
+            function updateMainStatusBadge(transactionId, newStatus) {
+                 // Find the specific badge for this transaction row
+                const badgeElement = document.querySelector(`.transaction-status-badge-${transactionId}`);
+                if (!badgeElement) {
+                    console.error(`Badge element not found for transaction ${transactionId}`);
+                    return;
+                 }
+
+                 // Update text (capitalize first letter)
+                badgeElement.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+
+                 // Update classes
+                // Remove all potential status background/text colors first
+                 badgeElement.classList.remove(
+                    'bg-yellow-100', 'text-yellow-800', 'dark:bg-yellow-900', 'dark:text-yellow-200',
+                    'bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-200',
+                    'bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-200',
+                    'bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-200',
+                    'bg-gray-100', 'text-gray-800', 'dark:bg-gray-700', 'dark:text-gray-200'
+                );
+                 // Add the new classes based on the status
+                 badgeElement.classList.add(...getStatusBadgeClasses(newStatus).split(' '));
+            }
+
+
             function showIndicator(indicatorElement, type = 'loading', message = '', transactionId = null, field = null) {
-                if (!indicatorElement) return;
+                // ... (keep the existing showIndicator function - no changes needed here)
+                 if (!indicatorElement) return;
                 const timeoutKey = `${transactionId}-${field}`;
                 if (indicatorTimeouts[timeoutKey]) {
                     clearTimeout(indicatorTimeouts[timeoutKey]);
                     delete indicatorTimeouts[timeoutKey];
                 }
                 indicatorElement.innerHTML = '';
-                let icon = '';
-                let colorClass = '';
-                switch (type) {
+                let icon = ''; let colorClass = '';
+                switch (type) { /* ... same cases as before ... */
                     case 'loading': icon = '<i class="fas fa-spinner fa-spin text-blue-500"></i>'; break;
                     case 'success': icon = '<i class="fas fa-check-circle text-green-500"></i>'; colorClass = 'text-green-500'; break;
                     case 'error': icon = '<i class="fas fa-times-circle text-red-500"></i>'; colorClass = 'text-red-500'; message = message || 'Error'; indicatorElement.title = message; break;
@@ -204,15 +241,17 @@
                 if (indicatorElement) showIndicator(indicatorElement, 'loading', '', transactionId, field);
                 element.disabled = true;
                 let originalValue = null;
-                if (element.tagName === 'SELECT') originalValue = element.options[element.selectedIndex].value;
+                 // ... (store originalValue - same as before) ...
+                 if (element.tagName === 'SELECT') originalValue = element.options[element.selectedIndex].value;
                 else if (element.type === 'checkbox') originalValue = !element.checked;
 
-                fetch(updateUrl, {
-                    method: 'PATCH',
+
+                fetch(updateUrl, { /* ... same fetch options ... */
+                     method: 'PATCH',
                     headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken},
                     body: JSON.stringify({ field: field, value: value })
                 })
-                .then(response => {
+                .then(response => { /* ... same error response handling ... */
                     if (!response.ok) {
                         return response.json().catch(() => ({})).then(errorData => {
                             let errorMsg = `Server error: ${response.status}.`;
@@ -225,23 +264,39 @@
                         });
                     }
                     return response.json();
-                })
+                 })
                 .then(data => {
                     if (data.success) {
                         console.log('Update successful:', data.message || 'Status diperbarui.');
                          if(indicatorElement) showIndicator(indicatorElement, 'success', '', transactionId, field);
-                         if (field === 'payment_status') {
+
+                         // --- Update Primary Control Display ---
+                         if (data.updated_field === 'payment_status') {
                             const textSpan = element.closest('label')?.querySelector(`.payment-status-text-${transactionId}`);
                             if(textSpan) textSpan.textContent = data.new_value === 'paid' ? 'Lunas' : 'Belum Lunas';
                          }
-                    } else { throw new Error(data.message || 'Gagal memperbarui status.'); }
+                         // (Select value is visually updated by the browser)
+
+                        // --- <<< NEW: Check and Update Main Status Badge >>> ---
+                        if (data.main_status_updated && data.new_main_status) {
+                             console.log(`Main status changed to: ${data.new_main_status}`);
+                             updateMainStatusBadge(transactionId, data.new_main_status);
+                        }
+                        // --- <<< END NEW SECTION >>> ---
+
+                    } else {
+                        throw new Error(data.message || 'Gagal memperbarui status dari server.');
+                    }
                 })
                 .catch(error => {
                     console.error('Update Error:', error);
                     if(indicatorElement) showIndicator(indicatorElement, 'error', error.message, transactionId, field);
-                    if (element.type === 'checkbox') {
+
+                    // --- Revert UI changes on error ---
+                     // ... (keep existing revert logic - it should still work) ...
+                      if (element.type === 'checkbox') {
                         element.checked = originalValue;
-                         if (field === 'payment_status') {
+                         if (field === 'payment_status') { // Ensure field matches if reverting text
                             const textSpan = element.closest('label')?.querySelector(`.payment-status-text-${transactionId}`);
                              if(textSpan) textSpan.textContent = originalValue ? 'Lunas' : 'Belum Lunas';
                          }
@@ -250,14 +305,16 @@
                 .finally(() => { element.disabled = false; });
             }
 
+            // Event Listeners (no changes needed here)
             tableBody.addEventListener('change', function(event) {
-                const target = event.target;
+                 const target = event.target;
                 if (target.matches('.quick-update-toggle') && target.type === 'checkbox') {
                     handleQuickUpdate(target, target.dataset.transactionId, target.dataset.field, target.checked ? target.dataset.valueChecked : target.dataset.valueUnchecked);
                 } else if (target.matches('.quick-update-select') && target.tagName === 'SELECT') {
                     handleQuickUpdate(target, target.dataset.transactionId, target.dataset.field, target.value);
-                }
+                 }
             });
+
         });
     </script>
     @endpush
