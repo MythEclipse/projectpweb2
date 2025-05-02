@@ -5,7 +5,7 @@
 PROJECT_DIR="/home/asephs/projectpweb2"
 # Branch Git yang digunakan untuk produksi
 GIT_BRANCH="main"
-# User yang MENJALANKAN WEB SERVER (nginx, apache). Ini SANGAT PENTING!
+# User yang MENJALANKAN WEB SERVER (nginx, apache). Ini SANGAT PENTING!a
 # Umumnya 'www-data' di Ubuntu/Debian, 'nginx' di CentOS/Fedora, 'apache'
 # Ganti ini dengan user yang benar! Cek dengan 'ps aux | grep nginx' atau 'ps aux | grep apache'
 WEB_USER="www-data" # <-- PASTIKAN INI BENAR!
