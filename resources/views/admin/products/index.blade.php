@@ -50,7 +50,7 @@
             <div class="flex flex-col sm:flex-row justify-between items-center gap-4 px-4 sm:px-0 mb-6">
                 <form method="GET" action="{{ route('admin.products.index') }}" class="relative w-full sm:w-auto flex-grow">
                     <input type="text" name="search" value="{{ request('search') }}"
-                           class="flex-grow border border-gray-300 dark:border-[#3E3E3A] rounded-md py-2 pl-4 pr-10 focus:ring-pink-500 focus:border-pink-500 dark:bg-[#0a0a0a] dark:text-white"
+                    class="flex-grow border border-gray-300 dark:border-[#3E3E3A] rounded-md py-2 pl-4 pr-10 focus:ring-pink-500 focus:border-pink-500 dark:bg-[#0a0a0a] dark:text-white w-full" {{-- Added w-full for better mobile --}}
                            placeholder="Cari produk...">
                     <button type="submit" title="Cari"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-pink-500">
