@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-
+use Illuminate\Support\Facades\Storage;
 class Product extends Model
 {
     use HasFactory;
@@ -37,7 +37,30 @@ class Product extends Model
 
         return $slug;
     }
+    public function getImageUrlAttribute(): ?string
+    {
+        $imageValue = $this->image;
 
+        if (empty($imageValue)) {
+            // return 'path/to/default/placeholder.png'; // Opsional: Placeholder
+            return null;
+        }
+
+        // Cek apakah $imageValue adalah URL absolut (mulai dengan http/https)
+        if (Str::startsWith($imageValue, ['http://', 'https://'])) {
+            return $imageValue; // Sudah berupa URL lengkap
+        }
+
+        // Jika bukan URL, anggap itu path lokal di disk 'public'
+        // Pastikan file benar-benar ada sebelum generate URL untuk menghindari error jika path invalid
+        if (Storage::disk('public')->exists($imageValue)) {
+            return asset('storage/' . $imageValue);
+        }
+
+        // Fallback jika path tidak ditemukan atau format tidak dikenali
+        // Mungkin return null atau placeholder default
+        return null; // Atau return $imageValue jika ingin menampilkan path mentahnya
+    }
     // Relasi many-to-many dengan Size
     public function sizes()
     {
@@ -70,7 +93,7 @@ class Product extends Model
         return $this->colors()->where('color_id', $colorId)->first()->code ?? null;
     }
     public function sizeColorStocks()
-{
-    return $this->hasMany(ProductSizeColor::class, 'product_id', 'id');
-}
+    {
+        return $this->hasMany(ProductSizeColor::class, 'product_id', 'id');
+    }
 }

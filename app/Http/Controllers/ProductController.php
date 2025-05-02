@@ -8,13 +8,19 @@ use App\Models\Color;
 use App\Models\ProductSizeColor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Storage; // Diperlukan untuk fallback dan delete lokal
+use Illuminate\Support\Facades\Http;      // Diperlukan untuk request API
+use Illuminate\Http\Client\ConnectionException; // Untuk menangani error koneksi API
+use Illuminate\Support\Facades\Log;      // Untuk logging error
+use Illuminate\Support\Str;              // Diperlukan untuk cek http/https
 
 class ProductController extends Controller
 {
+    // Definisikan URL API uploader
+    private string $apiUploaderUrl = 'https://asepharyana.cloud/api/uploader';
+
     /**
      * Display a listing of the products.
-     * Now always returns the main index view without Turbo Frame check.
      */
     public function index(Request $request)
     {
@@ -23,10 +29,10 @@ class ProductController extends Controller
         $products = Product::with('stockCombinations.size', 'stockCombinations.color')
             ->when($search, fn($query) => $query->where('name', 'like', '%' . $search . '%'))
             ->orderBy('created_at', 'desc')
-            ->paginate(24) // Adjust pagination count as needed
-            ->withQueryString(); // Keep search query in pagination links
+            ->paginate(24)
+            ->withQueryString();
 
-        // Always return the main index view
+        // Gunakan accessor $product->image_url di view 'admin.products.index'
         return view('admin.products.index', compact('products'));
     }
 
@@ -37,12 +43,12 @@ class ProductController extends Controller
     {
         $sizes = Size::all();
         $colors = Color::all();
-
         return view('admin.products.create', compact('sizes', 'colors'));
     }
 
     /**
-     * Store a newly created product in storage.
+     * Store a newly created product.
+     * Tries API upload first (stores URL), falls back to local storage (stores path).
      */
     public function store(Request $request)
     {
@@ -57,25 +63,98 @@ class ProductController extends Controller
             'stocks.*'    => 'nullable|integer|min:0',
         ]);
 
+        $imageValue = null; // Akan berisi URL dari API atau Path dari Storage
+
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('products', 'public');
-        }
+            $file = $request->file('image');
+            $uploadSuccess = false;
 
-        $product = Product::create(Arr::only($validated, ['name', 'description', 'price', 'image']));
+            // --- 1. Coba Upload ke API ---
+            try {
+                Log::info('Attempting API image upload for new product...');
+                $response = Http::timeout(15)->attach( // Tambahkan timeout
+                    'file', // Nama field di API
+                    file_get_contents($file->getRealPath()),
+                    $file->getClientOriginalName()
+                )->post($this->apiUploaderUrl);
 
-        foreach ($request->stocks as $key => $qty) {
-            if ((int) $qty > 0) {
-                [$sizeId, $colorId] = explode('-', $key);
-                ProductSizeColor::create([
-                    'product_id' => $product->id,
-                    'size_id'    => $sizeId,
-                    'color_id'   => $colorId,
-                    'stock'      => $qty,
-                ]);
+                if ($response->successful() && isset($response->json()['url']) && Str::startsWith($response->json()['url'], ['http://', 'https://'])) {
+                    $imageValue = $response->json()['url']; // Simpan URL lengkap
+                    $uploadSuccess = true;
+                    Log::info('API image upload successful.', ['url' => $imageValue]);
+                } else {
+                    // API merespons, tapi tidak sukses atau format tidak sesuai
+                    Log::error('API Upload Failed (Invalid Response or Format):', [
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                        'url_received' => $response->json()['url'] ?? 'N/A'
+                    ]);
+                }
+            } catch (ConnectionException $e) {
+                Log::error('API Connection Failed:', ['error' => $e->getMessage()]);
+                // Biarkan uploadSuccess tetap false, akan fallback
+            } catch (\Exception $e) {
+                // Tangkap error lain (misal: file_get_contents gagal, timeout Http, dll)
+                Log::error('Generic API Upload Error or HTTP Client Error:', ['error' => $e->getMessage()]);
+                 // Biarkan uploadSuccess tetap false, akan fallback
+            }
+
+            // --- 2. Fallback ke Storage Lokal jika API gagal ---
+            if (!$uploadSuccess) {
+                try {
+                    Log::warning('API upload failed, falling back to local storage...');
+                    // Simpan ke disk 'public' dalam folder 'products'
+                    $imageValue = $file->store('products', 'public'); // Simpan path relatif
+                    if ($imageValue) {
+                        $uploadSuccess = true; // Tandai sukses (di lokal)
+                        Log::info('Local storage upload successful.', ['path' => $imageValue]);
+                    } else {
+                         Log::error('Local storage upload failed to return a path.');
+                         // uploadSuccess tetap false
+                    }
+                } catch (\Exception $e) {
+                     Log::error('Local Storage Upload Failed Exception:', ['error' => $e->getMessage()]);
+                     // Jika lokal juga gagal, kembalikan error ke user
+                     return back()->withErrors(['image' => 'Gagal menyimpan gambar baik ke API maupun penyimpanan lokal. Silakan coba lagi.'])->withInput();
+                }
+            }
+
+             // Jika setelah fallback pun masih gagal (misalnya karena permission folder storage)
+            if (!$uploadSuccess) {
+                 return back()->withErrors(['image' => 'Tidak dapat menyimpan gambar. Pastikan API atau penyimpanan lokal berfungsi.'])->withInput();
             }
         }
 
-        // Redirect back to the index page (full reload)
+        // Siapkan data produk
+        $productData = Arr::only($validated, ['name', 'description', 'price']);
+        $productData['image'] = $imageValue;   // Simpan URL atau Path
+
+        $product = Product::create($productData);
+
+        // Simpan stock combinations
+        foreach ($request->stocks as $key => $qty) {
+            // Pastikan qty adalah integer > 0
+            if (is_numeric($qty) && (int) $qty > 0) {
+                // Pastikan key valid (mengandung '-')
+                if (strpos($key, '-') !== false) {
+                    [$sizeId, $colorId] = explode('-', $key);
+                    // Validasi tambahan jika perlu (cek apakah sizeId dan colorId ada)
+                    if (Size::find($sizeId) && Color::find($colorId)) {
+                        ProductSizeColor::create([
+                            'product_id' => $product->id,
+                            'size_id'    => $sizeId,
+                            'color_id'   => $colorId,
+                            'stock'      => (int) $qty,
+                        ]);
+                    } else {
+                         Log::warning('Invalid size_id or color_id skipped during stock creation.', ['key' => $key]);
+                    }
+                } else {
+                     Log::warning('Invalid stock key format skipped.', ['key' => $key]);
+                }
+            }
+        }
+
         return redirect()->route('admin.products.index')->with('success', 'Produk berhasil ditambahkan.');
     }
 
@@ -85,7 +164,7 @@ class ProductController extends Controller
     public function show(Product $product)
     {
         $product->load('stockCombinations.size', 'stockCombinations.color');
-
+        // Gunakan accessor $product->image_url di view 'admin.products.show'
         return view('admin.products.show', compact('product'));
     }
 
@@ -97,12 +176,13 @@ class ProductController extends Controller
         $product->load('stockCombinations.size', 'stockCombinations.color');
         $sizes = Size::all();
         $colors = Color::all();
-
+        // Gunakan accessor $product->image_url di view 'admin.products.edit'
         return view('admin.products.edit', compact('product', 'sizes', 'colors'));
     }
 
     /**
-     * Update the specified product in storage.
+     * Update the specified product.
+     * Handles new image upload (API/local) and deletion of old image based on its type (URL/path).
      */
     public function update(Request $request, Product $product)
     {
@@ -117,56 +197,177 @@ class ProductController extends Controller
             'stocks.*'    => 'nullable|integer|min:0',
         ]);
 
+        $newImageValue = $product->image;      // Default ke gambar lama (URL atau Path)
+        $oldImageValue = $product->image;      // Simpan nilai lama untuk penghapusan
+
         if ($request->hasFile('image')) {
-            if ($product->image && Storage::disk('public')->exists($product->image)) {
-                Storage::disk('public')->delete($product->image);
+            $file = $request->file('image');
+            $uploadSuccess = false;
+            $attemptedUpload = true; // Tandai bahwa kita mencoba upload baru
+
+            // --- 1. Coba Upload ke API (Gambar Baru) ---
+            try {
+                 Log::info('Attempting API image upload for product update...', ['product_id' => $product->id]);
+                $response = Http::timeout(15)->attach(
+                    'file',
+                    file_get_contents($file->getRealPath()),
+                    $file->getClientOriginalName()
+                )->post($this->apiUploaderUrl);
+
+                if ($response->successful() && isset($response->json()['url']) && Str::startsWith($response->json()['url'], ['http://', 'https://'])) {
+                    $newImageValue = $response->json()['url']; // URL baru
+                    $uploadSuccess = true;
+                    Log::info('API image upload successful (Update).', ['url' => $newImageValue]);
+                } else {
+                    Log::error('API Upload Failed (Update - Invalid Response or Format):', [
+                         'product_id' => $product->id,
+                         'status' => $response->status(),
+                         'body' => $response->body(),
+                         'url_received' => $response->json()['url'] ?? 'N/A'
+                    ]);
+                }
+            } catch (ConnectionException $e) {
+                 Log::error('API Connection Failed (Update):', ['product_id' => $product->id, 'error' => $e->getMessage()]);
+            } catch (\Exception $e) {
+                 Log::error('Generic API Upload Error or HTTP Client Error (Update):', ['product_id' => $product->id, 'error' => $e->getMessage()]);
             }
-            $validated['image'] = $request->file('image')->store('products', 'public');
+
+            // --- 2. Fallback ke Storage Lokal jika API gagal (Gambar Baru) ---
+            if (!$uploadSuccess) {
+                 try {
+                    Log::warning('API upload failed (Update), falling back to local storage...', ['product_id' => $product->id]);
+                    $newImageValue = $file->store('products', 'public'); // Path baru
+                    if ($newImageValue) {
+                        $uploadSuccess = true; // Sukses di lokal
+                        Log::info('Local storage upload successful (Update).', ['path' => $newImageValue]);
+                    } else {
+                         Log::error('Local storage upload failed to return a path (Update).', ['product_id' => $product->id]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Local Storage Upload Failed Exception (Update):', ['product_id' => $product->id, 'error' => $e->getMessage()]);
+                     // Jika upload baru gagal total, mungkin lebih baik hentikan atau beri tahu user
+                     // Di sini kita biarkan $uploadSuccess false
+                }
+            }
+
+            // Jika upload gambar baru (baik API maupun lokal) gagal, batalkan update gambar
+            if (!$uploadSuccess) {
+                // Kembalikan nilai gambar ke yang lama
+                 $newImageValue = $oldImageValue;
+                 $attemptedUpload = false; // Anggap tidak ada percobaan upload yang berhasil
+                 // Beri pesan error jika ingin
+                 // return back()->withErrors(['image' => 'Gagal menyimpan gambar baru. Gambar lama dipertahankan.'])->withInput();
+                 Log::error('Failed to upload new image via API or Local Storage during update.', ['product_id' => $product->id]);
+                 // Kita lanjutkan update field lain, tapi gambar tidak berubah
+            }
+
+
+            // --- 3. Hapus Gambar Lama jika upload baru berhasil *dan* gambar lama ada ---
+            if ($attemptedUpload && $uploadSuccess && $oldImageValue && $oldImageValue !== $newImageValue) {
+                // Cek apakah gambar lama adalah path lokal (tidak dimulai http/https)
+                if (!Str::startsWith($oldImageValue, ['http://', 'https://'])) {
+                    // Jika path lokal, coba hapus dari storage
+                    if (Storage::disk('public')->exists($oldImageValue)) {
+                        try {
+                            Storage::disk('public')->delete($oldImageValue);
+                            Log::info('Successfully deleted old local image during update.', ['path' => $oldImageValue]);
+                        } catch (\Exception $e) {
+                            Log::error('Failed to delete old local image during update.', ['path' => $oldImageValue, 'error' => $e->getMessage()]);
+                        }
+                    } else {
+                         Log::warning('Old local image path not found for deletion during update.', ['path' => $oldImageValue]);
+                    }
+                } else {
+                    // Jika URL API, tidak lakukan apa-apa (atau mungkin panggil API delete jika ada)
+                     Log::info('Old image was on API, not deleting from external source during update.', ['url' => $oldImageValue]);
+                }
+            }
+        } // End of if ($request->hasFile('image'))
+
+        // Siapkan data untuk diupdate
+        $productData = Arr::only($validated, ['name', 'description', 'price']);
+        // Hanya update 'image' jika ada gambar baru yang berhasil diupload
+        if ($request->hasFile('image') && $uploadSuccess) {
+             $productData['image'] = $newImageValue; // Simpan URL atau Path baru
+        } else if (!$request->hasFile('image')) {
+            // Jika tidak ada file baru di request, pastikan nilai image lama tetap tersimpan
+             $productData['image'] = $oldImageValue;
         }
+        // Jika ada file baru tapi upload gagal, $productData['image'] tidak di-set di sini,
+        // sehingga update() akan menggunakan nilai yang sudah ada di $product (yaitu $oldImageValue).
 
-        $product->update(Arr::only($validated, ['name', 'description', 'price', 'image']));
+        $product->update($productData);
 
-        // Clear old stock combinations
+        // Update stock combinations (Hapus semua lalu tambahkan lagi)
         $product->stockCombinations()->delete();
-
-        // Save new stock combinations
         foreach ($request->stocks as $key => $qty) {
-            if ((int) $qty > 0) {
-                [$sizeId, $colorId] = explode('-', $key);
-                ProductSizeColor::create([
-                    'product_id' => $product->id,
-                    'size_id'    => $sizeId,
-                    'color_id'   => $colorId,
-                    'stock'      => $qty,
-                ]);
+             if (is_numeric($qty) && (int) $qty > 0) {
+                if (strpos($key, '-') !== false) {
+                    [$sizeId, $colorId] = explode('-', $key);
+                     if (Size::find($sizeId) && Color::find($colorId)) {
+                        ProductSizeColor::create([
+                            'product_id' => $product->id,
+                            'size_id'    => $sizeId,
+                            'color_id'   => $colorId,
+                            'stock'      => (int) $qty,
+                        ]);
+                    } else {
+                        Log::warning('Invalid size_id or color_id skipped during stock update.', ['key' => $key, 'product_id' => $product->id]);
+                    }
+                } else {
+                    Log::warning('Invalid stock key format skipped during update.', ['key' => $key, 'product_id' => $product->id]);
+                }
             }
         }
 
-        // Redirect back to the index page (full reload)
         return redirect()->route('admin.products.index')->with('success', 'Produk berhasil diperbarui.');
     }
 
     /**
-     * Remove the specified product from storage.
+     * Remove the specified product.
+     * Deletes local image file if the 'image' field contains a path.
      */
     public function destroy(Product $product)
     {
-        if ($product->image && Storage::disk('public')->exists($product->image)) {
-            Storage::disk('public')->delete($product->image);
+        $imageValue = $product->image;
+
+        // Cek apakah gambar adalah path lokal (bukan URL) dan ada
+        if ($imageValue && !Str::startsWith($imageValue, ['http://', 'https://'])) {
+            if (Storage::disk('public')->exists($imageValue)) {
+                 try {
+                     Storage::disk('public')->delete($imageValue);
+                     Log::info('Successfully deleted local image on product destroy.', ['path' => $imageValue, 'product_id' => $product->id]);
+                 } catch (\Exception $e) {
+                      Log::error('Failed to delete local image on product destroy.', ['path' => $imageValue, 'product_id' => $product->id, 'error' => $e->getMessage()]);
+                 }
+            } else {
+                 Log::warning('Local image path not found during product destroy.', ['path' => $imageValue, 'product_id' => $product->id]);
+            }
+        } elseif ($imageValue) {
+             // Jika itu URL API
+             Log::info('Product image is on API, not deleting from external source during destroy.', ['url' => $imageValue, 'product_id' => $product->id]);
+             // Di sini Anda bisa menambahkan logika untuk memanggil API penghapusan jika ada
         }
 
-        $product->stockCombinations()->delete();
-        $product->delete();
-
-        // Redirect back to the index page (full reload)
-        return redirect()->route('admin.products.index')->with('success', 'Produk berhasil dihapus.');
+        try {
+            // Hapus relasi dan produk
+            $product->stockCombinations()->delete(); // Hapus relasi dulu
+            $product->delete(); // Hapus produk
+            Log::info('Product and associated stock deleted successfully.', ['product_id' => $product->id]);
+             return redirect()->route('admin.products.index')->with('success', 'Produk berhasil dihapus.');
+        } catch (\Exception $e) {
+             Log::error('Failed to delete product or stock combinations.', ['product_id' => $product->id, 'error' => $e->getMessage()]);
+            return redirect()->route('admin.products.index')->with('error', 'Gagal menghapus produk.');
+        }
     }
 
     /**
-     * API endpoint to get product details (remains unchanged).
+     * API endpoint to get product details.
+     * Uses the accessor to get the full image URL.
      */
     public function apiGetProduct(Product $product)
     {
+        // Eager load relasi untuk efisiensi
         $product->load('stockCombinations.size', 'stockCombinations.color');
 
         return response()->json([
@@ -174,22 +375,24 @@ class ProductController extends Controller
             'name' => $product->name,
             'description' => $product->description,
             'price' => $product->price,
+            'image_url' => $product->image_url, // <-- Menggunakan accessor dari Model
             'stock_combinations' => $product->stockCombinations->map(function ($combination) {
                 return [
+                    // Pastikan size dan color tidak null sebelum akses properti
                     'id' => $combination->id,
-                    'size' => [
+                    'size' => $combination->size ? [
                         'id' => $combination->size->id,
                         'name' => $combination->size->name,
-                    ],
-                    'color' => [
+                    ] : null,
+                    'color' => $combination->color ? [
                         'id' => $combination->color->id,
                         'name' => $combination->color->name,
-                    ],
+                    ] : null,
                     'stock' => $combination->stock,
                 ];
             }),
-            'created_at' => $product->created_at,
-            'updated_at' => $product->updated_at,
+            'created_at' => $product->created_at ? $product->created_at->toIso8601String() : null,
+            'updated_at' => $product->updated_at ? $product->updated_at->toIso8601String() : null,
         ]);
     }
 }
