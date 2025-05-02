@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
+    /**
+     * Display a listing of the products.
+     * Now always returns the main index view without Turbo Frame check.
+     */
     public function index(Request $request)
     {
         $search = $request->query('search');
@@ -19,16 +23,16 @@ class ProductController extends Controller
         $products = Product::with('stockCombinations.size', 'stockCombinations.color')
             ->when($search, fn($query) => $query->where('name', 'like', '%' . $search . '%'))
             ->orderBy('created_at', 'desc')
-            ->paginate(10)
-            ->withQueryString();
+            ->paginate(24) // Adjust pagination count as needed
+            ->withQueryString(); // Keep search query in pagination links
 
-        if ($request->header('Turbo-Frame') === 'products_frame') {
-            return view('admin.products._list', compact('products'));
-        }
-
-        return view('admin.products.home', compact('products'));
+        // Always return the main index view
+        return view('admin.products.index', compact('products'));
     }
 
+    /**
+     * Show the form for creating a new product.
+     */
     public function create()
     {
         $sizes = Size::all();
@@ -37,6 +41,9 @@ class ProductController extends Controller
         return view('admin.products.create', compact('sizes', 'colors'));
     }
 
+    /**
+     * Store a newly created product in storage.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -68,9 +75,13 @@ class ProductController extends Controller
             }
         }
 
-        return redirect()->route('admin.products.index')->with('success', 'Product created.');
+        // Redirect back to the index page (full reload)
+        return redirect()->route('admin.products.index')->with('success', 'Produk berhasil ditambahkan.');
     }
 
+    /**
+     * Display the specified product.
+     */
     public function show(Product $product)
     {
         $product->load('stockCombinations.size', 'stockCombinations.color');
@@ -78,6 +89,9 @@ class ProductController extends Controller
         return view('admin.products.show', compact('product'));
     }
 
+    /**
+     * Show the form for editing the specified product.
+     */
     public function edit(Product $product)
     {
         $product->load('stockCombinations.size', 'stockCombinations.color');
@@ -87,6 +101,9 @@ class ProductController extends Controller
         return view('admin.products.edit', compact('product', 'sizes', 'colors'));
     }
 
+    /**
+     * Update the specified product in storage.
+     */
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
@@ -125,9 +142,13 @@ class ProductController extends Controller
             }
         }
 
-        return redirect()->route('admin.products.index')->with('success', 'Product updated.');
+        // Redirect back to the index page (full reload)
+        return redirect()->route('admin.products.index')->with('success', 'Produk berhasil diperbarui.');
     }
 
+    /**
+     * Remove the specified product from storage.
+     */
     public function destroy(Product $product)
     {
         if ($product->image && Storage::disk('public')->exists($product->image)) {
@@ -137,9 +158,14 @@ class ProductController extends Controller
         $product->stockCombinations()->delete();
         $product->delete();
 
-        return redirect()->route('admin.products.index')->with('success', 'Product deleted.');
+        // Redirect back to the index page (full reload)
+        return redirect()->route('admin.products.index')->with('success', 'Produk berhasil dihapus.');
     }
-        public function apiGetProduct(Product $product)
+
+    /**
+     * API endpoint to get product details (remains unchanged).
+     */
+    public function apiGetProduct(Product $product)
     {
         $product->load('stockCombinations.size', 'stockCombinations.color');
 

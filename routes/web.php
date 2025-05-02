@@ -67,7 +67,12 @@ Route::middleware(['auth', 'verified', IsAdmin::class]) // Terapkan semua middle
         Route::get('/', [AdminController::class, 'index'])->name('index'); // Nama route menjadi 'admin.index'
 
         // Kelola Produk (Resource Controller)
-        Route::resource('products', ProductController::class); // URL: /admin/products, Nama: admin.products.*
+        Route::resource('products', ProductController::class)->except([
+            // Exclude any methods if you don't need them, e.g., 'create', 'edit' if handled differently
+        ]);
+
+        // If you need the API route (it was in your original controller)
+        Route::get('products', [ProductController::class, 'index'])->name('products.index');
 
         // Kelola Transaksi (Resource Controller)
         Route::resource('transactions', TransactionController::class); // URL: /admin/transactions, Nama: admin.transactions.*
