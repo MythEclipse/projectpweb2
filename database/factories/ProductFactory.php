@@ -18,7 +18,7 @@ class ProductFactory extends Factory
             'name' => $this->faker->words(2, true),
             'description' => $this->faker->paragraph(),
             'price' => $this->faker->randomFloat(2, 1000, 100000),
-            'image' => $this->faker->imageUrl(640, 480, 'products', true),
+            'image' => 'https://loremflickr.com/640/480/product',
         ];
     }
 }

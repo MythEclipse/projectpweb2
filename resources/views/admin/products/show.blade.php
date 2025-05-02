@@ -12,9 +12,11 @@
                 {{-- Product Image --}}
                 @if ($product->image)
                     <div class="flex justify-center">
-                        <img src="{{ asset('storage/' . $product->image) }}"
-                             alt="{{ $product->name }}"
-                             class="w-72 h-72 object-cover rounded-2xl border border-gray-200 dark:border-[#3E3E3A] shadow-md hover:scale-105 transition-transform duration-300" />
+                      
+                        <img s
+                            src="{{ Str::startsWith($product->image, ['http://', 'https://']) ? $product->image : asset('storage/' . $product->image) }}"
+                            alt="{{ $product->name }}"
+                            class="w-72 h-72 object-cover rounded-2xl border border-gray-200 dark:border-[#3E3E3A] shadow-md hover:scale-105 transition-transform duration-300" />
                     </div>
                 @endif
 
@@ -35,18 +37,21 @@
                     </h3>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                        @foreach($product->stockCombinations->groupBy('size_id') as $sizeId => $combos)
-                            <div class="bg-gray-50 dark:bg-[#2d2d2d] p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all">
-                                <div class="inline-block bg-pink-100 dark:bg-pink-900 text-pink-700 dark:text-pink-300 px-4 py-1 rounded-full font-semibold mb-4">
+                        @foreach ($product->stockCombinations->groupBy('size_id') as $sizeId => $combos)
+                            <div
+                                class="bg-gray-50 dark:bg-[#2d2d2d] p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all">
+                                <div
+                                    class="inline-block bg-pink-100 dark:bg-pink-900 text-pink-700 dark:text-pink-300 px-4 py-1 rounded-full font-semibold mb-4">
                                     {{ strtoupper($combos->first()->size->name) }}
                                 </div>
 
                                 <ul class="space-y-3">
-                                    @foreach($combos as $comb)
+                                    @foreach ($combos as $comb)
                                         <li class="flex items-center justify-between">
                                             <div class="flex items-center gap-2">
-                                                <span class="w-5 h-5 rounded-full border border-gray-300 dark:border-[#3E3E3A]"
-                                                      style="background-color: {{ $comb->color->code }};"></span>
+                                                <span
+                                                    class="w-5 h-5 rounded-full border border-gray-300 dark:border-[#3E3E3A]"
+                                                    style="background-color: {{ $comb->color->code }};"></span>
                                                 <span class="text-sm text-gray-700 dark:text-gray-300 capitalize">
                                                     {{ $comb->color->name }}
                                                 </span>
@@ -61,7 +66,7 @@
                         @endforeach
                     </div>
 
-                    @if($product->stockCombinations->isEmpty())
+                    @if ($product->stockCombinations->isEmpty())
                         <p class="mt-6 text-center text-gray-500 dark:text-gray-400">
                             Belum ada stock tersedia.
                         </p>
@@ -71,7 +76,7 @@
                 {{-- Action Button --}}
                 <div class="flex justify-center">
                     <a href="{{ route('admin.products.edit', $product) }}"
-                       class="px-6 py-3 bg-pink-600 hover:bg-pink-700 text-white font-medium rounded-xl shadow-md transition-transform hover:scale-105">
+                        class="px-6 py-3 bg-pink-600 hover:bg-pink-700 text-white font-medium rounded-xl shadow-md transition-transform hover:scale-105">
                         ✏️ Edit Produk
                     </a>
                 </div>

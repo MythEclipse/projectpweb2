@@ -1,7 +1,6 @@
 <x-app-layout>
     {{-- Gunakan ID yang konsisten untuk frame --}}
     <turbo-frame id="products_list_frame">
-
         <!-- Modal Notifikasi (Sukses/Error) -->
         @if (session('success') || session('error'))
             <div x-data="{
@@ -84,7 +83,7 @@
                         <div
                             class="h-40 w-full bg-gray-100 dark:bg-dark-border flex items-center justify-center text-gray-400 overflow-hidden">
                             @if ($product->image)
-                                <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}"
+                                <img src="{{ Str::startsWith($product->image, ['http://', 'https://']) ? $product->image : asset('storage/' . $product->image) }}"
                                     class="object-cover h-full w-full group-hover:scale-105 transition-transform duration-300 ease-in-out">
                             @else
                                 {{-- Placeholder Image SVG --}}
@@ -220,10 +219,20 @@
                                 </p>
                                 <div class="flex items-center space-x-3">
                                     {{-- Gunakan placeholder jika image null --}}
-                                    <img :src="selectedProduct.image ? ('/storage/' + selectedProduct.image) :
-                                        'https://via.placeholder.com/150/EEEEEE/AAAAAA?text=No+Image'"
+                                    <img {{-- Bind the src attribute dynamically --}}
+                                        :src="selectedProduct.image ? {{-- 1. Check if selectedProduct.image exists --}}(selectedProduct.image.startsWith(
+                                                    'http') ? {{-- 2. If it exists, check if it starts with 'http' (covers http:// and https://) --}} selectedProduct.image :
+                                                {{-- 3. If yes (it's a full URL), use the image path directly --}} '{{ asset('storage') }}/' + selectedProduct
+                                                .image {{-- 4. If no (it's a local path), prepend the storage asset path --}}
+                                            ) :
+                                            'https://via.placeholder.com/150/EEEEEE/AAAAAA?text=No+Image'
+                                        {{-- 5. If selectedProduct.image doesn't exist, use the placeholder --}}"
                                         :alt="selectedProduct.name"
-                                        class="w-12 h-12 rounded-md object-cover bg-gray-200 dark:bg-dark-border">
+                                        class="w-12 h-12 rounded-md object-cover bg-gray-200 dark:bg-dark-border flex-shrink-0"
+                                        {{-- Added flex-shrink-0 for safety in flex containers --}}
+                                        onerror="this.onerror=null; this.src='https://via.placeholder.com/150/EEEEEE/AAAAAA?text=Error';"
+                                        {{-- Optional: Fallback if the image fails to load --}} />
+
                                     <div>
                                         <p class="text-sm font-semibold text-text-dark dark:text-text-light"
                                             x-text="selectedProduct.name"></p>
@@ -405,8 +414,13 @@
                                     <div
                                         class="aspect-square bg-gray-100 dark:bg-dark-border rounded-xl flex items-center justify-center text-gray-400 overflow-hidden">
                                         <template x-if="selectedProduct.image">
-                                            <img :src="'/storage/' + selectedProduct.image"
-                                                :alt="selectedProduct.name" class="object-cover h-full w-full">
+                                            <img
+                                            :src="getProductImageUrl(selectedProduct)"
+                                            :alt="selectedProduct ? selectedProduct.name : 'Product Image'"
+                                            class="w-full h-full rounded-md object-cover bg-gray-200 dark:bg-dark-border flex-shrink-0"
+                                            onerror="this.onerror=null; this.src='https://via.placeholder.com/150/EEEEEE/AAAAAA?text=Error';"
+                                        />
+
                                         </template>
                                         <template x-if="!selectedProduct.image">
                                             <svg class="w-16 h-16 text-gray-300 dark:text-gray-600" fill="none"
@@ -523,7 +537,37 @@
                     maxStock: 0, // Calculated max stock for the selected size/color combo
                     availableSizes: [], // Dynamically populated list of sizes for the dropdown
                     availableColors: [], // Dynamically populated list of colors for the dropdown
+                    storageBaseUrl: '{{ rtrim(asset('storage'), '/') }}', // Get base URL from Blade, remove trailing slash if any
 
+                    // --- Helper ---
+                    isExternalImage(url) {
+                        return url && (url.startsWith('http://') || url.startsWith('https://'));
+                    },
+
+                    /**
+                     * Generates the correct image URL for a product.
+                     * Handles local storage paths, full HTTP/HTTPS URLs, and provides a placeholder.
+                     * @param {object|null} product The product object (must have an 'image' property)
+                     * @param {string} placeholder (Optional) Custom placeholder URL
+                     * @returns {string} The final image URL
+                     */
+                    getProductImageUrl(product, placeholder = 'https://via.placeholder.com/150/EEEEEE/AAAAAA?text=No+Image') {
+                        // Check if product and product.image exist
+                        if (!product || !product.image) {
+                            return placeholder;
+                        }
+
+                        const imagePath = product.image;
+
+                        // Check if it's already a full URL
+                        if (this.isExternalImage(imagePath)) {
+                            return imagePath;
+                        } else {
+                            // It's a local path, prepend the storage base URL
+                            // Ensure no double slashes if imagePath somehow starts with /
+                            return this.storageBaseUrl + '/' + imagePath.replace(/^\//, '');
+                        }
+                    },
                     // --- Methods ---
 
                     // Opens the Detail Modal
