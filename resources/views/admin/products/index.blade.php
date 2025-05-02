@@ -164,11 +164,6 @@
                         <div>
                             {{ $products->appends(request()->query())->links('vendor.pagination.tailwind') }}
                         </div>
-                        <div class="text-sm text-gray-600 dark:text-gray-400 text-center sm:text-right">
-                            Menampilkan halaman <span class="font-semibold text-pink-600 dark:text-pink-400">{{ $products->currentPage() }}</span>
-                            dari <span class="font-semibold text-pink-600 dark:text-pink-400">{{ $products->lastPage() }}</span>
-                            (Total: <span class="font-semibold text-pink-600 dark:text-pink-400">{{ $products->total() }}</span> produk)
-                        </div>
                     </div>
                 @endif
             </div>

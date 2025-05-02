@@ -22,7 +22,6 @@ class ProductSizeColorFactory extends Factory
 
     public function definition()
     {
-        // Ambil produk, ukuran dan warna acak
         $product = Product::inRandomOrder()->first();
         $size = Size::inRandomOrder()->first();
         $color = Color::inRandomOrder()->first();
@@ -31,7 +30,8 @@ class ProductSizeColorFactory extends Factory
             'product_id' => $product->id,
             'size_id' => $size->id,
             'color_id' => $color->id,
-            'stock' => $this->faker->numberBetween(1, 100),
+            'stock' => $this->faker->boolean(70) ? 0 : $this->faker->numberBetween(1, 100),
         ];
     }
+
 }
