@@ -87,11 +87,17 @@ echo ""
 # php artisan db:seed --class=NamaSeederPenting --force
 # echo "      Seeder selesai."
 # echo ""
-
+# 6.1. Membersihkan cache Laravel tambahan jika diperlukan
+echo "[6/8] Membersihkan cache tambahan Laravel..."
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+echo "      Cache tambahan berhasil dibersihkan."
+echo ""
 # 7. Bersihkan Cache Lama dan Optimalkan Aplikasi
 echo "[7/8] Membersihkan cache lama dan mengoptimalkan aplikasi..."
 php artisan optimize:clear
-php artisan cache:clear
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
