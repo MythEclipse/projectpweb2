@@ -81,13 +81,12 @@ class ProductController extends Controller
         $products = $productsQuery->paginate(24) // Adjust pagination count as needed
                                    ->withQueryString(); // Keep search query in pagination links
 
-        // --- Debugging ---
-        // Uncomment the following line to see the raw SQL query generated.
-        // dd($productsQuery->toSql(), $productsQuery->getBindings());
+        // --- Logging ---
+        // Log the raw SQL query generated.
+        Log::debug('Generated SQL Query:', ['query' => $productsQuery->toSql(), 'bindings' => $productsQuery->getBindings()]);
 
-        // Uncomment to see the calculated total_stock for the products on the current page.
-        // Make sure products you know are out of stock show 0.
-        // dd($products->map(fn($p) => ['name' => $p->name, 'total_stock' => $p->total_stock])->all());
+        // Log the calculated total_stock for the products on the current page.
+        Log::debug('Products with total_stock:', $products->map(fn($p) => ['name' => $p->name, 'total_stock' => $p->total_stock])->all());
         // -------------
 
         return view('admin.products.index', compact('products'));

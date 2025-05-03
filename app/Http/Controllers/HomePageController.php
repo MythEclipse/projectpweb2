@@ -21,44 +21,94 @@ class HomePageController extends Controller
     public function index(Request $request)
     {
         $search = $request->query('search');
-        $perPage = 24; // Atau ambil dari config/request jika perlu dinamis
+        $perPage = 24; // Or take from config/request if dynamic needed
 
-        // Query products with necessary relations and search filter
-        $productsQuery = Product::with([
-                // Eager load combinations and their related size/color
+        // Start building the query for products
+        $productsQuery = Product::query()
+            // Eager load relationships FOR DISPLAY after the query runs.
+            // DO NOT filter stock here if you need the sum for sorting below.
+            ->with([
                 'stockCombinations' => function ($query) {
-                    $query->with(['size', 'color'])->where('stock', '>', 0); // Optimasi: Hanya load kombinasi yang ada stok? (opsional)
+                    // Load related size and color for combinations
+                    $query->with(['size', 'color']);
                 }
-            ])
-            ->when($search, function ($query, $search) {
-                // Filter based on search term (name or maybe description)
-                return $query->where('name', 'like', '%' . $search . '%')
-                             ->orWhere('description', 'like', '%' . $search . '%'); // Cari di deskripsi juga?
-            })
-            ->orderBy('created_at', 'desc'); // Urutkan berdasarkan terbaru
+                // We don't need to load 'stockCombinations.size', 'stockCombinations.color' separately
+                // as they are handled within the nested 'with'.
+            ]);
+
+        // Subquery to calculate total stock per product_id
+        $stockAggregationSubQuery = ProductSizeColor::select(
+                'product_id',
+                DB::raw('SUM(stock) as aggregated_stock')
+            )
+            ->groupBy('product_id');
+
+        // Perform a LEFT JOIN from products to the aggregated stock subquery
+        $productsQuery->leftJoinSub(
+            $stockAggregationSubQuery,
+            'stock_summary', // Alias for the subquery result table
+            function ($join) {
+                $join->on('products.id', '=', 'stock_summary.product_id');
+            }
+        );
+
+        // Select all product columns AND the calculated total stock.
+        // Use COALESCE to ensure products with no stock records get 0, not NULL.
+        $productsQuery->select(
+            'products.*',
+            DB::raw('COALESCE(stock_summary.aggregated_stock, 0) as total_stock')
+        );
+
+        // Apply search filter if present (searches columns in the 'products' table)
+        if ($search) {
+            $productsQuery->where(function ($query) use ($search) {
+                $query->where('products.name', 'like', '%' . $search . '%')
+                      ->orWhere('products.description', 'like', '%' . $search . '%'); // Optional: search description too
+            });
+        }
+
+        // Apply Sorting:
+        // 1. Primary Sort: Use a CASE statement. Assign 0 to items with stock, 1 to items without. Sort ASC.
+        // 2. Secondary Sort: Within each group, sort by creation date descending.
+        $productsQuery
+            ->orderByRaw('CASE WHEN COALESCE(stock_summary.aggregated_stock, 0) > 0 THEN 0 ELSE 1 END ASC')
+            ->orderBy('products.created_at', 'desc'); // Newest first within the stock groups
 
         // Paginate the results
         $products = $productsQuery->paginate($perPage)->withQueryString();
 
-        // Add a 'slug' attribute to each product item within the paginator
-        // This is needed for the form action URL in the view
+        // Add a 'slug' attribute and process combinations *after* fetching and sorting
         $products->through(function ($product) {
-            $product->slug = Str::slug($product->name); // Generate slug from name
-            // Pastikan stock_combinations, size, dan color tidak null sebelum diakses (jika ada potensi null)
-             $product->stockCombinations->each(function ($combination) {
-                $combination->size_name = $combination->size ? $combination->size->name : null;
-                $combination->color_name = $combination->color ? $combination->color->name : null;
-                $combination->color_code = $combination->color ? $combination->color->code : null;
-                // Anda bisa menghapus relasi objek jika hanya butuh nama/kode untuk mengurangi ukuran data JSON
-                // unset($combination->size);
-                // unset($combination->color);
-            });
+            // Add slug - ensure Str::slug is available (use Illuminate\Support\Str;)
+            $product->slug = Str::slug($product->name);
+
+            // Process combinations if they were loaded (check if relation exists and is not null)
+            if ($product->relationLoaded('stockCombinations') && $product->stockCombinations) {
+                 $product->stockCombinations->each(function ($combination) {
+                    // Add helper attributes, checking if size/color objects exist
+                    $combination->size_name = $combination->size ? $combination->size->name : null;
+                    $combination->color_name = $combination->color ? $combination->color->name : null;
+                    $combination->color_code = $combination->color ? $combination->color->code : null;
+                    // Optional: unset relations if not needed further to reduce data size sent to view/js
+                    // unset($combination->size);
+                    // unset($combination->color);
+                });
+            }
             return $product;
         });
 
 
-        // Return the view with the paginated products
-        return view('homepage', compact('products', 'search')); // Kirim 'search' juga agar bisa ditampilkan di input
+        // --- Debugging (Optional) ---
+        // Uncomment the following line to see the raw SQL query generated by the builder.
+        // dd($productsQuery->toSql(), $productsQuery->getBindings());
+
+        // Uncomment to see the calculated total_stock for the products on the current page.
+        // dd($products->map(fn($p) => ['name' => $p->name, 'total_stock' => $p->total_stock])->all());
+        // -------------
+
+
+        // Return the view with the paginated products and search term
+        return view('homepage', compact('products', 'search'));
     }
 
     /**
