@@ -1,24 +1,44 @@
 <?php
 
-namespace App\Http\Controllers\Admin; // Pastikan namespace benar
+namespace App\Http\Controllers\Admin; // Ensure the namespace is correct
 
-use App\Http\Controllers\Controller; // Import Controller dasar
-use App\Models\User; // Import Model User
+use App\Http\Controllers\Controller; // Import base Controller
+use App\Models\User;                // Import User Model
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash; // Untuk hashing password
-use Illuminate\Support\Facades\Auth; // Untuk autentikasi
-use Illuminate\Validation\Rules; // Untuk aturan validasi password
+use Illuminate\Support\Facades\Hash; // For hashing passwords
+use Illuminate\Support\Facades\Auth; // For authentication checks
+use Illuminate\Validation\Rules;     // For password validation rules
+use Illuminate\Database\Eloquent\Builder; // Import Builder for cleaner search query
 
 class UserController extends Controller
 {
     /**
      * Display a listing of the resource.
+     * Handles searching and pagination.
      */
-    public function index()
+    public function index(Request $request) // Inject Request to access query parameters
     {
-        // Ambil semua user, urutkan berdasarkan nama, dan paginasi
-        $users = User::orderBy('name')->paginate(10); // Angka 10 bisa disesuaikan
-        return view('admin.users.index', compact('users')); // Kirim data ke view
+        $searchTerm = $request->query('search'); // Get search term from request
+
+        // Start building the query
+        $query = User::query();
+
+        // Apply search filter if a search term exists
+        if ($searchTerm) {
+            $query->where(function (Builder $subQuery) use ($searchTerm) {
+                $subQuery->where('name', 'like', "%{$searchTerm}%")
+                         ->orWhere('email', 'like', "%{$searchTerm}%");
+            });
+            // You could add more searchable fields here if needed
+            // ->orWhere('some_other_field', 'like', "%{$searchTerm}%");
+        }
+
+        // Order results by name and paginate
+        // Use withQueryString() to automatically append existing query parameters (like search) to pagination links
+        $users = $query->orderBy('name')->paginate(10)->withQueryString();
+
+        // Pass users data (and optionally the search term, though the view already gets it via request()) to the view
+        return view('admin.users.index', compact('users'));
     }
 
     /**
@@ -26,7 +46,7 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view('admin.users.create'); // Tampilkan form tambah user
+        return view('admin.users.create'); // Display the create user form
     }
 
     /**
@@ -34,34 +54,35 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        // Validasi input
+        // Validate input data
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:' . User::class], // Pastikan email unik
-            'password' => ['required', 'confirmed', Rules\Password::defaults()], // Validasi password + konfirmasi
-            'is_admin' => ['sometimes', 'boolean'], // is_admin opsional, harus boolean
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class], // Ensure email is unique in the users table
+            'password' => ['required', 'confirmed', Rules\Password::defaults()], // Validate password & confirmation using default rules
+            'is_admin' => ['sometimes', 'boolean'], // is_admin is optional, must be boolean (handles checkbox value 0/1 or on/null)
         ]);
 
-        // Buat user baru
+        // Create the new user
         User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'is_admin' => $request->boolean('is_admin'), // Ambil nilai boolean dari checkbox/select
+            'password' => Hash::make($request->password), // Hash the password before saving
+            'is_admin' => $request->boolean('is_admin'), // Get boolean value (true if 'is_admin' is present and truthy, false otherwise)
         ]);
 
-        // Redirect ke halaman index user dengan pesan sukses
+        // Redirect to the user index page with a success message
         return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan.');
     }
 
     /**
      * Display the specified resource.
-     * (Opsional untuk admin, biasanya langsung ke edit)
+     * (Often optional for admin panels where 'edit' is sufficient)
      */
-    public function show(User $user) // Route model binding
+    public function show(User $user) // Route model binding automatically finds the User or throws 404
     {
+        // You might want to display a detailed view or just redirect to edit
         return view('admin.users.show', compact('user'));
-        // Atau redirect ke edit: return redirect()->route('admin.users.edit', $user);
+        // Or redirect to edit: return redirect()->route('admin.users.edit', $user);
     }
 
     /**
@@ -69,7 +90,7 @@ class UserController extends Controller
      */
     public function edit(User $user) // Route model binding
     {
-        return view('admin.users.edit', compact('user')); // Tampilkan form edit dengan data user
+        return view('admin.users.edit', compact('user')); // Display the edit form with the user's data
     }
 
     /**
@@ -77,48 +98,52 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user) // Route model binding
     {
-        // Validasi input (email unik diabaikan untuk user saat ini)
+        // Validate input data (ignore unique email rule for the current user's email)
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:' . User::class . ',email,' . $user->id], // Abaikan email user ini
-            'password' => ['nullable', 'confirmed', Rules\Password::defaults()], // Password opsional saat update
-            'is_admin' => ['sometimes', 'boolean'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class.',email,'.$user->id], // Ignore this user's current email for uniqueness check
+            'password' => ['nullable', 'confirmed', Rules\Password::defaults()], // Password is optional during update; must be confirmed if provided
+            'is_admin' => ['sometimes', 'boolean'], // is_admin is optional, must be boolean
         ]);
 
-        // Siapkan data update
+        // Prepare data for update
         $dataToUpdate = [
             'name' => $request->name,
             'email' => $request->email,
-            'is_admin' => $request->boolean('is_admin'),
+            // Only update is_admin if it was included in the request
+            // Using boolean() handles checkbox value correctly
+            'is_admin' => $request->has('is_admin') ? $request->boolean('is_admin') : $user->is_admin,
         ];
 
-        // Jika password diisi, hash dan tambahkan ke data update
+        // If a new password was provided, hash it and add it to the update data
         if ($request->filled('password')) {
             $dataToUpdate['password'] = Hash::make($request->password);
         }
 
-        // Update data user
+        // Update the user's data
         $user->update($dataToUpdate);
 
-        // Redirect ke halaman index user dengan pesan sukses
+        // Redirect to the user index page with a success message
         return redirect()->route('admin.users.index')->with('success', 'User berhasil diperbarui.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(User $user)
+    public function destroy(User $user) // Route model binding
     {
-        if (Auth::check() && Auth::user()->id == $user->id) {
-            if (Auth::check() && Auth::user()->id == $user->id) {
-                return redirect()->route('admin.users.index')->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
-            }
-
-            // Hapus user
-            $user->delete();
-
-            // Redirect ke halaman index user dengan pesan sukses
-            return redirect()->route('admin.users.index')->with('success', 'User berhasil dihapus.');
+        // Prevent users from deleting their own account
+        // Use Auth::id() which is slightly more direct than checking Auth::check() first
+        if (Auth::id() === $user->id) {
+            return redirect()->route('admin.users.index')
+                       ->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
         }
+
+        // Delete the user
+        $user->delete();
+
+        // Redirect to the user index page with a success message
+        return redirect()->route('admin.users.index')
+                   ->with('success', 'User berhasil dihapus.');
     }
 }
