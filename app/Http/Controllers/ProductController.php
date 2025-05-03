@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Http;      // Diperlukan untuk request API
 use Illuminate\Http\Client\ConnectionException; // Untuk menangani error koneksi API
 use Illuminate\Support\Facades\Log;      // Untuk logging error
 use Illuminate\Support\Str;              // Diperlukan untuk cek http/https
+use Illuminate\Support\Facades\DB;       // Untuk query database
 
 class ProductController extends Controller
 {
@@ -26,13 +27,69 @@ class ProductController extends Controller
     {
         $search = $request->query('search');
 
-        $products = Product::with('stockCombinations.size', 'stockCombinations.color')
-            ->when($search, fn($query) => $query->where('name', 'like', '%' . $search . '%'))
-            ->orderBy('created_at', 'desc')
-            ->paginate(24)
-            ->withQueryString();
+        $productsQuery = Product::query()
+            // Eager load relationships FOR DISPLAY after the query runs.
+            // This `with` does NOT affect the sorting query itself.
+            ->with([
+                'stockCombinations' => function ($query) {
+                    // Optionally order combinations within the eager load if needed for display
+                    $query->orderBy('size_id')->orderBy('color_id');
+                },
+                'stockCombinations.size',
+                'stockCombinations.color'
+            ]);
 
-        // Gunakan accessor $product->image_url di view 'admin.products.index'
+        // Subquery to calculate total stock per product_id
+        $stockAggregationSubQuery = ProductSizeColor::select(
+                'product_id',
+                DB::raw('SUM(stock) as aggregated_stock')
+            )
+            ->groupBy('product_id');
+
+        // Perform a LEFT JOIN from products to the aggregated stock subquery
+        $productsQuery->leftJoinSub(
+            $stockAggregationSubQuery,
+            'stock_summary', // Alias for the subquery result table
+            function ($join) {
+                $join->on('products.id', '=', 'stock_summary.product_id');
+            }
+        );
+
+        // Select all product columns AND the calculated total stock.
+        // Use COALESCE to ensure products with no stock records get 0, not NULL.
+        $productsQuery->select(
+            'products.*',
+            DB::raw('COALESCE(stock_summary.aggregated_stock, 0) as total_stock')
+        );
+
+        // Apply search filter if present (searches columns in the 'products' table)
+        if ($search) {
+            $productsQuery->where(function ($query) use ($search) {
+                $query->where('products.name', 'like', '%' . $search . '%')
+                      ->orWhere('products.description', 'like', '%' . $search . '%');
+            });
+        }
+
+        // Apply Sorting:
+        // 1. Primary Sort: Use a CASE statement. Assign 0 to items with stock, 1 to items without. Sort ASC.
+        // 2. Secondary Sort: Within each group, sort by creation date descending.
+        $productsQuery
+            ->orderByRaw('CASE WHEN COALESCE(stock_summary.aggregated_stock, 0) > 0 THEN 0 ELSE 1 END ASC')
+            ->orderBy('products.created_at', 'desc'); // Newest first within the stock groups
+
+        // Paginate the results
+        $products = $productsQuery->paginate(24) // Adjust pagination count as needed
+                                   ->withQueryString(); // Keep search query in pagination links
+
+        // --- Debugging ---
+        // Uncomment the following line to see the raw SQL query generated.
+        // dd($productsQuery->toSql(), $productsQuery->getBindings());
+
+        // Uncomment to see the calculated total_stock for the products on the current page.
+        // Make sure products you know are out of stock show 0.
+        // dd($products->map(fn($p) => ['name' => $p->name, 'total_stock' => $p->total_stock])->all());
+        // -------------
+
         return view('admin.products.index', compact('products'));
     }
 
