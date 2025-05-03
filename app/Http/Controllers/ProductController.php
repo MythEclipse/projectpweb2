@@ -375,10 +375,9 @@ class ProductController extends Controller
             'name' => $product->name,
             'description' => $product->description,
             'price' => $product->price,
-            'image_url' => $product->image_url, // <-- Menggunakan accessor dari Model
+            'image_url' => $product->image_url, // Menggunakan accessor dari Model
             'stock_combinations' => $product->stockCombinations->map(function ($combination) {
                 return [
-                    // Pastikan size dan color tidak null sebelum akses properti
                     'id' => $combination->id,
                     'size' => $combination->size ? [
                         'id' => $combination->size->id,
@@ -387,8 +386,11 @@ class ProductController extends Controller
                     'color' => $combination->color ? [
                         'id' => $combination->color->id,
                         'name' => $combination->color->name,
+                        // Optionally add color code if needed
+                        // 'code' => $combination->color->code,
                     ] : null,
                     'stock' => $combination->stock,
+                    'is_out_of_stock' => $combination->is_out_of_stock, // <-- Add this line
                 ];
             }),
             'created_at' => $product->created_at ? $product->created_at->toIso8601String() : null,
