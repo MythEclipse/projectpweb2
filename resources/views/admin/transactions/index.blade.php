@@ -6,9 +6,7 @@
             <h2 class="text-2xl font-bold text-gray-800 dark:text-white">
                 Daftar Transaksi
             </h2>
-            <a href="{{ route('admin.transactions.create') }}"  class="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 bg-pink-brand hover:bg-pink-brand-dark text-white rounded-lg shadow-md transition-transform transform hover:scale-105">
-                + Tambah Transaksi {{-- Optional: Add '+' like product button --}}
-            </a>
+
         </div>
     </x-slot>
 

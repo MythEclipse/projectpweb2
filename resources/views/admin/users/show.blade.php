@@ -8,13 +8,13 @@
                 {{-- Tombol kembali --}}
                 <a href="{{ route('admin.users.index') }}"
                    class="inline-flex items-center px-4 py-2 bg-white dark:bg-dark-subcard border border-gray-300 dark:border-dark-border rounded-lg font-semibold text-xs text-gray-800 dark:text-gray-200 uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-dark-card transition">
-                   <x-icon name="arrow-left" class="h-4 w-4 mr-1.5" />
+                   <x-heroicon-s-arrow-left class="h-4 w-4 mr-1.5" />
                     Kembali
                 </a>
                 {{-- Tombol Edit --}}
                 <a href="{{ route('admin.users.edit', $user) }}"
                    class="inline-flex items-center px-4 py-2 bg-yellow-500 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-600 active:bg-yellow-700 transition">
-                   <x-icon name="edit" class="h-4 w-4 mr-1.5" />
+                   <x-heroicon-s-pencil class="h-4 w-4 mr-1.5" />
                     Edit
                 </a>
                 @if (Auth::user()->id != $user->id)
@@ -23,7 +23,7 @@
                         @method('DELETE')
                         <button type="submit"
                                 class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 active:bg-red-800 transition">
-                            <x-icon name="trash" class="h-4 w-4 mr-1.5" />
+                            <x-heroicon-s-trash class="h-4 w-4 mr-1.5" />
                             Hapus
                         </button>
                     </form>

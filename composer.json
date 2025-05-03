@@ -10,6 +10,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "blade-ui-kit/blade-heroicons": "^2.6",
         "guzzlehttp/guzzle": "^7.9",
         "hotwired-laravel/turbo-laravel": "^2.3",
         "laravel/framework": "^12.0",
