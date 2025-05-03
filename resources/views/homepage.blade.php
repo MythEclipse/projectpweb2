@@ -47,123 +47,182 @@
         @endif
 
         {{-- Kontainer Utama Produk --}}
+        {{-- Tambahkan x-data="productList()" di sini jika belum ada di layout utama --}}
+        {{-- Jika productList() sudah ada di layout, pastikan Alpine terinisialisasi sebelum skrip skeleton --}}
         <div class="p-4 sm:p-6 bg-white dark:bg-dark-card rounded-2xl shadow-sm" x-data="productList()">
-            <!-- Pencarian Server-Side -->
-            <form method="GET" action="{{ url()->current() }}" class="relative mb-6">
-                <input type="text" name="search" value="{{ request('search') }}"
-                    class="w-full border border-gray-300 dark:border-dark-border rounded-lg py-2.5 pl-4 pr-12 focus:ring-2 focus:ring-pink-brand/50 focus:border-pink-brand dark:bg-dark-subcard dark:text-text-light placeholder-gray-400 dark:placeholder-gray-500"
-                    placeholder="Cari produk...">
-                <button type="submit"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-pink-brand dark:hover:text-pink-brand-dark transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 21l-4.35-4.35M16.65 16.65a7 7 0 1 0-9.9-9.9 7 7 0 0 0 9.9 9.9z" />
-                    </svg>
-                </button>
-            </form>
-            <!-- /Pencarian Server-Side -->
 
-            <!-- Daftar Produk -->
-            <div id="product-grid"
-                class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
-                @forelse ($products as $product)
-                    <div
-                        class="bg-white dark:bg-dark-subcard rounded-xl shadow-md overflow-hidden flex flex-col group transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                        {{-- Gambar Produk (Klik untuk Detail) --}}
-                        <div class="aspect-square w-full bg-gray-100 dark:bg-dark-border flex items-center justify-center text-gray-400 overflow-hidden relative group cursor-pointer"
-                             @click="openModal({{ json_encode($product->load('stockCombinations.size', 'stockCombinations.color')) }})"> {{-- <<< CHANGED: Added @click and cursor-pointer --}}
-                           {{-- Gunakan accessor $product->image_url dari model --}}
-                            @if ($product->image_url)
-                                <img src="{{ $product->image_url }}"
-                                     alt="{{ $product->name }}"
-                                     class="object-cover h-full w-full group-hover:scale-105 transition-transform duration-300 ease-in-out"
-                                     loading="lazy" {{-- Add lazy loading --}}
-                                     onerror="this.onerror=null; this.src='https://via.placeholder.com/150/EEEEEE/AAAAAA?text=Error';">
-                            @else
-                                {{-- Placeholder Image SVG --}}
-                                <svg class="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
-                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                    </path>
-                                </svg>
-                            @endif
-                        </div>
-
-                        {{-- Konten Detail Produk --}}
-                        <div class="p-3 sm:p-4 flex flex-col flex-grow">
-                            <h3 class="text-sm sm:text-base font-semibold text-text-dark dark:text-text-light mb-1 truncate"
-                                title="{{ $product->name }}">
-                                {{ $product->name }}
-                            </h3>
-                            <p class="text-pink-brand dark:text-pink-brand-dark font-bold text-base sm:text-lg mb-2">
-                                Rp {{ number_format($product->price, 0, ',', '.') }}
-                            </p>
-                             {{-- Simple stock indicator (optional) --}}
-                             @php
-                                 $totalStock = $product->stockCombinations->sum('stock');
-                             @endphp
-                             <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                                 Stok:
-                                 @if($totalStock > 0)
-                                     <span class="text-green-600 font-medium">Tersedia</span>
-                                 @else
-                                     <span class="text-red-500 font-medium">Habis</span>
-                                 @endif
-                             </p>
-
-                            {{-- Tombol Aksi --}}
-                            <div class="mt-auto"> {{-- <<< CHANGED: Removed flex and space-x-2 as Detail button is gone --}}
-                                {{-- <<< REMOVED: Detail Button is gone >>> --}}
-                                <button @click="openBuyModal({{ json_encode($product->load('stockCombinations.size', 'stockCombinations.color')) }})"
-                                    {{-- Disable buy button directly if total stock is 0 --}}
-                                    :disabled="{{ $totalStock <= 0 }}"
-                                    class="w-full bg-pink-brand hover:bg-pink-brand-dark text-white text-xs font-medium rounded-lg px-3 py-1.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-subcard disabled:opacity-50 disabled:cursor-not-allowed"> {{-- <<< CHANGED: Added w-full --}}
-                                    Beli
-                                </button>
+            {{-- >>> START: Skeleton Loader Area <<< --}}
+            <div id="product-list-skeleton" class="hidden">
+                {{-- Skeleton Search Bar --}}
+                <div class="relative mb-6 animate-pulse">
+                    <div class="w-full h-[46px] bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                </div>
+                {{-- Skeleton Grid --}}
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6 animate-pulse">
+                    @php
+                        // Sesuaikan jumlah skeleton item dengan $products->perPage() atau jumlah default
+                        $skeletonCount = $products->perPage() ?: 12;
+                    @endphp
+                    @for ($i = 0; $i < $skeletonCount; $i++)
+                        <div
+                            class="bg-gray-200 dark:bg-dark-subcard/50 rounded-xl shadow-md overflow-hidden flex flex-col h-[270px] sm:h-[290px]"> {{-- Sesuaikan tinggi perkiraan --}}
+                            <div class="aspect-square w-full bg-gray-300 dark:bg-gray-600"></div>
+                            <div class="p-3 sm:p-4 flex flex-col flex-grow space-y-2">
+                                <div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div>
+                                <div class="h-5 bg-gray-300 dark:bg-gray-600 rounded w-1/2"></div>
+                                <div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-1/4 mb-2"></div>
+                                <div class="mt-auto h-8 bg-gray-300 dark:bg-gray-600 rounded w-full"></div>
                             </div>
                         </div>
+                    @endfor
+                </div>
+                {{-- Skeleton Pagination --}}
+                @if ($products->hasPages())
+                <div class="mt-8 animate-pulse flex justify-between items-center">
+                    {{-- Left Group: Pagination Buttons Placeholder --}}
+                    <div class="flex items-center space-x-1 sm:space-x-1.5">
+                        {{-- Prev Button Placeholder --}}
+                        <div class="h-8 w-8 sm:h-9 sm:w-9 bg-gray-300 dark:bg-dark-border rounded-md"></div>
+                        {{-- Page Number Placeholders (adjust count as needed) --}}
+                        <div class="h-8 w-8 sm:h-9 sm:w-9 bg-gray-300 dark:bg-dark-border rounded-md"></div>
+                        {{-- Active Page Placeholder --}}
+                        <div class="h-8 w-8 sm:h-9 sm:w-9 bg-pink-300 dark:bg-pink-800/50 rounded-md"></div>
+                        <div class="h-8 w-8 sm:h-9 sm:w-9 bg-gray-300 dark:bg-dark-border rounded-md"></div>
+                         {{-- Ellipsis Placeholder (Optional) --}}
+                        {{-- <div class="h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center text-gray-400">...</div> --}}
+                        {{-- Next Button Placeholder --}}
+                        <div class="h-8 w-8 sm:h-9 sm:w-9 bg-gray-300 dark:bg-dark-border rounded-md"></div>
                     </div>
-                @empty
-                    {{-- Tampilan jika tidak ada produk --}}
-                    <div class="col-span-full text-center py-12">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" aria-hidden="true">
-                            <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+
+                    {{-- Right Group: Results Text Placeholder --}}
+                    <div class="h-4 bg-gray-300 dark:bg-dark-border rounded w-36 sm:w-48"></div>
+                </div>
+                @endif
+            </div>
+            {{-- >>> END: Skeleton Loader Area <<< --}}
+
+            {{-- Kontainer untuk Konten Asli (Akan disembunyikan saat loading) --}}
+            <div id="product-list-content">
+                <!-- Pencarian Server-Side -->
+                <form method="GET" action="{{ url()->current() }}" class="relative mb-6" data-turbo-frame="products_list_frame" {{-- Optional: Make search use Turbo too --}}>
+                    <input type="text" name="search" value="{{ request('search') }}"
+                        class="w-full border border-gray-300 dark:border-dark-border rounded-lg py-2.5 pl-4 pr-12 focus:ring-2 focus:ring-pink-brand/50 focus:border-pink-brand dark:bg-dark-subcard dark:text-text-light placeholder-gray-400 dark:placeholder-gray-500"
+                        placeholder="Cari produk...">
+                    <button type="submit"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-pink-brand dark:hover:text-pink-brand-dark transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-4.35-4.35M16.65 16.65a7 7 0 1 0-9.9-9.9 7 7 0 0 0 9.9 9.9z" />
                         </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-200">Produk tidak ditemukan
-                        </h3>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            @if (request('search'))
-                                Tidak ada produk yang cocok dengan pencarian "{{ request('search') }}".
-                            @else
-                                Belum ada produk yang tersedia.
-                            @endif
-                        </p>
-                        @if (request('search'))
-                            <div class="mt-6">
-                                <a href="{{ url()->current() }}"
-                                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-pink-brand hover:bg-pink-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 dark:focus:ring-offset-dark-main">
-                                    Hapus Pencarian
-                                </a>
+                    </button>
+                </form>
+                <!-- /Pencarian Server-Side -->
+
+                <!-- Daftar Produk -->
+                <div id="product-grid"
+                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
+                    @forelse ($products as $product)
+                        <div
+                            class="bg-white dark:bg-dark-subcard rounded-xl shadow-md overflow-hidden flex flex-col group transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                            {{-- Gambar Produk (Klik untuk Detail) --}}
+                            <div class="aspect-square w-full bg-gray-100 dark:bg-dark-border flex items-center justify-center text-gray-400 overflow-hidden relative group cursor-pointer"
+                                @click="openModal({{ json_encode($product->load('stockCombinations.size', 'stockCombinations.color')) }})">
+                                {{-- Gunakan accessor $product->image_url dari model --}}
+                                @if ($product->image_url)
+                                    <img src="{{ $product->image_url }}"
+                                        alt="{{ $product->name }}"
+                                        class="object-cover h-full w-full group-hover:scale-105 transition-transform duration-300 ease-in-out"
+                                        loading="lazy" {{-- Add lazy loading --}}
+                                        onerror="this.onerror=null; this.src='https://via.placeholder.com/150/EEEEEE/AAAAAA?text=Error';">
+                                @else
+                                    {{-- Placeholder Image SVG --}}
+                                    <svg class="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                        </path>
+                                    </svg>
+                                @endif
                             </div>
-                        @endif
-                    </div>
-                @endforelse
-            </div>
-            <!-- /Daftar Produk -->
 
-            <!-- Pagination -->
-            @if ($products->hasPages())
-            <div class="mt-8">
-                {{ $products->links() }}
-            </div>
-            @endif
-            <!-- /Pagination -->
+                            {{-- Konten Detail Produk --}}
+                            <div class="p-3 sm:p-4 flex flex-col flex-grow">
+                                <h3 class="text-sm sm:text-base font-semibold text-text-dark dark:text-text-light mb-1 truncate"
+                                    title="{{ $product->name }}">
+                                    {{ $product->name }}
+                                </h3>
+                                <p class="text-pink-brand dark:text-pink-brand-dark font-bold text-base sm:text-lg mb-2">
+                                    Rp {{ number_format($product->price, 0, ',', '.') }}
+                                </p>
+                                {{-- Simple stock indicator (optional) --}}
+                                @php
+                                    $totalStock = $product->stockCombinations->sum('stock');
+                                @endphp
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                                    Stok:
+                                    @if($totalStock > 0)
+                                        <span class="text-green-600 font-medium">Tersedia</span>
+                                    @else
+                                        <span class="text-red-500 font-medium">Habis</span>
+                                    @endif
+                                </p>
 
+                                {{-- Tombol Aksi --}}
+                                <div class="mt-auto">
+                                    <button @click="openBuyModal({{ json_encode($product->load('stockCombinations.size', 'stockCombinations.color')) }})"
+                                        {{-- Disable buy button directly if total stock is 0 --}}
+                                        :disabled="{{ $totalStock <= 0 }}"
+                                        class="w-full bg-pink-brand hover:bg-pink-brand-dark text-white text-xs font-medium rounded-lg px-3 py-1.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-subcard disabled:opacity-50 disabled:cursor-not-allowed">
+                                        Beli
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        {{-- Tampilan jika tidak ada produk --}}
+                        <div class="col-span-full text-center py-12">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" aria-hidden="true">
+                                <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-200">Produk tidak ditemukan
+                            </h3>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                @if (request('search'))
+                                    Tidak ada produk yang cocok dengan pencarian "{{ request('search') }}".
+                                @else
+                                    Belum ada produk yang tersedia.
+                                @endif
+                            </p>
+                            @if (request('search'))
+                                <div class="mt-6">
+                                    <a href="{{ url()->current() }}"
+                                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-pink-brand hover:bg-pink-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 dark:focus:ring-offset-dark-main"
+                                        data-turbo-action="replace" {{-- Ensure search reset also works within frame --}}
+                                        >
+                                        Hapus Pencarian
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
+                    @endforelse
+                </div>
+                <!-- /Daftar Produk -->
+
+                <!-- Pagination -->
+                @if ($products->hasPages())
+                <div class="mt-8" id="product-pagination"> {{-- ID untuk pagination --}}
+                    {{ $products->links() }}
+                </div>
+                @endif
+                <!-- /Pagination -->
+            </div> {{-- End #product-list-content --}}
+
+
+            {{-- MODAL BELI DAN DETAIL TETAP SAMA DI BAWAH INI --}}
             <!-- =================================== -->
             <!--          MODAL BELI SECTION         -->
             <!-- =================================== -->
@@ -429,14 +488,7 @@
                                     </div>
                                 </div>
                             </div>
-
-                            {{-- Tombol Tutup (optional, as clicking away closes) --}}
-                            {{-- <div class="mt-6 text-right">
-                                <button @click="closeModal"
-                                    class="px-5 py-2 bg-pink-brand hover:bg-pink-brand-dark text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-card">
-                                    Tutup
-                                </button>
-                            </div> --}}
+                            {{-- Tombol Tutup tidak diperlukan karena @click.away dan tombol close di sudut --}}
                         </div>
                     </template>
                     {{-- Fallback jika selectedProduct null --}}
@@ -455,6 +507,7 @@
     </turbo-frame>
 
     @push('scripts')
+        {{-- Skrip Alpine productList() tetap sama --}}
         <script>
             function productList() {
                 return {
@@ -787,6 +840,107 @@
             }
         </script>
 
+        {{-- >>> START: Skrip untuk Skeleton Loader <<< --}}
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const frameId = 'products_list_frame';
+                const frameElement = document.getElementById(frameId);
+                const skeletonContainerId = 'product-list-skeleton';
+                const contentContainerId = 'product-list-content';
+
+                let isActualNavigation = false; // Flag untuk menandai klik navigasi
+
+                if (!frameElement) {
+                    console.warn(`Turbo Frame with ID #${frameId} not found.`);
+                    return;
+                }
+
+                const getSkeletonContainer = () => frameElement.querySelector(`#${skeletonContainerId}`);
+                const getContentContainer = () => frameElement.querySelector(`#${contentContainerId}`);
+
+                // Fungsi untuk menampilkan skeleton dan menyembunyikan konten
+                const showSkeleton = () => {
+                    const contentContainer = getContentContainer();
+                    const skeletonContainer = getSkeletonContainer();
+                    if (contentContainer) contentContainer.style.display = 'none';
+                    if (skeletonContainer) skeletonContainer.style.display = 'block';
+                    console.log('Skeleton Shown (Actual Navigation)');
+                };
+
+                // Fungsi untuk menyembunyikan skeleton dan menampilkan konten (yang baru dimuat)
+                const hideSkeleton = () => {
+                    const skeletonContainer = getSkeletonContainer();
+                    const contentContainer = getContentContainer(); // Dapatkan lagi kalau-kalau dirender ulang
+                    if (skeletonContainer) skeletonContainer.style.display = 'none';
+                    // Pastikan konten terlihat setelah skeleton hilang (terutama jika terjadi error)
+                    if (contentContainer && contentContainer.style.display === 'none') {
+                         contentContainer.style.display = 'block'; // Atau 'grid', 'flex' sesuai layout Anda
+                    }
+                    console.log('Skeleton Hidden');
+                };
+
+                // 1. Listener untuk klik link Turbo di dalam frame
+                frameElement.addEventListener('click', (event) => {
+                    // Pastikan yang diklik adalah link anchor (<a>) yang akan diproses Turbo
+                    // dan bukan link yang sengaja dinonaktifkan dari Turbo ([data-turbo="false"])
+                    const link = event.target.closest('a[href]:not([data-turbo="false"])');
+                    if (link && frameElement.contains(link)) {
+                        isActualNavigation = true;
+                        console.log('turbo:click detected inside frame, setting isActualNavigation = true');
+                    }
+                });
+
+                // 2. Listener sebelum request fetch oleh Turbo
+                document.addEventListener('turbo:before-fetch-request', (event) => {
+                    // Periksa apakah request ini berasal dari klik navigasi aktual
+                    // Kita tidak perlu memeriksa `frameElement.contains(event.target)` lagi
+                    // karena flag hanya diset oleh klik di dalam frame.
+                    if (isActualNavigation) {
+                        console.log('Fetch request starting AND isActualNavigation=true, showing skeleton.');
+                        showSkeleton();
+                    } else {
+                         console.log('Fetch request starting BUT isActualNavigation=false (likely prefetch), skipping skeleton.');
+                    }
+                });
+
+                // 3. Listener setelah frame berhasil dirender (konten baru masuk)
+                document.addEventListener('turbo:frame-render', (event) => {
+                    // Periksa apakah event ini untuk frame target kita
+                    if (event.target.id === frameId) {
+                        console.log('Turbo frame rendered, hiding skeleton and resetting flag.');
+                        hideSkeleton();
+                        isActualNavigation = false; // Reset flag setelah render selesai
+                    }
+                });
+
+                // 4. Listener jika terjadi error saat fetch
+                document.addEventListener('turbo:fetch-request-error', (event) => {
+                    // Selalu sembunyikan skeleton jika terjadi error, terlepas dari flag
+                    // karena navigasi yang di-flag mungkin gagal.
+                     const skeletonContainer = getSkeletonContainer();
+                     if (skeletonContainer && skeletonContainer.style.display !== 'none') {
+                        console.error('Turbo fetch error occurred, hiding skeleton and resetting flag.');
+                        hideSkeleton();
+                        isActualNavigation = false; // Reset flag pada error juga
+                     }
+                });
+
+                // 5. Sembunyikan skeleton jika user kembali menggunakan cache (Browser back button)
+                document.addEventListener("turbo:load", function() {
+                    console.log('Turbo full page load/cache restore, ensuring skeleton is hidden and flag reset.');
+                    // Pastikan skeleton tersembunyi dan flag direset saat halaman dimuat penuh
+                    // (termasuk dari cache Turbo)
+                    const skeletonContainer = getSkeletonContainer();
+                    if (skeletonContainer && skeletonContainer.style.display === 'block') {
+                         hideSkeleton();
+                    }
+                    isActualNavigation = false;
+                });
+
+            });
+        </script>
+        {{-- >>> END: Skrip untuk Skeleton Loader <<< --}}
+
         {{-- Optional: Add scrollbar styling if using tailwindcss-scrollbar --}}
         <style>
             /* Optional: Slim scrollbar for stock details */
@@ -802,6 +956,11 @@
             .prose-sm :where(p):where([class~="lead"]):not(:where([class~="not-prose"] *)) {
                  margin-top: 0.8em; /* Adjust spacing if needed */
                  margin-bottom: 0.8em;
+            }
+
+            /* Aturan untuk skeleton agar tidak terlihat saat inspect element sebelum JS jalan */
+            #product-list-skeleton:not([style*="display: block"]) {
+                display: none !important;
             }
         </style>
     @endpush
