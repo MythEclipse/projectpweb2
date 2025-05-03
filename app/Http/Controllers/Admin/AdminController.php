@@ -10,6 +10,7 @@ use App\Models\User;          // Import the User model (representing customers)
 use Carbon\Carbon;            // Import Carbon for date manipulation
 use Illuminate\Support\Facades\Auth; // Import Auth facade if needed directly (though Auth::user() works)
 use Illuminate\Support\Facades\DB;   // Optional: If needed for more complex queries
+use Illuminate\Support\Facades\Log;  // Import Log facade for logging
 
 class AdminController extends Controller
 {
@@ -34,13 +35,29 @@ class AdminController extends Controller
 
         // 4. Revenue This Month
         // Sums the 'total' column for transactions marked as 'paid' within the current calendar month.
-        $revenueThisMonth = Transaction::where('payment_status', 'paid') // Or your equivalent status for a completed/paid order
-                                       ->whereMonth('created_at', Carbon::now()->month)
-                                       ->whereYear('created_at', Carbon::now()->year)
-                                       ->sum('total'); // Sum the 'total' field from your transactions table
+        $revenueThisMonth = Transaction::where('status', 'complete')
+            ->whereMonth('created_at', Carbon::now()->month) // Checks CURRENT month
+            ->whereYear('created_at', Carbon::now()->year)  // Checks CURRENT year
+            ->sum('total');
 
         // Format the revenue into a more readable string (e.g., "Rp 15.7jt" or "Rp 15.700.000")
         // Option 1: Format as 'jt' (juta/million)
+        // --- Temporary Test ---
+        $revenueThisMonth_TestAllTime = Transaction::where('status', 'complete')
+            // ->whereMonth('created_at', Carbon::now()->month) // Temporarily disable
+            // ->whereYear('created_at', Carbon::now()->year)  // Temporarily disable
+            ->sum('total');
+
+        Log::info('Total Revenue (All Time Completed): ' . $revenueThisMonth_TestAllTime); // Check your laravel.log file
+        // dd($revenueThisMonth_TestAllTime); // Or dump and die here for immediate feedback
+        // --- End Temporary Test ---
+
+        // Original query (keep this one for the actual logic)
+        $revenueThisMonth = Transaction::where('status', 'completed')
+            ->whereMonth('created_at', Carbon::now()->month)
+            ->whereYear('created_at', Carbon::now()->year)
+            ->sum('total');
+
         $formattedRevenue = 'Rp ' . number_format($revenueThisMonth / 1000000, 1, ',', '.') . 'jt';
         // Option 2: Format with full thousands separators
         // $formattedRevenue = 'Rp ' . number_format($revenueThisMonth, 0, ',', '.');
@@ -51,13 +68,13 @@ class AdminController extends Controller
         // Example: Get the 5 most recent transactions (orders)
         // Eager load the 'user' relationship to avoid N+1 query issues in the view
         $recentTransactions = Transaction::with('user')
-                                           ->latest() // Order by created_at descending (newest first)
-                                           ->take(5)  // Limit the results
-                                           ->get();
+            ->latest() // Order by created_at descending (newest first)
+            ->take(5)  // Limit the results
+            ->get();
 
         // You could add more activity types here if needed:
-        // $recentUsers = User::latest()->take(3)->get();
-        // $recentProductUpdates = Product::latest('updated_at')->take(3)->get();
+        $recentUsers = User::latest()->take(3)->get();
+        $recentProductUpdates = Product::latest('updated_at')->take(3)->get();
 
 
         // --- Pass Data to the View ---
@@ -68,8 +85,8 @@ class AdminController extends Controller
             'newOrdersCount'    => $newOrdersCount,
             'totalCustomers'    => $totalCustomers,
             'formattedRevenue'  => $formattedRevenue,    // Pass the pre-formatted string
-            'recentTransactions'=> $recentTransactions, // Pass the collection of recent transactions
-            // 'recentUsers' => $recentUsers,           // Pass other activity data if you fetched it
+            'recentTransactions' => $recentTransactions, // Pass the collection of recent transactions
+            'recentUsers' => $recentUsers,           // Pass other activity data if you fetched it
         ]);
     }
 
