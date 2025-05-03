@@ -7,15 +7,7 @@
                 showModal: true,
                 closeModal() {
                     this.showModal = false;
-                    // Optional: Clear flash session via AJAX if needed,
-                    // otherwise let the next page load handle it.
-                    // fetch('{{ route('session.clear.flash') }}', { // Ensure this route exists if used
-                    //     method: 'POST',
-                    //     headers: {
-                    //         'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    //         'Accept': 'application/json'
-                    //     }
-                    // });
+                    // Optional: Clear flash session via AJAX if needed
                 }
             }" x-init="$nextTick(() => showModal = true)" x-show="showModal"
                 x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90"
@@ -41,11 +33,9 @@
                             </svg>
                         </button>
                     </div>
-
                     <p class="text-text-dark dark:text-text-light mb-6">
                         {{ session('success') ?? session('error') }}
                     </p>
-
                     <div class="flex justify-end">
                         <button @click="closeModal"
                             class="px-4 py-2 bg-pink-brand text-white rounded-lg hover:bg-pink-brand-dark transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-card">
@@ -80,8 +70,9 @@
                 @forelse ($products as $product)
                     <div
                         class="bg-white dark:bg-dark-subcard rounded-xl shadow-md overflow-hidden flex flex-col group transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                        {{-- Gambar Produk --}}
-                        <div class="aspect-square w-full bg-gray-100 dark:bg-dark-border flex items-center justify-center text-gray-400 overflow-hidden relative">
+                        {{-- Gambar Produk (Klik untuk Detail) --}}
+                        <div class="aspect-square w-full bg-gray-100 dark:bg-dark-border flex items-center justify-center text-gray-400 overflow-hidden relative group cursor-pointer"
+                             @click="openModal({{ json_encode($product->load('stockCombinations.size', 'stockCombinations.color')) }})"> {{-- <<< CHANGED: Added @click and cursor-pointer --}}
                            {{-- Gunakan accessor $product->image_url dari model --}}
                             @if ($product->image_url)
                                 <img src="{{ $product->image_url }}"
@@ -121,21 +112,14 @@
                                      <span class="text-red-500 font-medium">Habis</span>
                                  @endif
                              </p>
-                            {{-- <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-3 flex-grow">
-                                {{ $product->description ?? 'Tidak ada deskripsi.' }}
-                            </p> --}}
 
                             {{-- Tombol Aksi --}}
-                            <div class="mt-auto flex space-x-2">
-                                {{-- Encode product data for Alpine, ensure stockCombinations are loaded --}}
-                                <button @click="openModal({{ json_encode($product->load('stockCombinations.size', 'stockCombinations.color')) }})"
-                                    class="flex-1 bg-gray-100 dark:bg-dark-border hover:bg-gray-200 dark:hover:bg-dark-card text-text-dark dark:text-text-light px-3 py-1.5 rounded-lg text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-dark-subcard">
-                                    Detail
-                                </button>
+                            <div class="mt-auto"> {{-- <<< CHANGED: Removed flex and space-x-2 as Detail button is gone --}}
+                                {{-- <<< REMOVED: Detail Button is gone >>> --}}
                                 <button @click="openBuyModal({{ json_encode($product->load('stockCombinations.size', 'stockCombinations.color')) }})"
                                     {{-- Disable buy button directly if total stock is 0 --}}
                                     :disabled="{{ $totalStock <= 0 }}"
-                                    class="bg-pink-brand hover:bg-pink-brand-dark text-white text-xs font-medium rounded-lg px-3 py-1.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-subcard disabled:opacity-50 disabled:cursor-not-allowed">
+                                    class="w-full bg-pink-brand hover:bg-pink-brand-dark text-white text-xs font-medium rounded-lg px-3 py-1.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-subcard disabled:opacity-50 disabled:cursor-not-allowed"> {{-- <<< CHANGED: Added w-full --}}
                                     Beli
                                 </button>
                             </div>
@@ -278,10 +262,10 @@
                             <div class="mb-4">
                                 <label for="buy-size" class="block text-sm font-medium mb-1 text-text-dark dark:text-text-light">Pilih Ukuran</label>
                                 <select id="buy-size" name="size_id" x-model="selectedSizeId"
-                                    @change="updateAvailableColors();"
+                                    @change="updateAvailableColors(); updateMaxStock();" {{-- Added updateMaxStock here too --}}
                                     class="w-full p-2 border border-gray-300 dark:border-dark-border rounded-lg dark:bg-dark-subcard dark:text-text-light focus:ring-pink-brand focus:border-pink-brand disabled:opacity-50 disabled:bg-gray-100 dark:disabled:bg-dark-border"
                                     required
-                                    :disabled="availableSizes.length === 0"> {{-- Disable if no sizes available at all --}}
+                                    :disabled="availableSizes.length === 0">
                                     <option value="">-- Pilih Ukuran --</option>
                                     <template x-for="size in availableSizes" :key="size.id">
                                         <option :value="size.id" x-text="size.name"></option>
@@ -297,10 +281,10 @@
                             <div class="mb-4">
                                 <label for="buy-color" class="block text-sm font-medium mb-1 text-text-dark dark:text-text-light">Pilih Warna</label>
                                 <select id="buy-color" name="color_id" x-model="selectedColorId"
-                                    @change="updateAvailableSizes();"
+                                    @change="updateAvailableSizes(); updateMaxStock();" {{-- Added updateMaxStock here too --}}
                                     class="w-full p-2 border border-gray-300 dark:border-dark-border rounded-lg dark:bg-dark-subcard dark:text-text-light focus:ring-pink-brand focus:border-pink-brand disabled:opacity-50 disabled:bg-gray-100 dark:disabled:bg-dark-border"
                                     required
-                                    :disabled="availableColors.length === 0 || !selectedSizeId"> {{-- Disable if no colors or size not selected --}}
+                                    :disabled="availableColors.length === 0 || !selectedSizeId">
                                     <option value="">-- Pilih Warna --</option>
                                     <template x-for="color in availableColors" :key="color.id">
                                         <option :value="color.id" x-text="color.name"></option>
@@ -318,25 +302,21 @@
                                 <div class="flex items-center">
                                     <input id="buy-quantity" type="number" name="quantity"
                                         class="w-full p-2 border border-gray-300 dark:border-dark-border rounded-lg dark:bg-dark-subcard dark:text-text-light focus:ring-pink-brand focus:border-pink-brand disabled:opacity-50 disabled:bg-gray-100 dark:disabled:bg-dark-border"
-                                        min="1" :max="maxStock > 0 ? maxStock : 1" {{-- Set max to 1 if stock is 0, just as a fallback --}}
+                                        min="1" :max="maxStock > 0 ? maxStock : 1"
                                         x-model.number="quantity"
                                         @input="validateQuantity()"
                                         required
-                                        {{-- Disable if size/color not chosen OR if maxStock is 0 or less --}}
                                         :disabled="!selectedSizeId || !selectedColorId || maxStock <= 0"
                                     />
-                                    {{-- Show Max Stock only if selections made and stock > 0 --}}
                                     <span x-show="selectedSizeId && selectedColorId && maxStock > 0"
                                           class="ml-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
                                         (Max: <span x-text="maxStock"></span>)
                                     </span>
-                                    {{-- Show Out of Stock message if selections made and stock <= 0 --}}
                                     <span x-show="selectedSizeId && selectedColorId && maxStock <= 0"
                                           class="ml-2 text-xs text-red-500 whitespace-nowrap font-medium">
                                         (Stok Habis)
                                     </span>
                                 </div>
-                                {{-- Helper text if selections not made --}}
                                 <p x-show="!selectedSizeId || !selectedColorId" class="mt-1 text-xs text-orange-500">
                                     Pilih ukuran dan warna terlebih dahulu.
                                 </p>
@@ -350,7 +330,6 @@
                                     Batal
                                 </button>
                                 <button type="submit"
-                                    {{-- Comprehensive disable condition --}}
                                     :disabled="!selectedSizeId || !selectedColorId || !quantity || quantity < 1 || maxStock <= 0 || quantity > maxStock"
                                     class="px-4 py-2 text-sm font-medium bg-pink-brand text-white rounded-lg hover:bg-pink-brand-dark transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-card disabled:opacity-50 disabled:cursor-not-allowed">
                                     Beli Sekarang
@@ -376,23 +355,27 @@
                 x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0"
                 class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[70] p-4" {{-- Higher z-index than buy modal --}}
-                @click.away="closeModal" style="display: none;">
+                 style="display: none;">
+                {{-- Removed @click.away here - clicking outside the content box below will close it --}}
 
                 <div x-show="modalOpen" x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                     x-transition:leave="transition ease-in duration-200"
                     x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                    class="bg-white dark:bg-dark-card rounded-2xl p-5 sm:p-6 w-full max-w-lg shadow-xl dark:border dark:border-dark-border"
-                    @click.stop> {{-- Prevent closing when clicking inside --}}
+                    class="bg-white dark:bg-dark-card rounded-2xl p-5 sm:p-6 w-full max-w-lg shadow-xl dark:border dark:border-dark-border relative" {{-- Added relative for potential absolute positioning inside if needed --}}
+                    @click.away="closeModal"> {{-- <<< CHANGED: Moved @click.away here --}}
 
                     <template x-if="selectedProduct">
                         <div>
-                            <div class="flex justify-between items-start mb-4"> {{-- items-start for long titles --}}
-                                <h3 class="text-xl font-semibold text-text-dark dark:text-text-light pr-4" x-text="selectedProduct.name"></h3>
-                                <button @click="closeModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                </button>
-                            </div>
+                             {{-- Close button moved to top right corner for better standard UX --}}
+                             <button @click="closeModal" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 z-10 p-1 bg-white/50 dark:bg-dark-card/50 rounded-full">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+
+                            {{-- Title now below the close button area --}}
+                             <h3 class="text-xl font-semibold text-text-dark dark:text-text-light mb-4 pr-8" {{-- Added pr-8 to avoid overlap with close button --}}
+                                x-text="selectedProduct.name">
+                            </h3>
 
                             <div class="md:flex md:space-x-6">
                                 {{-- Kolom Gambar --}}
@@ -439,23 +422,30 @@
                                     {{-- Description --}}
                                     <div>
                                         <p class="font-medium text-text-dark dark:text-text-light mb-1">Deskripsi:</p>
-                                        <p class="text-gray-600 dark:text-gray-400 leading-relaxed prose prose-sm dark:prose-invert max-w-none" x-html="selectedProduct.description || 'Tidak ada deskripsi.'"></p> {{-- Use x-html if description might contain basic HTML --}}
+                                        <div class="text-gray-600 dark:text-gray-400 leading-relaxed prose prose-sm dark:prose-invert max-w-none max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
+                                             x-html="selectedProduct.description || 'Tidak ada deskripsi.'">
+                                        </div>
+                                         {{-- Use x-html if description might contain basic HTML. Added max-h and overflow. --}}
                                     </div>
                                 </div>
                             </div>
 
-                            {{-- Tombol Tutup --}}
-                            <div class="mt-6 text-right">
+                            {{-- Tombol Tutup (optional, as clicking away closes) --}}
+                            {{-- <div class="mt-6 text-right">
                                 <button @click="closeModal"
                                     class="px-5 py-2 bg-pink-brand hover:bg-pink-brand-dark text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-card">
                                     Tutup
                                 </button>
-                            </div>
+                            </div> --}}
                         </div>
                     </template>
                     {{-- Fallback jika selectedProduct null --}}
-                    <template x-if="!selectedProduct">
-                        <p class="text-center text-gray-500 dark:text-gray-400 py-8">Gagal memuat detail produk.</p>
+                    <template x-if="!selectedProduct && modalOpen"> {{-- Show only if modal intended to be open --}}
+                         <div class="text-center py-8">
+                            <p class="text-gray-500 dark:text-gray-400">Memuat detail produk...</p>
+                             {{-- Optional: Add a spinner here --}}
+                             <button @click="closeModal" class="mt-4 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-dark-border rounded-lg hover:bg-gray-200 dark:hover:bg-dark-card transition-colors">Tutup</button>
+                        </div>
                     </template>
                 </div>
             </div>
@@ -493,56 +483,77 @@
                     },
 
                     getProductImageUrl(product, placeholder = 'https://via.placeholder.com/150/EEEEEE/AAAAAA?text=No+Image') {
-                        if (!product || !product.image_url) { // Use image_url from accessor
-                             if (!product || !product.image) { // Fallback check for raw image path
-                                 return placeholder;
-                             }
-                             // If image_url is missing but image path exists, construct it
-                             const imagePath = product.image;
-                              if (this.isExternalImage(imagePath)) {
-                                 return imagePath; // Should have been image_url, but handle just in case
-                             } else {
-                                 return this.storageBaseUrl + '/' + imagePath.replace(/^\//, '');
-                             }
+                        if (!product) return placeholder; // Guard against null product
+
+                        if (product.image_url) { // Primary: use the accessor value
+                           return product.image_url;
+                        } else if (product.image) { // Fallback check for raw image path
+                            const imagePath = product.image;
+                            if (this.isExternalImage(imagePath)) {
+                                return imagePath;
+                            } else {
+                                // Ensure no double slashes if storageBaseUrl ends with / and imagePath starts with /
+                                return this.storageBaseUrl + '/' + imagePath.replace(/^\/+/, '');
+                            }
+                        } else {
+                            return placeholder; // No image info at all
                         }
-                        return product.image_url; // Primary: use the accessor value
                     },
 
                     // --- Methods for Modals ---
                     openModal(product) { // Detail Modal
                         console.log("Opening Detail Modal for:", product);
-                        this.selectedProduct = product;
-                        this.modalOpen = true;
+                         if (!product) {
+                             console.error("Cannot open detail modal, product data is null.");
+                             return;
+                         }
+                        this.selectedProduct = product; // Set product data immediately
+                        this.modalOpen = true; // Then open modal
                     },
 
                     closeModal() { // Detail Modal
                         this.modalOpen = false;
-                        setTimeout(() => { this.selectedProduct = null; }, 300); // Delay clear for transition
+                        // Delay clearing product only if you need animations to finish smoothly
+                        // Using @click.away on the modal content handles the closing trigger
+                        setTimeout(() => {
+                            if (!this.modalOpen) { // Check if it wasn't reopened quickly
+                                this.selectedProduct = null;
+                            }
+                         }, 300); // Match transition duration
                     },
 
                     openBuyModal(product) { // Buy Modal
-                        if (!product || !product.stockCombinations || product.stockCombinations.reduce((sum, c) => sum + c.stock, 0) <= 0) {
-                            console.warn("Buy modal blocked: Product or stockCombinations missing, or total stock is zero.");
-                            // Optionally show a notification to the user here
-                            return; // Prevent opening if fundamentally out of stock
+                        if (!product || !product.stock_combinations || product.stock_combinations.reduce((sum, c) => sum + (c.stock || 0), 0) <= 0) {
+                            console.warn("Buy modal blocked: Product/stockCombinations missing, or total stock is zero.", product);
+                            // Optionally show a user notification here (e.g., using a toast library)
+                            alert("Produk ini sedang tidak tersedia."); // Simple alert example
+                            return; // Prevent opening
                         }
                         console.log("Opening Buy Modal for:", product);
                         this.selectedProduct = product;
                         this.loading = true;
+                        this.showBuyModal = true; // Open modal container first
                         this.resetBuyFormState();
 
-                        this.$nextTick(() => { // Ensure DOM is ready if needed, though likely not critical here
-                            this.populateInitialOptions();
-                            this.loading = false;
-                            this.showBuyModal = true;
+                        this.$nextTick(() => { // Ensure modal structure exists before populating
+                            try {
+                                this.populateInitialOptions();
+                            } catch (error) {
+                                console.error("Error populating buy modal options:", error);
+                                // Optionally close modal or show error message inside
+                            } finally {
+                                this.loading = false; // Turn off loading state
+                            }
                         });
                     },
 
                     closeBuyModal() { // Buy Modal
                         this.showBuyModal = false;
                         setTimeout(() => {
-                            this.selectedProduct = null;
-                            this.resetBuyFormState();
+                             if (!this.showBuyModal) { // Check if it wasn't reopened quickly
+                                this.selectedProduct = null; // Clear product data after transition
+                                this.resetBuyFormState(); // Reset form state as well
+                             }
                         }, 300);
                     },
 
@@ -554,46 +565,57 @@
                         this.maxStock = 0;
                         this.availableSizes = [];
                         this.availableColors = [];
+                         // Reset any validation messages if needed
                     },
 
-                    populateInitialOptions() {
-                        if (!this.selectedProduct || !this.selectedProduct.stock_combinations) {
-                            console.error("Stock combinations missing for populating options.");
-                            this.availableSizes = [];
-                            this.availableColors = [];
-                            return;
-                        }
+                     populateInitialOptions() {
+                         if (!this.selectedProduct || !this.selectedProduct.stock_combinations) {
+                             console.error("Stock combinations missing for populating options.");
+                             this.availableSizes = [];
+                             this.availableColors = [];
+                             return;
+                         }
 
-                        const combinations = this.selectedProduct.stock_combinations.filter(c => c.stock > 0); // Only consider combinations with stock > 0 for initial options
+                         // --- Get All Unique Sizes & Colors from Combinations ---
+                         const allSizes = new Map();
+                         const allColors = new Map();
+                         this.selectedProduct.stock_combinations.forEach(c => {
+                             if (c.size) allSizes.set(c.size.id, c.size);
+                             if (c.color) allColors.set(c.color.id, c.color);
+                         });
 
-                        // Use Maps to get unique sizes/colors *that have stock*
-                         const uniqueSizesWithStock = [...new Map(combinations
-                                .filter(c => c.size) // Ensure size object exists
-                                .map(item => [item.size.id, { id: item.size.id, name: item.size.name }])) // Use direct size name
-                            .values()
-                        ];
+                         // --- Determine Initially Available Sizes (those part of *any* combination with stock > 0) ---
+                         const sizesWithAnyStock = new Set();
+                         this.selectedProduct.stock_combinations.forEach(c => {
+                             if (c.stock > 0 && c.size_id) {
+                                 sizesWithAnyStock.add(c.size_id);
+                             }
+                         });
+                         this.availableSizes = [...allSizes.values()].filter(size => sizesWithAnyStock.has(size.id));
 
-                        // Populate all unique colors initially, filtering will happen on size change
-                         const allUniqueColors = [...new Map(this.selectedProduct.stock_combinations // Use original list for all colors
-                                .filter(c => c.color) // Ensure color object exists
-                                .map(item => [item.color.id, { id: item.color.id, name: item.color.name }])) // Use direct color name
-                            .values()
-                        ];
+                         // --- Set All Colors Initially ---
+                         // We filter colors *after* a size is selected.
+                         this.availableColors = [...allColors.values()];
 
-                        this.availableSizes = uniqueSizesWithStock;
-                        this.availableColors = allUniqueColors; // Start with all colors
+                         // --- Reset selections and stock ---
+                         this.selectedSizeId = '';
+                         this.selectedColorId = '';
+                         this.maxStock = 0;
+                         this.quantity = 1;
 
-                         // If only one size is available initially, auto-select it
-                        if (this.availableSizes.length === 1) {
-                            this.selectedSizeId = this.availableSizes[0].id;
-                            this.updateAvailableColors(); // Trigger color filtering and stock update
-                        } else {
-                             this.selectedSizeId = ''; // Ensure reset if multiple options
-                             this.selectedColorId = '';
-                             this.maxStock = 0;
-                             this.quantity = 1;
-                        }
-                    },
+                         // --- Auto-select if only one size option ---
+                         if (this.availableSizes.length === 1) {
+                             this.selectedSizeId = this.availableSizes[0].id;
+                             // IMPORTANT: Trigger updates after auto-selecting size
+                             this.$nextTick(() => { // Ensure Alpine picks up the change
+                                 this.updateAvailableColors();
+                                 // No need to call updateMaxStock here, updateAvailableColors calls it
+                             });
+                         } else {
+                              // Ensure color list is reset visually if no size is auto-selected
+                              this.availableColors = [...allColors.values()];
+                         }
+                     },
 
                     updateAvailableColors() {
                         console.log("Updating colors for size:", this.selectedSizeId);
@@ -602,77 +624,113 @@
                         const combinations = this.selectedProduct.stock_combinations;
                         const sizeId = this.selectedSizeId ? parseInt(this.selectedSizeId) : null;
 
+                        // --- Get All Unique Colors (for resetting) ---
+                         const allColorsMap = new Map();
+                         combinations.forEach(c => {
+                             if (c.color) allColorsMap.set(c.color.id, c.color);
+                         });
+
                         if (!sizeId) {
-                             // If no size selected, show all unique colors again (from original list)
-                             this.availableColors = [...new Map(combinations
-                                .filter(c => c.color)
-                                .map(item => [item.color.id, { id: item.color.id, name: item.color.name }]))
-                                .values()];
+                            // Reset: Show all colors, clear selection, clear stock
+                            this.availableColors = [...allColorsMap.values()];
                             this.selectedColorId = '';
                             this.maxStock = 0;
                             this.quantity = 1;
+                            console.log("Size cleared, reset colors and stock.");
                             return;
                         }
 
-                        // Find colors available *for the selected size* AND *have stock > 0*
-                        const colorsForSizeWithStock = combinations
-                            .filter(c => c.size_id === sizeId && c.color && c.stock > 0)
-                            .map(c => ({ id: c.color.id, name: c.color.name }));
+                        // Find colors available for the selected size AND have stock > 0
+                        const colorsForSizeWithStock = new Map();
+                        combinations.forEach(c => {
+                            if (c.size_id === sizeId && c.stock > 0 && c.color) {
+                                colorsForSizeWithStock.set(c.color.id, c.color);
+                            }
+                        });
 
-                        this.availableColors = [...new Map(colorsForSizeWithStock.map(item => [item.id, item])).values()];
+                        this.availableColors = [...colorsForSizeWithStock.values()];
+                        console.log("Available colors for size " + sizeId + ":", this.availableColors);
 
-                         // Auto-select color if only one is available for the chosen size
-                        if (this.availableColors.length === 1) {
-                             this.selectedColorId = this.availableColors[0].id;
-                        } else {
-                             // If the currently selected color is no longer valid, reset it
-                            if (this.selectedColorId && !this.availableColors.some(c => c.id === parseInt(this.selectedColorId))) {
-                                 this.selectedColorId = '';
-                             }
+                        // If the currently selected color is no longer valid for this size, reset it
+                        const currentSelectedColorIsValid = this.availableColors.some(c => c.id === parseInt(this.selectedColorId));
+                        if (this.selectedColorId && !currentSelectedColorIsValid) {
+                            console.log("Previously selected color", this.selectedColorId, "is not valid for size", sizeId, ". Resetting color.");
+                            this.selectedColorId = '';
                         }
 
-                        // Always update max stock after potential color changes
-                        this.updateMaxStock();
+                         // Auto-select color if only one option remains *and* it wasn't already selected
+                         // Prevents infinite loops if updateAvailableSizes also auto-selects
+                        if (this.availableColors.length === 1 && this.selectedColorId !== this.availableColors[0].id.toString()) {
+                              console.log("Auto-selecting the only available color:", this.availableColors[0].id);
+                              this.selectedColorId = this.availableColors[0].id;
+                              // Since color changed, trigger size update and stock update
+                               this.$nextTick(() => {
+                                  // this.updateAvailableSizes(); // Usually not needed - flow is size->color
+                                  this.updateMaxStock();
+                               });
+                        } else {
+                             // Always update max stock if color didn't auto-change,
+                             // or if it was reset, or if multiple colors are available.
+                             this.updateMaxStock();
+                        }
                     },
 
-                    updateAvailableSizes() { // Optional: Filter sizes based on color (less common flow)
+                    updateAvailableSizes() { // Filter sizes based on selected color (less common)
                         console.log("Updating sizes for color:", this.selectedColorId);
-                        if (!this.selectedProduct || !this.selectedProduct.stock_combinations) return;
+                         if (!this.selectedProduct || !this.selectedProduct.stock_combinations) return;
 
                         const combinations = this.selectedProduct.stock_combinations;
                         const colorId = this.selectedColorId ? parseInt(this.selectedColorId) : null;
 
-                         if (!colorId) {
-                             // If no color selected, show all unique sizes *with stock*
-                             this.availableSizes = [...new Map(combinations
-                                .filter(c => c.size && c.stock > 0)
-                                .map(item => [item.size.id, { id: item.size.id, name: item.size.name }]))
-                                .values()];
+                         // --- Get All Unique Sizes (for resetting) ---
+                         const allSizesMap = new Map();
+                         combinations.forEach(c => {
+                             if (c.size) allSizesMap.set(c.size.id, c.size);
+                         });
+
+                        if (!colorId) {
+                             // Reset: Show all sizes *that have any stock*, clear selection, clear stock
+                             const sizesWithAnyStock = new Set();
+                             combinations.forEach(c => { if (c.stock > 0 && c.size_id) sizesWithAnyStock.add(c.size_id); });
+                             this.availableSizes = [...allSizesMap.values()].filter(size => sizesWithAnyStock.has(size.id));
                              this.selectedSizeId = '';
                              this.maxStock = 0;
                              this.quantity = 1;
+                             console.log("Color cleared, reset sizes and stock.");
                              return;
+                        }
+
+                         // Find sizes available for the selected color AND have stock > 0
+                         const sizesForColorWithStock = new Map();
+                          combinations.forEach(c => {
+                              if (c.color_id === colorId && c.stock > 0 && c.size) {
+                                  sizesForColorWithStock.set(c.size.id, c.size);
+                              }
+                          });
+
+                         this.availableSizes = [...sizesForColorWithStock.values()];
+                         console.log("Available sizes for color " + colorId + ":", this.availableSizes);
+
+                         // If the currently selected size is no longer valid for this color, reset it
+                         const currentSelectedSizeIsValid = this.availableSizes.some(s => s.id === parseInt(this.selectedSizeId));
+                         if (this.selectedSizeId && !currentSelectedSizeIsValid) {
+                             console.log("Previously selected size", this.selectedSizeId, "is not valid for color", colorId, ". Resetting size.");
+                             this.selectedSizeId = '';
                          }
 
-                        // Find sizes available *for the selected color* AND *have stock > 0*
-                         const sizesForColorWithStock = combinations
-                             .filter(c => c.color_id === colorId && c.size && c.stock > 0)
-                             .map(c => ({ id: c.size.id, name: c.size.name }));
-
-                         this.availableSizes = [...new Map(sizesForColorWithStock.map(item => [item.id, item])).values()];
-
-                         // Auto-select size if only one is available for the chosen color
-                         if (this.availableSizes.length === 1) {
-                             this.selectedSizeId = this.availableSizes[0].id;
+                         // Auto-select size if only one option remains *and* it wasn't already selected
+                         if (this.availableSizes.length === 1 && this.selectedSizeId !== this.availableSizes[0].id.toString()) {
+                              console.log("Auto-selecting the only available size:", this.availableSizes[0].id);
+                              this.selectedSizeId = this.availableSizes[0].id;
+                              // Since size changed, trigger color update and stock update
+                              this.$nextTick(() => {
+                                   this.updateAvailableColors();
+                                   // No need to call updateMaxStock here, updateAvailableColors calls it
+                              });
                          } else {
-                             // If the currently selected size is no longer valid, reset it
-                             if (this.selectedSizeId && !this.availableSizes.some(s => s.id === parseInt(this.selectedSizeId))) {
-                                 this.selectedSizeId = '';
-                             }
+                              // Always update max stock if size didn't auto-change
+                              this.updateMaxStock();
                          }
-
-                        // Always update max stock after potential size changes
-                        this.updateMaxStock();
                     },
 
                     updateMaxStock() {
@@ -688,32 +746,40 @@
                             this.maxStock = (combination && combination.stock > 0) ? combination.stock : 0;
                         }
                         console.log(`Max stock updated to: ${this.maxStock} for Size ${this.selectedSizeId}, Color ${this.selectedColorId}`);
-                        // Re-validate quantity after stock update
+
+                        // Re-validate quantity whenever max stock changes
                         this.validateQuantity();
                     },
 
                     validateQuantity() {
-                        // Need $nextTick to ensure maxStock value is updated in the DOM/Alpine state
-                        // before comparing quantity against it, especially after async ops or complex state changes.
+                        // Use $nextTick to ensure maxStock has been updated in Alpine's reactive state
                         this.$nextTick(() => {
-                             let currentQuantity = parseInt(this.quantity);
-                             if (isNaN(currentQuantity) || currentQuantity < 1) {
-                                 currentQuantity = 1;
+                            let qty = parseInt(this.quantity);
+
+                            // Ensure quantity is at least 1 if input is enabled
+                             if (isNaN(qty) || qty < 1) {
+                                 if(this.maxStock > 0) { // Only force to 1 if stock allows
+                                    qty = 1;
+                                 } else {
+                                    // If stock is 0, leave quantity as whatever user typed (or default 1)
+                                    // The input field should be disabled anyway.
+                                    // We don't want to force it to 1 if maxStock is 0.
+                                    // Let's keep it simple: if invalid, default to 1 for logic,
+                                    // but the disabled state handles the user interaction.
+                                    if(isNaN(qty) || qty < 1) qty = 1;
+                                 }
                              }
 
-                            // Only cap quantity if maxStock is determined and positive
-                            if (this.maxStock > 0 && currentQuantity > this.maxStock) {
-                                currentQuantity = this.maxStock;
-                            }
-
-                             // If stock is 0, input is disabled, but ensure quantity model is visually 1
-                             if (this.maxStock <= 0) {
-                                 currentQuantity = 1;
+                             // Cap quantity at maxStock only if maxStock is determined and positive
+                             if (this.maxStock > 0 && qty > this.maxStock) {
+                                 console.log(`Quantity ${qty} exceeds max stock ${this.maxStock}. Capping.`);
+                                 qty = this.maxStock;
                              }
 
-                            // Update the model only if the calculated value differs
-                            if (this.quantity !== currentQuantity) {
-                                this.quantity = currentQuantity;
+                            // If calculated quantity differs from model, update model
+                            if (this.quantity !== qty) {
+                                // console.log("Updating quantity model to:", qty);
+                                this.quantity = qty;
                             }
                         });
                     },
@@ -724,11 +790,19 @@
         {{-- Optional: Add scrollbar styling if using tailwindcss-scrollbar --}}
         <style>
             /* Optional: Slim scrollbar for stock details */
-            .scrollbar-thin { scrollbar-width: thin; }
-            .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 10px;}
-            .dark .scrollbar-thumb-gray-600::-webkit-scrollbar-thumb { background-color: #4b5563; border-radius: 10px;}
-            .scrollbar-track-transparent::-webkit-scrollbar-track { background: transparent; }
-            ::-webkit-scrollbar { width: 6px; height: 6px; }
+            .scrollbar-thin { scrollbar-width: thin; scrollbar-color: #d1d5db transparent; } /* thumb track */
+            .dark .scrollbar-thin { scrollbar-color: #4b5563 transparent; }
+
+            .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+            .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+            .scrollbar-thin::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 10px; border: 3px solid transparent; } /* Lighter thumb */
+            .dark .scrollbar-thin::-webkit-scrollbar-thumb { background-color: #4b5563; } /* Darker thumb */
+
+            /* Tailwind prose adjustments if needed */
+            .prose-sm :where(p):where([class~="lead"]):not(:where([class~="not-prose"] *)) {
+                 margin-top: 0.8em; /* Adjust spacing if needed */
+                 margin-bottom: 0.8em;
+            }
         </style>
     @endpush
 
