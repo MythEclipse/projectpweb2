@@ -20,6 +20,12 @@
                  transactions
               </a>
           </li>
+          <li>
+              <a data-turbo="false" href="{{ route('admin.users.index') }}"
+                 class="hover:text-pink-500 font-medium transition flex items-center gap-2">
+                 users
+              </a>
+          </li>
       </ul>
   </div>
 </aside>

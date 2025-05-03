@@ -7,7 +7,8 @@ use App\Http\Controllers\HomePageController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\Admin\AdminController; // Pastikan namespace benar
 use App\Http\Controllers\Auth\GoogleController;
-use App\Http\Middleware\IsAdmin; // Pastikan middleware di-import
+use App\Http\Middleware\IsAdmin; // Pastikan middleware di-import4
+use App\Http\Controllers\Admin\UserController; // Import UserController untuk admin
 
 /*
 |--------------------------------------------------------------------------
@@ -73,7 +74,7 @@ Route::middleware(['auth', 'verified', IsAdmin::class]) // Terapkan semua middle
 
         // If you need the API route (it was in your original controller)
         Route::get('products', [ProductController::class, 'index'])->name('products.index');
-
+        Route::resource('users', UserController::class);
         // Kelola Transaksi (Resource Controller)
         Route::resource('transactions', TransactionController::class); // URL: /admin/transactions, Nama: admin.transactions.*
 
