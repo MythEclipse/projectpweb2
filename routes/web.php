@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Middleware\IsAdmin; // Pastikan middleware di-import4
 use App\Http\Controllers\Admin\UserController; // Import UserController untuk admin
 use App\Http\Controllers\WishlistController; // Import WishlistController untuk wishlist
+use App\Http\Controllers\OrderController; // Import OrderController untuk orders
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +54,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/homepage', [HomePageController::class, 'index'])->name('homepage');
     Route::post('/products/{product}/purchase', [HomePageController::class, 'purchase'])->name('products.purchase');
     Route::get('/products/{product}/options', [HomePageController::class, 'options'])->name('products.options'); // Beri nama jika belum
+    // User Orders Route
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    // Optional: Route for order detail page
+    // Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show'); // {order} expects ID
 
     // Profile Routes (Bisa dipisah ke grup 'auth' saja jika verifikasi email tidak wajib untuk edit profile)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -83,16 +88,16 @@ Route::middleware(['auth', 'verified', IsAdmin::class]) // Terapkan semua middle
         // ===> ADD THIS LINE <===
         // Route custom untuk quick update transaksi (harus didefinisikan terpisah dari resource)
         Route::patch('transactions/{transaction}/quick-update', [TransactionController::class, 'quickUpdate'])
-             ->name('transactions.quick_update'); // Nama route menjadi 'admin.transactions.quick_update'
+            ->name('transactions.quick_update'); // Nama route menjadi 'admin.transactions.quick_update'
 
         // Tambahkan route admin lainnya di sini jika ada...
-});
+    });
 
 // == API Routes (Sebaiknya di routes/api.php) ==
 // Route ini akan menggunakan middleware group 'web' jika diletakkan di sini.
 // Pindahkan ke routes/api.php untuk menggunakan middleware 'api' (stateless, dll).
 Route::get('/api/products', [ProductController::class, 'apiGetProduct'])
-      ->name('api.products.index'); // Beri nama untuk API
+    ->name('api.products.index'); // Beri nama untuk API
 
 
 // == Authentication Routes (dari Laravel Breeze/UI) ==

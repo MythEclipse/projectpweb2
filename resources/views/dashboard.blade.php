@@ -68,19 +68,6 @@
                         </div>
                     </div>
 
-                    {{-- Aksi Cepat: Edit Profil --}}
-                    <div class="md:col-span-1 flex items-center justify-start md:justify-end mt-4 md:mt-0">
-                        {{-- Menggunakan route('profile.edit') yang sudah ada --}}
-                        <a href="{{ route('profile.edit') }}"
-                            class="inline-flex items-center justify-center px-5 py-3 bg-pink-600 border border-transparent rounded-lg font-semibold text-sm text-white uppercase tracking-widest hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-[#1a1a1a] transition ease-in-out duration-150 transform hover:scale-105 shadow-md hover:shadow-lg w-full md:w-auto">
-                            <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                            </svg>
-                            {{ __('Edit Profile') }}
-                        </a>
-                    </div>
                 </div>
             </div>
 
@@ -100,26 +87,24 @@
 
                     {{-- Akses Cepat: Pesanan Saya --}}
                     {{-- Rute 'orders.index' untuk user belum ada, gunakan # --}}
-                    <a href="#" {{-- TODO: Buat route untuk halaman pesanan user, contoh: route('user.orders.index') --}}
-                        class="block p-6 bg-gray-50 dark:bg-[#2d2d2d] rounded-lg hover:bg-gray-100 dark:hover:bg-[#3a3a3a] transition duration-300 ease-in-out transform hover:scale-[1.03] hover:shadow-md group">
-                        <div class="flex items-center space-x-4">
-                            <div class="flex-shrink-0 bg-purple-100 dark:bg-purple-900/80 p-3 rounded-lg">
-                                <svg class="h-6 w-6 text-purple-600 dark:text-purple-400"
-                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h4
-                                    class="text-lg font-semibold text-gray-800 dark:text-gray-100 group-hover:text-purple-700 dark:group-hover:text-purple-300">
-                                    {{ __('My Orders') }}</h4>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ __('View your order history') }}
-                                </p>
-                            </div>
-                        </div>
-                    </a>
+                    <a href="{{ route('orders.index') }}" {{-- Pastikan ini benar --}}
+                    class="block p-6 bg-gray-50 dark:bg-[#2d2d2d] rounded-lg hover:bg-gray-100 dark:hover:bg-[#3a3a3a] transition duration-300 ease-in-out transform hover:scale-[1.03] hover:shadow-md group">
+                     <div class="flex items-center space-x-4">
+                         <div class="flex-shrink-0 bg-purple-100 dark:bg-purple-900/80 p-3 rounded-lg">
+                             {{-- Icon: Shopping Bag --}}
+                             <svg class="h-6 w-6 text-purple-600 dark:text-purple-400"
+                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                             stroke-width="1.5" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round"
+                                 d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                         </svg>
+                         </div>
+                         <div>
+                             <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-100 group-hover:text-purple-700 dark:group-hover:text-purple-300">{{ __('My Orders') }}</h4>
+                             <p class="text-sm text-gray-600 dark:text-gray-400">{{ __('View your order history') }}</p>
+                         </div>
+                     </div>
+                 </a>
 
                     {{-- Akses Cepat: Wishlist --}}
                     {{-- Rute 'wishlist.index' belum ada, gunakan # --}}
