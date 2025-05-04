@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\AdminController; // Pastikan namespace benar
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Middleware\IsAdmin; // Pastikan middleware di-import4
 use App\Http\Controllers\Admin\UserController; // Import UserController untuk admin
+use App\Http\Controllers\WishlistController; // Import WishlistController untuk wishlist
 
 /*
 |--------------------------------------------------------------------------
@@ -46,7 +47,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Pertimbangkan untuk redirect ke 'homepage' jika itu dashboard utama Anda
         return view('dashboard');
     })->name('dashboard');
-
+    Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+    Route::post('/wishlist/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle'); // Pakai POST karena mengubah data
     // Homepage dan interaksi produk user
     Route::get('/homepage', [HomePageController::class, 'index'])->name('homepage');
     Route::post('/products/{product}/purchase', [HomePageController::class, 'purchase'])->name('products.purchase');

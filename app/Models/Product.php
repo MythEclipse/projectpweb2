@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Product extends Model
 {
     use HasFactory;
@@ -95,5 +96,10 @@ class Product extends Model
     public function sizeColorStocks()
     {
         return $this->hasMany(ProductSizeColor::class, 'product_id', 'id');
+    }
+    public function wishlistedByUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'product_wishlist', 'product_id', 'user_id')
+                    ->withTimestamps();
     }
 }

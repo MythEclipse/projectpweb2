@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
@@ -49,5 +50,20 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    public function wishlistProducts(): BelongsToMany
+    {
+        // Argumen kedua adalah nama tabel pivot
+        // Argumen ketiga & keempat adalah foreign key (opsional jika mengikuti konvensi)
+        return $this->belongsToMany(Product::class, 'product_wishlist', 'user_id', 'product_id')
+            ->withTimestamps(); // Jika ingin mengakses created_at/updated_at di pivot
+    }
 
+    /**
+     * Helper untuk mengecek apakah produk ada di wishlist.
+     * Lebih efisien daripada mengambil semua produk lalu mengecek.
+     */
+    public function hasInWishlist(Product $product): bool
+    {
+        return $this->wishlistProducts()->where('product_id', $product->id)->exists();
+    }
 }
