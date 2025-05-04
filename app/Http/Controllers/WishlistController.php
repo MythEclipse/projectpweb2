@@ -15,11 +15,13 @@ class WishlistController extends Controller
     public function index(): View
     {
         /** @var \App\Models\User $user */
-        $user = Auth::user(); // Dapatkan user yang sedang login
+        $user = Auth::user();
 
-        // Ambil produk dari wishlist user, eager load relasi jika perlu (misal: kategori)
-        $wishlistItems = $user->wishlistProducts()->latest('product_wishlist.created_at')->get();
-         // Urutkan berdasarkan kapan ditambahkan ke pivot
+        $wishlistItems = $user->wishlistProducts()
+                             // Penting: Eager load relasi yang dibutuhkan modal Beli
+                             ->with(['stockCombinations.size', 'stockCombinations.color'])
+                             ->latest('product_wishlist.created_at')
+                             ->get();
 
         return view('wishlist.index', compact('wishlistItems'));
     }
