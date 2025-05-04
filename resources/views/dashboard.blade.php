@@ -6,11 +6,13 @@
         </h2>
     </x-slot>
 
-    {{-- Menggunakan padding vertikal yang sama dengan section homepage --}}
+    {{-- Kontainer Utama dengan Padding Vertikal Konsisten --}}
     <div class="py-12 md:py-16 lg:py-20">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8"> {{-- Menambah space antar elemen --}}
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8"> {{-- Jarak vertikal antar card --}}
 
-            {{-- 1. Welcome Card (Style disamakan dengan card di homepage) --}}
+            {{-- ======================================== --}}
+            {{-- 1. Welcome Card                        --}}
+            {{-- ======================================== --}}
             <div class="bg-white dark:bg-[#1a1a1a] overflow-hidden shadow-lg sm:rounded-xl">
                 {{-- Header Card --}}
                 <div class="p-6 md:p-8 border-b border-gray-200 dark:border-gray-700">
@@ -18,18 +20,19 @@
                         {{ __("Welcome back, ") }} <span class="text-pink-600 dark:text-pink-400">{{ Auth::user()->name }}</span>! 👋
                     </h3>
                     <p class="text-base text-gray-600 dark:text-gray-300">
-                        {{ __("Manage your profile and access your fashion essentials.") }}
+                        {{ __("Here's a quick overview of your account.") }}
                     </p>
                 </div>
 
-                {{-- Konten Card (Grid untuk info & action) --}}
-                <div class="p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-                    {{-- Quick Stat/Info 1 (Gaya disamakan dengan stat di "Tentang Kami") --}}
-                    <div class="p-4 bg-gray-100 dark:bg-[#2d2d2d] rounded-xl transition-all duration-300 hover:scale-[1.03] shadow-md hover:shadow-lg">
+                {{-- Konten Card (Grid untuk Info Cepat & Tombol Aksi) --}}
+                <div class="p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-6 items-center"> {{-- items-center agar tombol align vertikal --}}
+
+                    {{-- Info Cepat 1: Status Akun --}}
+                    <div class="p-4 bg-gray-100 dark:bg-[#2d2d2d] rounded-xl transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
                         <div class="flex items-center space-x-3">
                              <div class="flex-shrink-0 bg-pink-100 dark:bg-pink-900/80 p-2 rounded-lg">
                                 <svg class="h-6 w-6 text-pink-600 dark:text-pink-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                             </div>
                             <div>
@@ -39,13 +42,13 @@
                         </div>
                     </div>
 
-                     {{-- Quick Stat/Info 2 (Gaya disamakan) --}}
-                    <div class="p-4 bg-gray-100 dark:bg-[#2d2d2d] rounded-xl transition-all duration-300 hover:scale-[1.03] shadow-md hover:shadow-lg">
+                     {{-- Info Cepat 2: Tanggal Bergabung --}}
+                    <div class="p-4 bg-gray-100 dark:bg-[#2d2d2d] rounded-xl transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
                          <div class="flex items-center space-x-3">
-                            <div class="flex-shrink-0 bg-blue-100 dark:bg-blue-900/80 p-2 rounded-lg"> {{-- Warna bisa divariasikan jika perlu --}}
+                            <div class="flex-shrink-0 bg-blue-100 dark:bg-blue-900/80 p-2 rounded-lg">
                                <svg class="h-6 w-6 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" />
-                               </svg>
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                                </svg>
                             </div>
                             <div>
                                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{{ __('Member Since') }}</dt>
@@ -54,9 +57,11 @@
                         </div>
                     </div>
 
-                    {{-- Quick Action: Edit Profile (Tombol disamakan dengan tombol di Hero) --}}
+                    {{-- Aksi Cepat: Edit Profil --}}
                      <div class="md:col-span-1 flex items-center justify-start md:justify-end mt-4 md:mt-0">
-                         <a href="{{ route('profile.edit') }}" class="inline-flex items-center px-6 py-3 bg-pink-600 border border-transparent rounded-lg font-semibold text-sm text-white uppercase tracking-widest hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-[#1a1a1a] transition ease-in-out duration-150 transform hover:scale-105 shadow-lg">
+                         {{-- Menggunakan route('profile.edit') yang sudah ada --}}
+                         <a href="{{ route('profile.edit') }}"
+                            class="inline-flex items-center justify-center px-5 py-3 bg-pink-600 border border-transparent rounded-lg font-semibold text-sm text-white uppercase tracking-widest hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-[#1a1a1a] transition ease-in-out duration-150 transform hover:scale-105 shadow-md hover:shadow-lg w-full md:w-auto">
                              <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                               </svg>
@@ -66,14 +71,78 @@
                 </div>
             </div>
 
-            {{-- 2. Section: Quick Access (Gaya card disamakan) --}}
+            {{-- ======================================== --}}
+            {{-- 2. Section: Quick Access              --}}
+            {{-- ======================================== --}}
+            <div class="bg-white dark:bg-[#1a1a1a] overflow-hidden shadow-lg sm:rounded-xl">
+                <div class="p-6 md:p-8 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-xl font-bold leading-6 text-gray-900 dark:text-white">
+                        {{ __('Quick Access') }}
+                    </h3>
+                    <p class="mt-1 text-base text-gray-600 dark:text-gray-300">
+                        {{ __("Navigate to frequently used sections.")}}
+                    </p>
+                </div>
+                <div class="p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+
+                    {{-- Akses Cepat: Pesanan Saya --}}
+                    {{-- Rute 'orders.index' untuk user belum ada, gunakan # --}}
+                    <a href="#" {{-- TODO: Buat route untuk halaman pesanan user, contoh: route('user.orders.index') --}}
+                       class="block p-6 bg-gray-50 dark:bg-[#2d2d2d] rounded-lg hover:bg-gray-100 dark:hover:bg-[#3a3a3a] transition duration-300 ease-in-out transform hover:scale-[1.03] hover:shadow-md group">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-shrink-0 bg-purple-100 dark:bg-purple-900/80 p-3 rounded-lg">
+                                <svg class="h-6 w-6 text-purple-600 dark:text-purple-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-100 group-hover:text-purple-700 dark:group-hover:text-purple-300">{{ __('My Orders') }}</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ __('View your order history') }}</p>
+                            </div>
+                        </div>
+                    </a>
+
+                    {{-- Akses Cepat: Wishlist --}}
+                    {{-- Rute 'wishlist.index' belum ada, gunakan # --}}
+                     <a href="#" {{-- TODO: Buat route untuk halaman wishlist, contoh: route('wishlist.index') --}}
+                       class="block p-6 bg-gray-50 dark:bg-[#2d2d2d] rounded-lg hover:bg-gray-100 dark:hover:bg-[#3a3a3a] transition duration-300 ease-in-out transform hover:scale-[1.03] hover:shadow-md group">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-shrink-0 bg-red-100 dark:bg-red-900/80 p-3 rounded-lg">
+                                <svg class="h-6 w-6 text-red-600 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" >
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                                </svg>
+                            </div>
+                             <div>
+                                <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-100 group-hover:text-red-700 dark:group-hover:text-red-300">{{ __('My Wishlist') }}</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ __('See your saved items') }}</p>
+                            </div>
+                        </div>
+                    </a>
+
+                    {{-- Akses Cepat: Pengaturan Akun (Link ke Edit Profile) --}}
+                    {{-- Menggunakan route('profile.edit') yang sudah ada --}}
+                    <a href="{{ route('profile.edit') }}"
+                       class="block p-6 bg-gray-50 dark:bg-[#2d2d2d] rounded-lg hover:bg-gray-100 dark:hover:bg-[#3a3a3a] transition duration-300 ease-in-out transform hover:scale-[1.03] hover:shadow-md group">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-shrink-0 bg-green-100 dark:bg-green-900/80 p-3 rounded-lg">
+                                <svg class="h-6 w-6 text-green-600 dark:text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0015 0m-15 0a7.5 7.5 0 1115 0m-15 0H3m18 0h-1.5m-15.0-5.19v-1.8a1.5 1.5 0 011.83-.82l.74.15a.75.75 0 01.71.71v.17a.75.75 0 001.28.53l.4-.59a.75.75 0 011.21-.07l1.15.86a.75.75 0 00.94 0l1.15-.86a.75.75 0 011.21.07l.4.59a.75.75 0 001.28-.53v-.17a.75.75 0 01.71-.71l.74-.15a1.5 1.5 0 011.83.82v1.8M4.5 12.49v1.8a1.5 1.5 0 001.83.82l.74-.15a.75.75 0 00.71-.71V14a.75.75 0 011.28-.53l.4.59a.75.75 0 001.21.07l1.15.86a.75.75 0 01.94 0l1.15-.86a.75.75 0 001.21-.07l.4-.59a.75.75 0 011.28.53v.41a.75.75 0 00.71.71l.74.15a1.5 1.5 0 001.83-.82v-1.8m-15-4.17v-1.8a1.5 1.5 0 011.83-.82l.74.15a.75.75 0 01.71.71v.17a.75.75 0 001.28.53l.4-.59a.75.75 0 011.21-.07l1.15.86a.75.75 0 00.94 0l1.15-.86a.75.75 0 011.21.07l.4.59a.75.75 0 001.28-.53v-.17a.75.75 0 01.71-.71l.74-.15a1.5 1.5 0 011.83.82v1.8" />
+                                </svg>
+                            </div>
+                             <div>
+                                <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-100 group-hover:text-green-700 dark:group-hover:text-green-300">{{ __('Account Settings') }}</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ __('Manage your profile & preferences') }}</p>
+                            </div>
+                        </div>
+                    </a>
 
 
-             {{-- Tambahkan section lain jika diperlukan, misal Notifikasi, dll. --}}
-             {{-- <div class="bg-white dark:bg-[#1a1a1a] overflow-hidden shadow-lg sm:rounded-xl p-6 md:p-8">
-                 <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Notifications</h3>
-                 <p class="text-sm text-gray-500 dark:text-gray-400">You have no new notifications.</p>
-             </div> --}}
+
+                </div>
+            </div>
+
+            {{-- Tempat untuk section lain (misal: Notifikasi) --}}
+            {{-- ... code ... --}}
 
         </div>
     </div>
