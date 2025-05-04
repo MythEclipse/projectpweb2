@@ -19,7 +19,7 @@ PHP_BINARY=$(command -v php || echo "/usr/bin/php") # Sesuaikan jika PHP tidak a
 COMPOSER_BINARY=$(command -v composer || echo "/usr/local/bin/composer") # Sesuaikan jika Composer tidak ada di PATH
 
 # Nama service PHP-FPM (sesuaikan versi PHP Anda!)
-PHP_FPM_SERVICE="php8.1-fpm" # <-- GANTI DENGAN VERSI PHP-FPM ANDA (e.g., php7.4-fpm, php8.2-fpm)
+PHP_FPM_SERVICE="php8.4-fpm" # <-- GANTI DENGAN VERSI PHP-FPM ANDA (e.g., php7.4-fpm, php8.2-fpm)
 # Nama service Web Server (jika perlu direstart)
 WEB_SERVER_SERVICE="nginx" # atau 'apache2', atau kosongkan jika tidak perlu: ""
 
