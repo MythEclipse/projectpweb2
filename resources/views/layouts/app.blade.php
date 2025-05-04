@@ -6,26 +6,22 @@
 @endphp
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
-      x-data="{
-          darkMode: false,
-          sidebarOpen: window.innerWidth >= 768
-      }"
-      x-init="
-          // Set dark mode from localStorage
-          darkMode = localStorage.getItem('dark-mode') === 'true';
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{
+    darkMode: false,
+    sidebarOpen: window.innerWidth >= 768
+}" x-init="// Set dark mode from localStorage
+darkMode = localStorage.getItem('dark-mode') === 'true';
 
-          // Responsive sidebar
-          window.addEventListener('resize', () => {
-              sidebarOpen = window.innerWidth >= 768;
-          });
+// Responsive sidebar
+window.addEventListener('resize', () => {
+    sidebarOpen = window.innerWidth >= 768;
+});
 
-          // Sync dark mode state
-          $watch('darkMode', value => {
-              localStorage.setItem('dark-mode', value);
-              document.documentElement.classList.toggle('dark', value);
-          });
-      ">
+// Sync dark mode state
+$watch('darkMode', value => {
+    localStorage.setItem('dark-mode', value);
+    document.documentElement.classList.toggle('dark', value);
+});">
 
 <head>
     <meta charset="utf-8">
@@ -49,7 +45,7 @@
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
     <!-- Scripts -->
@@ -60,19 +56,20 @@
     <div class="flex min-h-screen">
 
         @if ($isAdmin && $onAdminPage)
-        @include('layouts.sidebar')
+            @include('layouts.sidebar')
         @endif
 
         <!-- Main Content -->
         <div class="flex-1 transition-all duration-300">
             <!-- Top Navigation -->
             {{-- @if (request()->path() !== '/') --}}
-                @include('layouts.navigation')
+            @include('layouts.navigation')
             {{-- @endif --}}
 
             <!-- Header -->
             @isset($header)
-                <header class="bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-sm shadow border-b border-gray-100 dark:border-[#3E3E3A]">
+                <header
+                    class="bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-sm shadow border-b border-gray-100 dark:border-[#3E3E3A]">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>
@@ -93,16 +90,49 @@
                 </button>
             </div>
         @endif
+        {{-- >>> START: Floating Wishlist Button <<< --}}
+        @auth {{-- Hanya tampilkan jika user login --}}
+            {{-- Opsional: Sembunyikan jika sedang di halaman wishlist itu sendiri --}}
+            @if (!request()->routeIs('wishlist.index'))
+                <div class="fixed bottom-6 right-6 z-40"> {{-- Posisi fixed, bottom-left, z-index --}}
+                    <a href="{{ route('wishlist.index') }}" title="View Wishlist" {{-- Tooltip/Aksesibilitas --}}
+                        class="flex items-center justify-center w-14 h-14 {{-- Ukuran tombol --}}
+                                bg-pink-brand hover:bg-pink-brand-dark {{-- Warna Pink Brand --}}
+                                text-white {{-- Warna ikon putih --}}
+                                rounded-full {{-- Bentuk bulat --}}
+                                shadow-lg {{-- Bayangan agar menonjol --}}
+                                transition-all duration-200 ease-in-out transform hover:scale-110 {{-- Animasi hover --}}
+                                focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg">
+                        {{-- State Fokus --}}
 
+                        {{-- Ikon Hati (Wishlist) --}}
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="w-7 h-7">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                        </svg>
+
+                        {{-- Opsional: Tambahkan Badge Jumlah Item Wishlist --}}
+                        {{-- Anda perlu logic untuk mendapatkan jumlah item wishlist di sini --}}
+                        {{-- @php
+                              $wishlistCount = Auth::user()->wishlistProducts()->count();
+                          @endphp
+                          @if ($wishlistCount > 0)
+                          <span class="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 flex items-center justify-center min-w-[18px] h-[18px]">
+                              {{ $wishlistCount }}
+                          </span>
+                          @endif --}}
+
+                    </a>
+                </div>
+            @endif
+        @endauth
         <!-- Dark Mode Toggle -->
-        <div class="fixed bottom-6 right-6 z-50">
+        <div class="fixed bottom-6 left-6 z-50">
             <button
                 @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode); window.dispatchEvent(new CustomEvent('dark-mode-toggled', { detail: darkMode }))"
-                x-data="{ hover: false, press: false }"
-                @mouseenter="hover = true"
-                @mouseleave="hover = false"
-                @mousedown="press = true; setTimeout(() => press = false, 200)"
-                @mouseup="press = false"
+                x-data="{ hover: false, press: false }" @mouseenter="hover = true" @mouseleave="hover = false"
+                @mousedown="press = true; setTimeout(() => press = false, 200)" @mouseup="press = false"
                 class="relative w-16 h-16 rounded-full overflow-hidden transition-all duration-500 ease-out transform focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-[#0a0a0a]"
                 :class="{
                     'bg-gradient-to-br from-pink-100 to-purple-100 dark:from-gray-800 dark:to-purple-900': true,
@@ -115,23 +145,28 @@
 
                 <!-- Background Orb/Gradient Layer -->
                 <div class="absolute inset-0 transition-opacity duration-500"
-                     :class="darkMode ? 'opacity-100' : 'opacity-0'">
-                     <div class="w-full h-full bg-gradient-to-br from-gray-700 via-purple-800 to-black opacity-80"></div>
+                    :class="darkMode ? 'opacity-100' : 'opacity-0'">
+                    <div class="w-full h-full bg-gradient-to-br from-gray-700 via-purple-800 to-black opacity-80"></div>
                 </div>
-                 <div class="absolute inset-0 transition-opacity duration-500"
-                     :class="!darkMode ? 'opacity-100' : 'opacity-0'">
-                     <div class="w-full h-full bg-gradient-to-br from-white via-pink-200 to-purple-200 opacity-90"></div>
+                <div class="absolute inset-0 transition-opacity duration-500"
+                    :class="!darkMode ? 'opacity-100' : 'opacity-0'">
+                    <div class="w-full h-full bg-gradient-to-br from-white via-pink-200 to-purple-200 opacity-90"></div>
                 </div>
 
                 <!-- Sun Icon Container -->
                 <div class="absolute inset-0 flex items-center justify-center transition-all duration-700 ease-in-out"
-                     :class="{ 'opacity-0 -translate-y-full scale-50 rotate-90': darkMode, 'opacity-100 translate-y-0 scale-100 rotate-0': !darkMode }">
+                    :class="{ 'opacity-0 -translate-y-full scale-50 rotate-90': darkMode, 'opacity-100 translate-y-0 scale-100 rotate-0':
+                            !darkMode }">
                     <!-- Sun Core -->
-                    <div class="w-6 h-6 bg-gradient-to-br from-yellow-300 to-orange-400 rounded-full shadow-md animate-subtle-pulse"></div>
+                    <div
+                        class="w-6 h-6 bg-gradient-to-br from-yellow-300 to-orange-400 rounded-full shadow-md animate-subtle-pulse">
+                    </div>
                     <!-- Sun Rays (subtle) -->
-                     <div class="absolute w-10 h-10 animate-spin-slow opacity-60">
-                        <div class="absolute top-0 left-1/2 -ml-px w-px h-2 bg-orange-300 transform origin-bottom"></div>
-                        <div class="absolute bottom-0 left-1/2 -ml-px w-px h-2 bg-orange-300 transform origin-top"></div>
+                    <div class="absolute w-10 h-10 animate-spin-slow opacity-60">
+                        <div class="absolute top-0 left-1/2 -ml-px w-px h-2 bg-orange-300 transform origin-bottom">
+                        </div>
+                        <div class="absolute bottom-0 left-1/2 -ml-px w-px h-2 bg-orange-300 transform origin-top">
+                        </div>
                         <div class="absolute left-0 top-1/2 -mt-px h-px w-2 bg-orange-300 transform origin-right"></div>
                         <div class="absolute right-0 top-1/2 -mt-px h-px w-2 bg-orange-300 transform origin-left"></div>
                     </div>
@@ -139,24 +174,32 @@
 
                 <!-- Moon Icon Container -->
                 <div class="absolute inset-0 flex items-center justify-center transition-all duration-700 ease-in-out"
-                     :class="{ 'opacity-100 translate-y-0 scale-100 rotate-0': darkMode, 'opacity-0 translate-y-full scale-50 -rotate-90': !darkMode }">
+                    :class="{ 'opacity-100 translate-y-0 scale-100 rotate-0': darkMode, 'opacity-0 translate-y-full scale-50 -rotate-90':
+                            !darkMode }">
                     <!-- Moon Body -->
-                    <div class="w-6 h-6 bg-gradient-to-br from-slate-300 to-slate-500 rounded-full shadow-inner shadow-slate-700/50 animate-subtle-float">
+                    <div
+                        class="w-6 h-6 bg-gradient-to-br from-slate-300 to-slate-500 rounded-full shadow-inner shadow-slate-700/50 animate-subtle-float">
                         <!-- Moon Craters (simple) -->
                         <div class="absolute w-2 h-2 rounded-full bg-slate-400/50 top-2 left-3 opacity-70"></div>
                         <div class="absolute w-1 h-1 rounded-full bg-slate-600/50 bottom-3 right-3 opacity-60"></div>
                     </div>
-                     <!-- Subtle Stars/Sparkle around Moon -->
-                     <div class="absolute w-10 h-10 animate-spin-reverse-slow opacity-50">
-                        <div class="absolute top-1 left-2 w-0.5 h-0.5 bg-purple-300 rounded-full animate-subtle-pulse animation-delay-200"></div>
-                        <div class="absolute bottom-2 right-1 w-px h-px bg-pink-200 rounded-full animate-subtle-pulse animation-delay-500"></div>
-                         <div class="absolute top-3 right-4 w-0.5 h-0.5 bg-purple-300 rounded-full animate-subtle-pulse animation-delay-800"></div>
+                    <!-- Subtle Stars/Sparkle around Moon -->
+                    <div class="absolute w-10 h-10 animate-spin-reverse-slow opacity-50">
+                        <div
+                            class="absolute top-1 left-2 w-0.5 h-0.5 bg-purple-300 rounded-full animate-subtle-pulse animation-delay-200">
+                        </div>
+                        <div
+                            class="absolute bottom-2 right-1 w-px h-px bg-pink-200 rounded-full animate-subtle-pulse animation-delay-500">
+                        </div>
+                        <div
+                            class="absolute top-3 right-4 w-0.5 h-0.5 bg-purple-300 rounded-full animate-subtle-pulse animation-delay-800">
+                        </div>
                     </div>
                 </div>
 
                 <!-- Hover/Press Effect Layer -->
                 <div class="absolute inset-0 rounded-full transition-all duration-300 border border-transparent"
-                     :class="{ 'border-pink-400/50 dark:border-purple-500/50 scale-110': hover && !press, 'scale-95': press }">
+                    :class="{ 'border-pink-400/50 dark:border-purple-500/50 scale-110': hover && !press, 'scale-95': press }">
                 </div>
 
             </button>
@@ -375,7 +418,7 @@
                     // Auto-select color if only one option remains *and* it wasn't already selected
                     // Prevents infinite loops if updateAvailableSizes also auto-selects
                     if (this.availableColors.length === 1 && this.selectedColorId !== this.availableColors[0].id
-                    .toString()) {
+                        .toString()) {
                         console.log("Auto-selecting the only available color:", this.availableColors[0].id);
                         this.selectedColorId = this.availableColors[0].id;
                         // Since color changed, trigger size update and stock update
@@ -430,7 +473,7 @@
 
                     // If the currently selected size is no longer valid for this color, reset it
                     const currentSelectedSizeIsValid = this.availableSizes.some(s => s.id === parseInt(this
-                    .selectedSizeId));
+                        .selectedSizeId));
                     if (this.selectedSizeId && !currentSelectedSizeIsValid) {
                         console.log("Previously selected size", this.selectedSizeId, "is not valid for color", colorId,
                             ". Resetting size.");
@@ -467,7 +510,7 @@
                     }
                     console.log(
                         `Max stock updated to: ${this.maxStock} for Size ${this.selectedSizeId}, Color ${this.selectedColorId}`
-                        );
+                    );
 
                     // Re-validate quantity whenever max stock changes
                     this.validateQuantity();
@@ -570,7 +613,7 @@
                 } else {
                     console.log(
                         'Fetch request starting BUT isActualNavigation=false (likely prefetch), skipping skeleton.'
-                        );
+                    );
                 }
             });
 
@@ -662,4 +705,5 @@
     </style>
     @stack('scripts')
 </body>
+
 </html>

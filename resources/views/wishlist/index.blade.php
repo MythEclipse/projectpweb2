@@ -152,7 +152,7 @@
                          {{-- Action: Perlu disesuaikan jika slug tidak ada pada model Product --}}
                          {{-- Jika ID digunakan, route('products.purchase', selectedProduct.id) mungkin lebih cocok --}}
                         <form method="POST"
-                            :action="selectedProduct && selectedProduct.id ? `{{ url('/products') }}/${selectedProduct.id}/purchase` : '#'" {{-- Ganti slug dengan ID jika perlu --}}
+                            :action="selectedProduct && selectedProduct.id ? `{{ url('/products') }}/${selectedProduct.slug}/purchase` : '#'" {{-- Ganti slug dengan ID jika perlu --}}
                             x-ref="buyForm">
                             @csrf
 
