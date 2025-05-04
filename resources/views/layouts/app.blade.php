@@ -94,54 +94,150 @@ $watch('darkMode', value => {
         @auth {{-- Hanya tampilkan jika user login --}}
             {{-- Opsional: Sembunyikan jika sedang di halaman wishlist itu sendiri --}}
             @if (!request()->routeIs('wishlist.index'))
-                <div class="fixed bottom-6 right-6 z-40"> {{-- Posisi fixed, bottom-left, z-index --}}
-                    <a href="{{ route('wishlist.index') }}" title="View Wishlist" {{-- Tooltip/Aksesibilitas --}}
-                        class="flex items-center justify-center w-14 h-14 {{-- Ukuran tombol --}}
-                                bg-pink-brand hover:bg-pink-brand-dark {{-- Warna Pink Brand --}}
-                                text-white {{-- Warna ikon putih --}}
-                                rounded-full {{-- Bentuk bulat --}}
-                                shadow-lg {{-- Bayangan agar menonjol --}}
-                                transition-all duration-200 ease-in-out transform hover:scale-110 {{-- Animasi hover --}}
-                                focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg">
+                {{-- Container untuk kedua versi tombol --}}
+                <div class="fixed bottom-6 right-6 z-40"> {{-- Posisi fixed, bottom-right, z-index --}}
+
+                    {{-- ============================================= --}}
+                    {{-- Versi Mobile (Simple)                       --}}
+                    {{-- Tampil default, hilang di layar md ke atas --}}
+                    {{-- ============================================= --}}
+                    <a href="{{ route('wishlist.index') }}" title="View Wishlist"
+                        class="block md:hidden relative {{-- Relative untuk positioning badge --}}
+                   flex items-center justify-center w-12 h-12 {{-- Ukuran mobile --}}
+                   bg-pink-600 hover:bg-pink-700 {{-- Warna Pink (contoh) --}}
+                   text-white {{-- Warna ikon putih --}}
+                   rounded-full {{-- Bentuk bulat --}}
+                   shadow-md hover:shadow-lg {{-- Bayangan standar --}}
+                   transition-all duration-200 ease-in-out transform hover:scale-105 {{-- Animasi hover simpel --}}
+                   focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg">
                         {{-- State Fokus --}}
 
                         {{-- Ikon Hati (Wishlist) --}}
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="w-7 h-7">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="none" class="w-6 h-6"> {{-- Slightly smaller icon, fill added --}}
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
                         </svg>
 
-                        {{-- Opsional: Tambahkan Badge Jumlah Item Wishlist --}}
-                        {{-- Anda perlu logic untuk mendapatkan jumlah item wishlist di sini --}}
-                        {{-- @php
-                              $wishlistCount = Auth::user()->wishlistProducts()->count();
-                          @endphp
-                          @if ($wishlistCount > 0)
-                          <span class="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 flex items-center justify-center min-w-[18px] h-[18px]">
-                              {{ $wishlistCount }}
-                          </span>
-                          @endif --}}
+                        {{-- Badge Jumlah Item Wishlist (Mobile Version) --}}
+                        {{-- Pastikan $wishlistCount tersedia --}}
+                        @php
+                            // Uncomment baris ini jika $wishlistCount tidak di-pass dari controller
+                            // $wishlistCount = Auth::user()->wishlistProducts()->count();
+                        @endphp
+                        @isset($wishlistCount)
+                            {{-- Gunakan isset untuk mencegah error jika var tidak ada --}}
+                            @if ($wishlistCount > 0)
+                                <span
+                                    class="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 flex items-center justify-center min-w-[18px] h-[18px] shadow-sm">
+                                    {{ $wishlistCount > 99 ? '99+' : $wishlistCount }} {{-- Limit display --}}
+                                </span>
+                            @endif
+                        @endisset
+                    </a>
+
+                    {{-- ============================================= --}}
+                    {{-- Versi Desktop (Complex & Animated)          --}}
+                    {{-- Hilang default, tampil di layar md ke atas --}}
+                    {{-- ============================================= --}}
+                    <a href="{{ route('wishlist.index') }}" title="View Wishlist" x-data="{ hover: false, press: false }"
+                        @mouseenter="hover = true" @mouseleave="hover = false"
+                        @mousedown="press = true; setTimeout(() => press = false, 200)" @mouseup="press = false"
+                        class="hidden md:block relative {{-- Relative untuk positioning badge & layers --}}
+                   w-16 h-16 rounded-full overflow-hidden {{-- Ukuran desktop, overflow hidden jika ada inner layers --}}
+                   transition-all duration-500 ease-out transform {{-- Transisi utama --}}
+                   focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg"
+                        :class="{
+                            'bg-gradient-to-br from-pink-500 via-red-500 to-rose-600 dark:from-pink-700 dark:via-red-700 dark:to-rose-800': true,
+                            {{-- Gradient background --}} 'scale-110 shadow-pink-glow-strong': hover && !press,
+                            {{-- Hover state --}} 'scale-90': press,
+                            {{-- Press state --}} 'shadow-lg shadow-red-400/40 dark:shadow-red-800/40': !hover && !
+                                press,
+                            {{-- Idle state shadow --}} 'shadow-pink-glow': hover || press {{-- Glow on hover/press (pakai custom shadow class) --}}
+                        }">
+
+                        {{-- Optional: Background Effect Layer (Mirip dark mode button) --}}
+                        <div class="absolute inset-0 transition-opacity duration-500 opacity-50 mix-blend-overlay">
+                            <div class="w-full h-full bg-gradient-to-tl from-white/20 via-transparent to-white/10"></div>
+                        </div>
+
+                        {{-- Icon Container (untuk animasi icon jika diinginkan) --}}
+                        <div class="absolute inset-0 flex items-center justify-center transition-transform duration-300"
+                            :class="{ 'scale-110': hover && !press }">
+                            {{-- Ikon Hati (Wishlist) - Desktop --}}
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="none"
+                                class="w-8 h-8 text-white drop-shadow-lg animate-subtle-pulse"> {{-- Icon lebih besar, warna putih, shadow, pulse --}}
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                            </svg>
+                        </div>
+
+                        {{-- Hover/Press Border Effect Layer --}}
+                        <div class="absolute inset-0 rounded-full transition-all duration-300 border border-transparent pointer-events-none"
+                            :class="{ 'border-white/40 scale-110': hover && !press, 'scale-95': press }">
+                        </div>
+
+                        {{-- Badge Jumlah Item Wishlist (Desktop Version) --}}
+                        {{-- Pastikan $wishlistCount tersedia --}}
+                        @isset($wishlistCount)
+                            @if ($wishlistCount > 0)
+                                <span
+                                    class="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5 flex items-center justify-center min-w-[22px] h-[22px] shadow-md border-2 border-white dark:border-gray-800 transform transition-transform"
+                                    :class="{ 'scale-110': hover && !press }"> {{-- Sedikit scale up badge saat hover --}}
+                                    {{ $wishlistCount > 99 ? '99+' : $wishlistCount }}
+                                </span>
+                            @endif
+                        @endisset
 
                     </a>
                 </div>
             @endif
         @endauth
+        {{-- >>> END: Floating Wishlist Button <<< --}}
+
+
         <!-- Dark Mode Toggle -->
         <div class="fixed bottom-6 left-6 z-50">
+
+            <!-- Simple Mobile Button -->
+            <!-- Shown by default, hidden on 'md' screens and up -->
+            <button
+                @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode); window.dispatchEvent(new CustomEvent('dark-mode-toggled', { detail: darkMode }))"
+                class="block md:hidden w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-[#0a0a0a]"
+                :class="{
+                    'bg-yellow-400 hover:bg-yellow-500 focus:ring-yellow-500': !darkMode,
+                    'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500': darkMode
+                }"
+                aria-label="Toggle Dark Mode (Simple)">
+                <!-- Simple Sun/Moon Icon -->
+                <svg x-show="!darkMode" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <svg x-show="darkMode" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-300" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
+
+            <!-- Complex Desktop Button -->
+            <!-- Hidden by default, shown on 'md' screens and up -->
             <button
                 @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode); window.dispatchEvent(new CustomEvent('dark-mode-toggled', { detail: darkMode }))"
                 x-data="{ hover: false, press: false }" @mouseenter="hover = true" @mouseleave="hover = false"
                 @mousedown="press = true; setTimeout(() => press = false, 200)" @mouseup="press = false"
-                class="relative w-16 h-16 rounded-full overflow-hidden transition-all duration-500 ease-out transform focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-[#0a0a0a]"
+                class="hidden md:block relative w-16 h-16 rounded-full overflow-hidden transition-all duration-500 ease-out transform focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-[#0a0a0a]"
                 :class="{
                     'bg-gradient-to-br from-pink-100 to-purple-100 dark:from-gray-800 dark:to-purple-900': true,
-                    'scale-110 shadow-pink-glow-strong': hover && !press,
+                    'scale-110 shadow-pink-glow-strong dark:shadow-purple-glow-strong': hover && !press,
                     'scale-90': press,
                     'shadow-lg shadow-pink-300/40 dark:shadow-purple-900/40': !hover && !press,
-                    'shadow-pink-glow': hover || press /* Terapkan glow saat hover atau press */
+                    'shadow-pink-glow dark:shadow-purple-glow': hover || press /* Terapkan glow saat hover atau press */
                 }"
-                aria-label="Toggle Dark Mode">
+                aria-label="Toggle Dark Mode (Complex)">
 
                 <!-- Background Orb/Gradient Layer -->
                 <div class="absolute inset-0 transition-opacity duration-500"
@@ -155,8 +251,11 @@ $watch('darkMode', value => {
 
                 <!-- Sun Icon Container -->
                 <div class="absolute inset-0 flex items-center justify-center transition-all duration-700 ease-in-out"
-                    :class="{ 'opacity-0 -translate-y-full scale-50 rotate-90': darkMode, 'opacity-100 translate-y-0 scale-100 rotate-0':
-                            !darkMode }">
+                    :class="{
+                        'opacity-0 -translate-y-full scale-50 rotate-90': darkMode,
+                        'opacity-100 translate-y-0 scale-100 rotate-0':
+                            !darkMode
+                    }">
                     <!-- Sun Core -->
                     <div
                         class="w-6 h-6 bg-gradient-to-br from-yellow-300 to-orange-400 rounded-full shadow-md animate-subtle-pulse">
@@ -167,15 +266,20 @@ $watch('darkMode', value => {
                         </div>
                         <div class="absolute bottom-0 left-1/2 -ml-px w-px h-2 bg-orange-300 transform origin-top">
                         </div>
-                        <div class="absolute left-0 top-1/2 -mt-px h-px w-2 bg-orange-300 transform origin-right"></div>
-                        <div class="absolute right-0 top-1/2 -mt-px h-px w-2 bg-orange-300 transform origin-left"></div>
+                        <div class="absolute left-0 top-1/2 -mt-px h-px w-2 bg-orange-300 transform origin-right">
+                        </div>
+                        <div class="absolute right-0 top-1/2 -mt-px h-px w-2 bg-orange-300 transform origin-left">
+                        </div>
                     </div>
                 </div>
 
                 <!-- Moon Icon Container -->
                 <div class="absolute inset-0 flex items-center justify-center transition-all duration-700 ease-in-out"
-                    :class="{ 'opacity-100 translate-y-0 scale-100 rotate-0': darkMode, 'opacity-0 translate-y-full scale-50 -rotate-90':
-                            !darkMode }">
+                    :class="{
+                        'opacity-100 translate-y-0 scale-100 rotate-0': darkMode,
+                        'opacity-0 translate-y-full scale-50 -rotate-90':
+                            !darkMode
+                    }">
                     <!-- Moon Body -->
                     <div
                         class="w-6 h-6 bg-gradient-to-br from-slate-300 to-slate-500 rounded-full shadow-inner shadow-slate-700/50 animate-subtle-float">
@@ -203,6 +307,7 @@ $watch('darkMode', value => {
                 </div>
 
             </button>
+
         </div>
 
     </div>
@@ -701,6 +806,123 @@ $watch('darkMode', value => {
         /* Aturan untuk skeleton agar tidak terlihat saat inspect element sebelum JS jalan */
         #product-list-skeleton:not([style*="display: block"]) {
             display: none !important;
+        }
+
+        /*Darkmode*/
+    </style>
+    <style>
+        /* Add custom animations from your original code if needed,
+       or define them within Tailwind config */
+        @keyframes subtle-pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes subtle-float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-3px);
+            }
+        }
+
+        @keyframes spin-slow {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes spin-reverse-slow {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(-360deg);
+            }
+        }
+
+        .animate-subtle-pulse {
+            animation: subtle-pulse 3s ease-in-out infinite;
+        }
+
+        .animate-subtle-float {
+            animation: subtle-float 4s ease-in-out infinite;
+        }
+
+        .animate-spin-slow {
+            animation: spin-slow 20s linear infinite;
+        }
+
+        .animate-spin-reverse-slow {
+            animation: spin-reverse-slow 25s linear infinite;
+        }
+
+        .animation-delay-200 {
+            animation-delay: 0.2s;
+        }
+
+        .animation-delay-500 {
+            animation-delay: 0.5s;
+        }
+
+        .animation-delay-800 {
+            animation-delay: 0.8s;
+        }
+
+        /* Custom Glow Effects (Example - Adjust as needed) */
+        .shadow-pink-glow {
+            box-shadow: 0 0 15px 5px rgba(236, 72, 153, 0.4);
+            /* pink-400 */
+        }
+
+        .shadow-pink-glow-strong {
+            box-shadow: 0 0 25px 8px rgba(236, 72, 153, 0.5);
+            /* pink-400 */
+        }
+
+        .dark .shadow-purple-glow {
+            /* Assuming glow should be different in dark mode */
+            box-shadow: 0 0 15px 5px rgba(168, 85, 247, 0.4);
+            /* purple-500 */
+        }
+
+        .dark .shadow-purple-glow-strong {
+            box-shadow: 0 0 25px 8px rgba(168, 85, 247, 0.5);
+            /* purple-500 */
+        }
+
+        /* Tailwind Config for Dark Mode */
+        tailwind.config= {
+
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    boxShadow: {
+                        'pink-glow': '0 0 15px 5px rgba(236, 72, 153, 0.4)',
+                            'pink-glow-strong': '0 0 25px 8px rgba(236, 72, 153, 0.5)',
+                            'purple-glow': '0 0 15px 5px rgba(168, 85, 247, 0.4)', // Example for dark
+                            'purple-glow-strong': '0 0 25px 8px rgba(168, 85, 247, 0.5)', // Example for dark
+                    }
+                }
+            }
         }
     </style>
     @stack('scripts')
