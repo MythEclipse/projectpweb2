@@ -925,6 +925,29 @@ $watch('darkMode', value => {
             }
         }
     </style>
+    <style>
+        @keyframes subtle-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.03); }
+        }
+        .animate-subtle-pulse { animation: subtle-pulse 2.5s ease-in-out infinite; }
+
+        /* Custom Glow Effects (Sesuaikan warna pink/red) */
+        .shadow-pink-glow {
+            /* Contoh: Sesuaikan RGBA dengan warna pink/merah Anda */
+            box-shadow: 0 0 15px 5px rgba(236, 72, 153, 0.5); /* Pink-500-ish */
+        }
+        .shadow-pink-glow-strong {
+            box-shadow: 0 0 25px 8px rgba(225, 29, 72, 0.5); /* Rose-600-ish */
+        }
+         /* Anda mungkin ingin glow berbeda di dark mode juga */
+        .dark .shadow-pink-glow {
+            box-shadow: 0 0 15px 5px rgba(190, 24, 93, 0.6); /* Pink-700-ish */
+        }
+         .dark .shadow-pink-glow-strong {
+             box-shadow: 0 0 25px 8px rgba(225, 29, 72, 0.6); /* Rose-600-ish */
+         }
+    </style>
     @stack('scripts')
 </body>
 
