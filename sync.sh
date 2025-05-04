@@ -101,7 +101,7 @@ cd "$PROJECT_DIR" || { log_error "Tidak bisa masuk ke direktori ${PROJECT_DIR}";
 
 # 1. Aktifkan Maintenance Mode
 log_info "[1/9] Mengaktifkan Maintenance Mode..."
-if ! "${PHP_BINARY}" artisan down --message="Aplikasi sedang dalam proses pembaruan. Silakan coba lagi dalam beberapa saat." --retry=60; then
+if ! "${PHP_BINARY}" artisan down --retry=60; then
     log_warning "Gagal mengaktifkan maintenance mode (mungkin sudah aktif?). Melanjutkan..."
     # Kita lanjutkan saja, mungkin memang sudah down atau ada masalah lain yg akan muncul nanti
 fi
