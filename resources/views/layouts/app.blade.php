@@ -2,7 +2,7 @@
 
 @php
     $isAdmin = auth()->check() && auth()->user()->is_admin;
-    $onAdminPage =  request()->is('admin*') || request()->is('transactions*');
+    $onAdminPage = request()->is('admin*') || request()->is('transactions*');
 @endphp
 
 <!DOCTYPE html>
@@ -90,11 +90,111 @@ $watch('darkMode', value => {
                 </button>
             </div>
         @endif
+
+        {{-- >>> START: Floating Cart Button <<< --}}
+        @auth {{-- Hanya tampilkan jika user login --}}
+            {{-- Opsional: Sembunyikan jika sedang di halaman cart itu sendiri --}}
+            @if (!request()->routeIs('cart.index'))
+                {{-- Container untuk kedua versi tombol --}}
+                {{-- Atur `right` agar tidak bertabrakan dengan tombol wishlist (jika ada) --}}
+                <div class="fixed bottom-6 right-20 md:right-24 z-40"> {{-- Posisi fixed, bottom-right, z-index. Sesuaikan `right` jika perlu --}}
+
+                    {{-- ============================================= --}}
+                    {{-- Versi Mobile (Simple)                       --}}
+                    {{-- Tampil default, hilang di layar md ke atas --}}
+                    {{-- ============================================= --}}
+                    <a href="{{ route('cart.index') }}" title="View Cart"
+                        class="block md:hidden relative {{-- Relative untuk positioning badge --}}
+                   flex items-center justify-center w-12 h-12 {{-- Ukuran mobile --}}
+                   bg-teal-600 hover:bg-teal-700 {{-- Warna Teal (contoh) --}}
+                   text-white {{-- Warna ikon putih --}}
+                   rounded-full {{-- Bentuk bulat --}}
+                   shadow-md hover:shadow-lg {{-- Bayangan standar --}}
+                   transition-all duration-200 ease-in-out transform hover:scale-105 {{-- Animasi hover simpel --}}
+                   focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg">
+                        {{-- State Fokus --}}
+
+                        {{-- Ikon Keranjang (Cart) --}}
+                        <i class="fas fa-shopping-cart text-lg"></i> {{-- Font Awesome icon --}}
+
+
+                        {{-- Badge Jumlah Item Cart (Mobile Version) --}}
+                        {{-- Pastikan $cartCount tersedia (misal dari View Composer) --}}
+                        @isset($cartCount)
+                            {{-- Gunakan isset untuk mencegah error jika var tidak ada --}}
+                            @if ($cartCount > 0)
+                                <span
+                                    class="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 flex items-center justify-center min-w-[18px] h-[18px] shadow-sm">
+                                    {{ $cartCount > 99 ? '99+' : $cartCount }} {{-- Limit display --}}
+                                </span>
+                            @endif
+                        @endisset
+                    </a>
+
+                    {{-- ============================================= --}}
+                    {{-- Versi Desktop (Complex & Animated)          --}}
+                    {{-- Hilang default, tampil di layar md ke atas --}}
+                    {{-- ============================================= --}}
+                    <a href="{{ route('cart.index') }}" title="View Cart" x-data="{ hover: false, press: false }"
+                        @mouseenter="hover = true" @mouseleave="hover = false"
+                        @mousedown="press = true; setTimeout(() => press = false, 200)" @mouseup="press = false"
+                        class="hidden md:block relative {{-- Relative untuk positioning badge & layers --}}
+                   w-16 h-16 rounded-full overflow-hidden {{-- Ukuran desktop, overflow hidden jika ada inner layers --}}
+                   transition-all duration-500 ease-out transform {{-- Transisi utama --}}
+                   focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg"
+                        :class="{
+                            'bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-600 dark:from-teal-700 dark:via-cyan-700 dark:to-blue-800': true,
+                            {{-- Gradient background --}} 'scale-110 shadow-xl shadow-cyan-400/50 dark:shadow-blue-800/50': hover && !press,
+                            {{-- Hover state with stronger shadow --}} 'scale-90': press,
+                            {{-- Press state --}} 'shadow-lg shadow-teal-400/40 dark:shadow-blue-700/40': !hover && !
+                                press,
+                            {{-- Idle state shadow --}}
+                        }">
+
+                        {{-- Optional: Background Effect Layer (Subtle gradient overlay) --}}
+                         <div class="absolute inset-0 transition-opacity duration-500 opacity-50 mix-blend-overlay">
+                              <div class="w-full h-full bg-gradient-to-tl from-white/20 via-transparent to-white/10"></div>
+                        </div>
+
+                        {{-- Icon Container (untuk animasi icon jika diinginkan) --}}
+                        <div class="absolute inset-0 flex items-center justify-center transition-transform duration-300"
+                            :class="{ 'scale-110': hover && !press }">
+                            {{-- Ikon Keranjang (Cart) - Desktop --}}
+                            <i
+                                class="fas fa-shopping-cart text-xl text-white drop-shadow-lg animate-subtle-pulse"></i>
+                             {{-- Icon lebih besar, warna putih, shadow, pulse. Class `animate-subtle-pulse` sudah ada di style Anda --}}
+                        </div>
+
+                        {{-- Hover/Press Border Effect Layer --}}
+                        <div class="absolute inset-0 rounded-full transition-all duration-300 border border-transparent pointer-events-none"
+                            :class="{ 'border-white/40 scale-110': hover && !press, 'scale-95': press }">
+                        </div>
+
+                        {{-- Badge Jumlah Item Cart (Desktop Version) --}}
+                        {{-- Pastikan $cartCount tersedia --}}
+                        @isset($cartCount)
+                            @if ($cartCount > 0)
+                                <span
+                                    class="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5 flex items-center justify-center min-w-[22px] h-[22px] shadow-md border-2 border-white dark:border-gray-800 transform transition-transform"
+                                    :class="{ 'scale-110': hover && !press }"> {{-- Sedikit scale up badge saat hover --}}
+                                    {{ $cartCount > 99 ? '99+' : $cartCount }}
+                                </span>
+                            @endif
+                        @endisset
+
+                    </a>
+                </div>
+            @endif
+        @endauth
+        {{-- >>> END: Floating Cart Button <<< --}}
+
+
         {{-- >>> START: Floating Wishlist Button <<< --}}
         @auth {{-- Hanya tampilkan jika user login --}}
             {{-- Opsional: Sembunyikan jika sedang di halaman wishlist itu sendiri --}}
             @if (!request()->routeIs('wishlist.index'))
                 {{-- Container untuk kedua versi tombol --}}
+                {{-- Atur `right` agar di sebelah kanan tombol cart --}}
                 <div class="fixed bottom-6 right-6 z-40"> {{-- Posisi fixed, bottom-right, z-index --}}
 
                     {{-- ============================================= --}}
@@ -123,7 +223,7 @@ $watch('darkMode', value => {
                         {{-- Pastikan $wishlistCount tersedia --}}
                         @php
                             // Uncomment baris ini jika $wishlistCount tidak di-pass dari controller
-                            // $wishlistCount = Auth::user()->wishlistProducts()->count();
+                            // $wishlistCount = Auth::user()->wishlistProducts()->count(); // Pastikan ini sesuai dengan logic Anda
                         @endphp
                         @isset($wishlistCount)
                             {{-- Gunakan isset untuk mencegah error jika var tidak ada --}}
@@ -181,6 +281,7 @@ $watch('darkMode', value => {
                         {{-- Badge Jumlah Item Wishlist (Desktop Version) --}}
                         {{-- Pastikan $wishlistCount tersedia --}}
                         @isset($wishlistCount)
+                             {{-- Jangan lupa pastikan $wishlistCount benar-benar ada di sini, misal dari View Composer --}}
                             @if ($wishlistCount > 0)
                                 <span
                                     class="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5 flex items-center justify-center min-w-[22px] h-[22px] shadow-md border-2 border-white dark:border-gray-800 transform transition-transform"
@@ -203,26 +304,26 @@ $watch('darkMode', value => {
             <!-- Simple Mobile Button -->
             <!-- Shown by default, hidden on 'md' screens and up -->
             <button
-            @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode); window.dispatchEvent(new CustomEvent('dark-mode-toggled', { detail: darkMode }))"
-            {{-- Hapus 'block' dari sini --}}
-            class="md:hidden w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-[#0a0a0a]"
-            :class="{
-                'bg-yellow-400 hover:bg-yellow-500 focus:ring-yellow-500': !darkMode,
-                'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500': darkMode
-            }"
-            aria-label="Toggle Dark Mode (Simple)">
-            <!-- Simple Sun/Moon Icon -->
-            <svg x-show="!darkMode" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none"
-                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            <svg x-show="darkMode" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-300" fill="none"
-                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-            </svg>
-        </button>
+                @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode); window.dispatchEvent(new CustomEvent('dark-mode-toggled', { detail: darkMode }))"
+                {{-- Hapus 'block' dari sini --}}
+                class="md:hidden w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-[#0a0a0a]"
+                :class="{
+                    'bg-yellow-400 hover:bg-yellow-500 focus:ring-yellow-500': !darkMode,
+                    'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500': darkMode
+                }"
+                aria-label="Toggle Dark Mode (Simple)">
+                <!-- Simple Sun/Moon Icon -->
+                <svg x-show="!darkMode" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <svg x-show="darkMode" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-300" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
 
             <!-- Complex Desktop Button -->
             <!-- Hidden by default, shown on 'md' screens and up -->
@@ -812,142 +913,48 @@ $watch('darkMode', value => {
         /*Darkmode*/
     </style>
     <style>
-        /* Add custom animations from your original code if needed,
-       or define them within Tailwind config */
-        @keyframes subtle-pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 0.8;
-                transform: scale(1.05);
-            }
-        }
-
-        @keyframes subtle-float {
-
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-3px);
-            }
-        }
-
-        @keyframes spin-slow {
-            from {
-                transform: rotate(0deg);
-            }
-
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        @keyframes spin-reverse-slow {
-            from {
-                transform: rotate(0deg);
-            }
-
-            to {
-                transform: rotate(-360deg);
-            }
-        }
-
-        .animate-subtle-pulse {
-            animation: subtle-pulse 3s ease-in-out infinite;
-        }
-
-        .animate-subtle-float {
-            animation: subtle-float 4s ease-in-out infinite;
-        }
-
-        .animate-spin-slow {
-            animation: spin-slow 20s linear infinite;
-        }
-
-        .animate-spin-reverse-slow {
-            animation: spin-reverse-slow 25s linear infinite;
-        }
-
-        .animation-delay-200 {
-            animation-delay: 0.2s;
-        }
-
-        .animation-delay-500 {
-            animation-delay: 0.5s;
-        }
-
-        .animation-delay-800 {
-            animation-delay: 0.8s;
-        }
-
-        /* Custom Glow Effects (Example - Adjust as needed) */
-        .shadow-pink-glow {
-            box-shadow: 0 0 15px 5px rgba(236, 72, 153, 0.4);
-            /* pink-400 */
-        }
-
-        .shadow-pink-glow-strong {
-            box-shadow: 0 0 25px 8px rgba(236, 72, 153, 0.5);
-            /* pink-400 */
-        }
-
-        .dark .shadow-purple-glow {
-            /* Assuming glow should be different in dark mode */
-            box-shadow: 0 0 15px 5px rgba(168, 85, 247, 0.4);
-            /* purple-500 */
-        }
-
-        .dark .shadow-purple-glow-strong {
-            box-shadow: 0 0 25px 8px rgba(168, 85, 247, 0.5);
-            /* purple-500 */
-        }
-
-        /* Tailwind Config for Dark Mode */
-        tailwind.config= {
-
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    boxShadow: {
-                        'pink-glow': '0 0 15px 5px rgba(236, 72, 153, 0.4)',
-                            'pink-glow-strong': '0 0 25px 8px rgba(236, 72, 153, 0.5)',
-                            'purple-glow': '0 0 15px 5px rgba(168, 85, 247, 0.4)', // Example for dark
-                            'purple-glow-strong': '0 0 25px 8px rgba(168, 85, 247, 0.5)', // Example for dark
-                    }
-                }
-            }
-        }
-    </style>
-    <style>
+         /* Re-define or ensure presence of animations used */
         @keyframes subtle-pulse {
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.85; transform: scale(1.03); }
         }
+
+        /* Ensure these animation classes exist */
         .animate-subtle-pulse { animation: subtle-pulse 2.5s ease-in-out infinite; }
 
-        /* Custom Glow Effects (Sesuaikan warna pink/red) */
+        /* --- Custom Shadow/Glow Examples --- */
+        /* Anda mungkin perlu menambahkan ini di tailwind.config.js untuk reusability penuh */
+        /* atau biarkan di sini jika hanya digunakan sekali */
+
+        /* Pink/Red Glow (dari wishlist) */
         .shadow-pink-glow {
-            /* Contoh: Sesuaikan RGBA dengan warna pink/merah Anda */
-            box-shadow: 0 0 15px 5px rgba(236, 72, 153, 0.5); /* Pink-500-ish */
-        }
-        .shadow-pink-glow-strong {
-            box-shadow: 0 0 25px 8px rgba(225, 29, 72, 0.5); /* Rose-600-ish */
-        }
-         /* Anda mungkin ingin glow berbeda di dark mode juga */
-        .dark .shadow-pink-glow {
-            box-shadow: 0 0 15px 5px rgba(190, 24, 93, 0.6); /* Pink-700-ish */
-        }
+             box-shadow: 0 0 15px 5px rgba(236, 72, 153, 0.5); /* Pink-500-ish */
+         }
+         .shadow-pink-glow-strong {
+             box-shadow: 0 0 25px 8px rgba(225, 29, 72, 0.5); /* Rose-600-ish */
+         }
+         .dark .shadow-pink-glow {
+             box-shadow: 0 0 15px 5px rgba(190, 24, 93, 0.6); /* Pink-700-ish */
+         }
          .dark .shadow-pink-glow-strong {
              box-shadow: 0 0 25px 8px rgba(225, 29, 72, 0.6); /* Rose-600-ish */
          }
+
+        /* Teal/Cyan/Blue Glow (Untuk Cart Button) */
+        .shadow-teal-glow {
+             box-shadow: 0 0 15px 5px rgba(20, 184, 166, 0.5); /* Teal-500-ish */
+         }
+        .shadow-teal-glow-strong {
+             box-shadow: 0 0 25px 8px rgba(6, 182, 212, 0.5); /* Cyan-600-ish */
+         }
+         .dark .shadow-blue-glow {
+             box-shadow: 0 0 15px 5px rgba(59, 130, 246, 0.6); /* Blue-500-ish */
+         }
+         .dark .shadow-blue-glow-strong {
+             box-shadow: 0 0 25px 8px rgba(37, 99, 235, 0.6); /* Blue-600-ish */
+         }
+
+
     </style>
     @stack('scripts')
 </body>
