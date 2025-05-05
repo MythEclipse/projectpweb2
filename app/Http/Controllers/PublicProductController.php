@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException; // Import untuk error detail
+use Illuminate\Http\JsonResponse; // Import untuk JsonResponse
 
 class PublicProductController extends Controller
 {
@@ -43,6 +44,16 @@ class PublicProductController extends Controller
             ->values();                  // Reset keys array
 
         return view('products.show', compact('product', 'availableSizes', 'availableColors'));
+    }
+    public function getStockCombinations(Product $product): JsonResponse
+    {
+        // Load only the necessary fields from stockCombinations
+        $stockCombinations = $product->stockCombinations()
+                                     ->select('size_id', 'color_id', 'stock') // Select hanya kolom yang dibutuhkan
+                                     ->get();
+
+        // Return as JSON
+        return response()->json($stockCombinations);
     }
 
 }

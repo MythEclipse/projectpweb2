@@ -56,6 +56,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/homepage', [HomePageController::class, 'index'])->name('homepage');
 
     Route::get('/products/{product}', [PublicProductController::class, 'show'])->name('products.show');
+    Route::get('/products/{product}/stock', [PublicProductController::class, 'getStockCombinations'])->name('products.stock');
     // Route::post('/products/{product}/purchase', [PublicProductController::class, 'processPurchase'])->name('products.purchase');
     // Route::post('/products/{product}/purchase', [HomePageController::class, 'purchase'])->name('products.purchase');
     // Route::get('/products/{product}/options', [HomePageController::class, 'options'])->name('products.options'); // Beri nama jika belum

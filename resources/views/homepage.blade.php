@@ -109,7 +109,7 @@
                         <div class="p-3 sm:p-4 flex flex-col flex-grow">
                             {{-- Link ke Detail Page pada Nama --}}
                             <h3 class="text-sm sm:text-base font-semibold text-text-dark dark:text-text-light mb-1 truncate" title="{{ $product->name }}">
-                                <a href="{{ route('products.show', $product) }}" class="hover:text-pink-brand dark:hover:text-pink-brand-dark transition-colors">
+                                <a href="{{ route('products.show', $product) }}" class="hover:text-pink-brand dark:hover:text-pink-brand-dark transition-colors" data-turbo="false">
                                     {{ $product->name }}
                                 </a>
                             </h3>
@@ -146,8 +146,8 @@
                             {{-- Tombol "Beli" Menjadi Link ke Detail --}}
                             {{-- Removed @click and :disabled --}}
                             <div class="mt-auto">
-                                <a href="{{ route('products.show', $product) }}"
-                                   class="block text-center w-full bg-pink-brand hover:bg-pink-brand-dark text-white text-xs font-medium rounded-lg px-3 py-1.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-subcard">
+                                <a href="{{ route('products.show', $product) }} "
+                                   class="block text-center w-full bg-pink-brand hover:bg-pink-brand-dark text-white text-xs font-medium rounded-lg px-3 py-1.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-subcard" data-turbo="false">
                                     Lihat Detail
                                 </a>
                             </div>
