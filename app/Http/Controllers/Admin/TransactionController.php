@@ -162,4 +162,100 @@ class TransactionController extends Controller
                 ->with('error', 'Gagal menghapus item transaksi. Mungkin terkait dengan data lain.');
         }
     }
+    public function quickUpdate(Request $request, Order $order): JsonResponse // <<< METHOD quickUpdate DIKEMBALIKAN & DIUBAH SIGNATURENYA
+    {
+        // Validator now targets fields on the Order model
+        $validator = Validator::make($request->all(), [
+             // Hanya izinkan update shipping_status dari view ini
+             'field' => ['required', 'string', Rule::in(['shipping_status'])],
+             'value' => ['required', function ($attribute, $value, $fail) use ($request) {
+                 // Validasi nilai berdasarkan field yang diupdate pada model Order
+                 if ($request->input('field') === 'shipping_status') {
+                     // Check against valid shipping statuses for the Order model
+                     if (!in_array($value, ['not_shipped', 'shipped', 'delivered', 'returned'])) { // Add 'returned' if needed
+                         $fail('Nilai status pengiriman tidak valid.');
+                     }
+                 }
+                 // Tambahkan validasi untuk field lain jika quickUpdate diperluas
+             }],
+        ]);
+
+        if ($validator->fails()) {
+             // Return JSON response for validation errors
+            return response()->json(['success' => false, 'message' => 'Validasi gagal.', 'errors' => $validator->errors()], 422);
+        }
+
+        $field = $request->input('field');
+        $value = $request->input('value');
+
+        DB::beginTransaction(); // Use transaction for safety
+        try {
+            // Re-fetch the order with a lock if necessary (optional for this simple update, but good practice)
+            // $order->lockForUpdate(); // Uncomment if you anticipate race conditions on Order updates
+
+            // Store original status before potential change
+            $originalMainStatus = $order->status; // Check status on the Order model
+            $mainStatusChanged = false;
+
+            // Apply the requested change to the specific field on the Order model
+            $order->{$field} = $value;
+
+            // --- Revised Main Status Logic (Operates on Order) ---
+            // Only update the main status field IF the updated field is NOT the main status field itself
+            // and IF the order is not already in a final state like cancelled or completed
+            // In this case, we only allow updating 'shipping_status', so we check if main status needs recalculation
+            if (!in_array($originalMainStatus, ['completed', 'cancelled', 'failed'])) { // Don't change main status if already in final state
+
+                 // Determine the NEW target main status based on the CURRENT state of payment/shipping on the Order model
+                $newCalculatedStatus = 'pending'; // Default
+
+                // Logic based on Order's payment and shipping statuses
+                if (in_array($order->payment_status, ['paid', 'settlement', 'capture'])) { // Order is considered paid by Midtrans
+                    if ($order->shipping_status === 'delivered') {
+                        $newCalculatedStatus = 'completed';
+                    } elseif ($order->shipping_status === 'shipped') {
+                         $newCalculatedStatus = 'processing'; // Or 'shipped' if that's a status
+                    } else { // Paid, but not shipped (not_shipped)
+                        $newCalculatedStatus = 'processing'; // Still being processed before shipping
+                    }
+                } elseif (in_array($order->payment_status, ['deny', 'expire', 'cancel', 'refunded'])) {
+                    $newCalculatedStatus = 'cancelled'; // If payment fails/refunded, mark order as cancelled
+                }
+                // If payment_status 'unpaid' or 'pending', main status remains 'pending' (default)
+
+                // Update the main status field IF the calculated status is different
+                if ($newCalculatedStatus !== $originalMainStatus) {
+                    $order->status = $newCalculatedStatus;
+                    $mainStatusChanged = true;
+                }
+            }
+            // If the order was already completed/cancelled/failed, we only updated the shipping_status field, mainStatusChanged remains false.
+
+            // Save the Order (persists changes)
+            $order->save();
+
+            DB::commit(); // Commit the transaction
+
+            // --- End Revised Main Status Logic ---
+
+            // Return success response with updated information
+            return response()->json([
+                'success' => true,
+                'message' => 'Status berhasil diperbarui.',
+                'updated_field' => $field,
+                'new_value' => $value,
+                'main_status_updated' => $mainStatusChanged, // True if main status actually changed
+                'new_main_status' => $order->status, // The current main status from the DB
+                // You might want to return other relevant order details here too
+            ]);
+
+        } catch (\Throwable $e) {
+            DB::rollBack(); // Rollback the transaction if any error occurs
+            // Log the error
+            Log::error("Error quick updating order {$order->id} field {$field}: " . $e->getMessage(), ['exception' => $e]);
+
+            // Return JSON error response
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan pada server saat memperbarui status.'], 500);
+        }
+    }
 }

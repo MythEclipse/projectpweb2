@@ -106,8 +106,8 @@ Route::middleware(['auth', 'verified', IsAdmin::class]) // Terapkan semua middle
 
         // ===> ADD THIS LINE <===
         // Route custom untuk quick update transaksi (harus didefinisikan terpisah dari resource)
-        Route::patch('transactions/{transaction}/quick-update', [TransactionController::class, 'quickUpdate'])
-            ->name('transactions.quick_update'); // Nama route menjadi 'admin.transactions.quick_update'
+        Route::patch('/admin/orders/{order}/quick-update', [TransactionController::class, 'quickUpdate'])
+     ->name('orders.quick-update');
 
         // Tambahkan route admin lainnya di sini jika ada...
     });

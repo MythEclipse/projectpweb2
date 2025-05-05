@@ -3,7 +3,6 @@
     {{-- Header Title --}}
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-            {{-- Adjusted title to reflect this lists ITEMs, not full Orders --}}
             <h2 class="text-2xl font-bold text-text-dark dark:text-text-light">
                 Daftar Item Transaksi (Detail Pesanan)
             </h2>
@@ -11,12 +10,11 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto space-y-6 sm:px-6 lg:px-8"> {{-- Outer padding handled by sm/lg --}}
+        <div class="max-w-7xl mx-auto space-y-6 sm:px-6 lg:px-8">
 
-            {{-- Session Status / Alerts (Keeping semantic colors for alerts) --}}
+            {{-- Session Status / Alerts --}}
             <div class="px-4 sm:px-0">
-                 {{-- Success Alert --}}
-                 @if (session('success') || session('status')) {{-- Catch both keys for flexibility --}}
+                 @if (session('success') || session('status'))
                     <div id="alert-success" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
                          class="mb-4 p-4 bg-green-100 dark:bg-green-900 border border-green-300 dark:border-green-700 text-green-700 dark:text-green-200 rounded-md shadow-sm transition-opacity duration-500"
                          role="alert">
@@ -24,7 +22,6 @@
                     </div>
                 @endif
 
-                {{-- Error Alert --}}
                 @if (session('error'))
                     <div id="alert-error" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
                          class="mb-4 p-4 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-200 rounded-md shadow-sm transition-opacity duration-500"
@@ -33,7 +30,6 @@
                     </div>
                 @endif
 
-                 {{-- Display validation errors if needed --}}
                  @if ($errors->any())
                     <div class="mb-4 p-4 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-200 rounded-md shadow-sm">
                         <strong class="font-bold">Oops! Ada beberapa masalah:</strong>
@@ -46,13 +42,12 @@
                 @endif
             </div>
 
-            {{-- Actions: Search (Still relevant for filtering items based on product/user etc.) --}}
+            {{-- Actions: Search --}}
             <div class="flex flex-col sm:flex-row justify-between items-center gap-4 px-4 sm:px-0 mb-6">
-                 {{-- Search Form (Note: Controller's index method needs to handle this 'search' parameter) --}}
                  <form method="GET" action="{{ route('admin.transactions.index') }}" class="relative w-full sm:w-auto flex-grow">
                     <input type="text" name="search" value="{{ request('search') }}"
                            class="flex-grow border border-gray-300 dark:border-dark-border rounded-md py-2 pl-4 pr-10 focus:ring-pink-brand focus:border-pink-brand dark:bg-dark-bg dark:text-text-light w-full"
-                           placeholder="Cari item transaksi..."> {{-- Adjusted placeholder --}}
+                           placeholder="Cari item transaksi...">
                     <button type="submit" title="Cari"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-pink-brand">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M16.65 16.65a7 7 0 1 0-9.9-9.9 7 7 0 0 0 9.9 9.9z" /></svg>
@@ -68,72 +63,81 @@
                         <thead class="bg-gray-100 dark:bg-dark-card">
                             <tr class="text-gray-600 dark:text-gray-400">
                                 <th class="px-4 py-3 text-left uppercase tracking-wider">Produk</th>
-                                <th class="px-4 py-3 text-left uppercase tracking-wider hidden md:table-cell">Detail Item</th> {{-- Clarified header --}}
+                                <th class="px-4 py-3 text-left uppercase tracking-wider hidden md:table-cell">Detail Item</th>
                                 <th class="px-4 py-3 text-right uppercase tracking-wider hidden sm:table-cell">Qty</th>
-                                <th class="px-4 py-3 text-right uppercase tracking-wider hidden lg:table-cell">Harga Satuan</th> {{-- Clarified header --}}
-                                <th class="px-4 py-3 text-right uppercase tracking-wider">Total (Item)</th> {{-- Clarified header --}}
+                                <th class="px-4 py-3 text-right uppercase tracking-wider hidden lg:table-cell">Harga Satuan</th>
+                                <th class="px-4 py-3 text-right uppercase tracking-wider">Total (Item)</th>
                                 <th class="px-4 py-3 text-left uppercase tracking-wider">Pembeli</th>
-                                {{-- Headers referencing Order properties --}}
                                 <th class="px-4 py-3 text-left uppercase tracking-wider">Status Pesanan</th>
                                 <th class="px-4 py-3 text-left uppercase tracking-wider">Pembayaran</th>
-                                <th class="px-4 py-3 text-left uppercase tracking-wider">Pengiriman</th>
-                                <th class="px-4 py-3 text-left uppercase tracking-wider hidden md:table-cell">Tanggal Pesanan</th> {{-- Changed header --}}
+                                <th class="px-4 py-3 text-left uppercase tracking-wider">Pengiriman</th> {{-- Header for Shipping Status Select --}}
+                                <th class="px-4 py-3 text-left uppercase tracking-wider hidden md:table-cell">Tanggal Pesanan</th>
                                 <th class="px-4 py-3 text-center uppercase tracking-wider">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white dark:bg-dark-bg divide-y divide-gray-100 dark:divide-dark-border text-text-dark dark:text-text-light">
-                            {{-- *** Loop through $transactionItems (new variable name) *** --}}
+                        <tbody class="bg-white dark:bg-dark-bg divide-y divide-gray-100 dark:divide-dark-border text-text-dark dark:text-text-light" id="transaction-table-body">
                             @forelse($transactionItems as $item)
                             <tr class="hover:bg-gray-50 dark:hover:bg-dark-card transition">
-                                <td class="px-4 py-4 break-words font-semibold">{{ $item->product->name ?? 'N/A' }}</td> {{-- Access product name --}}
+                                <td class="px-4 py-4 break-words font-semibold">{{ $item->product->name ?? 'N/A' }}</td>
                                 <td class="px-4 py-4 whitespace-nowrap hidden md:table-cell">
-                                    {{ $item->size->name ?? '' }} {{-- Access size name, handle null --}}
-                                    @if($item->size && $item->color) / @endif {{-- Use '/' as separator --}}
-                                    {{ $item->color->name ?? '' }} {{-- Access color name, handle null --}}
-                                    @if(!$item->size && !$item->color) - @endif {{-- Display '-' if no size or color --}}
+                                    {{ $item->size->name ?? '' }}
+                                    @if($item->size && $item->color) / @endif
+                                    {{ $item->color->name ?? '' }}
+                                    @if(!$item->size && !$item->color) - @endif
                                 </td>
-                                <td class="px-4 py-4 text-right whitespace-nowrap hidden sm:table-cell">{{ $item->quantity }}</td> {{-- Item quantity --}}
-                                <td class="px-4 py-4 text-right whitespace-nowrap hidden lg:table-cell">Rp {{ number_format($item->price, 0, ',', '.') }}</td> {{-- Item price per unit --}}
-                                {{-- *** Calculate Item Total (quantity * price) *** --}}
+                                <td class="px-4 py-4 text-right whitespace-nowrap hidden sm:table-cell">{{ $item->quantity }}</td>
+                                <td class="px-4 py-4 text-right whitespace-nowrap hidden lg:table-cell">Rp {{ number_format($item->price, 0, ',', '.') }}</td>
                                 <td class="px-4 py-4 text-right whitespace-nowrap font-semibold text-pink-brand dark:text-pink-brand">Rp {{ number_format($item->quantity * $item->price, 0, ',', '.') }}</td>
 
-                                {{-- *** Access data from the parent Order via the 'order' relationship *** --}}
-                                <td class="px-4 py-4 break-words">{{ $item->order->user->name ?? 'N/A' }}</td> {{-- Access buyer name via order and user --}}
+                                <td class="px-4 py-4 break-words">{{ $item->order->user->name ?? 'N/A' }}</td>
 
-                                {{-- *** Display Status from Order model *** --}}
+                                {{-- Display Status from Order model --}}
                                 <td class="px-4 py-4 whitespace-nowrap">
-                                     {{-- Using Order status for the main badge --}}
                                     @php
-                                        $orderStatus = $item->order->status ?? 'unknown'; // Use Order status
+                                        $orderStatus = $item->order->status ?? 'unknown';
                                         $badgeClasses = '';
                                         switch($orderStatus) {
                                             case 'pending': $badgeClasses = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'; break;
                                             case 'processing': $badgeClasses = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'; break;
                                             case 'completed': $badgeClasses = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'; break;
                                             case 'cancelled':
-                                            case 'failed': $badgeClasses = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'; break; // Also use red for failed
+                                            case 'failed': $badgeClasses = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'; break;
                                             default: $badgeClasses = 'bg-gray-100 text-gray-800 dark:bg-dark-subcard dark:text-gray-400'; break;
                                         }
                                     @endphp
-                                    <span class="inline-block px-2 py-1 text-xs leading-tight font-medium rounded-full w-fit {{ $badgeClasses }}">
+                                    {{-- Add class to easily select the badge for JS updates --}}
+                                    <span class="order-status-badge-{{ $item->order->id }} inline-block px-2 py-1 text-xs leading-tight font-medium rounded-full w-fit {{ $badgeClasses }}">
                                         {{ ucfirst($orderStatus) }}
                                     </span>
-                                    {{-- Quick Update UI for status REMOVED --}}
                                 </td>
 
-                                {{-- *** Display Payment Status from Order model *** --}}
+                                {{-- Display Payment Status from Order model --}}
                                 <td class="px-4 py-4 whitespace-nowrap">
                                     {{ $item->order->payment_status ?? 'N/A' }}
-                                    {{-- Quick Update UI for payment status REMOVED --}}
+                                    {{-- Note: Quick Update UI for payment status is NOT added back here --}}
                                 </td>
 
-                                {{-- *** Display Shipping Status from Order model *** --}}
+                                {{-- Kolom Status Pengiriman (Quick Update Select) --}}
                                 <td class="px-4 py-4 whitespace-nowrap">
-                                     {{ $item->order->shipping_status ?? 'N/A' }}
-                                     {{-- Quick Update UI for shipping status REMOVED --}}
+                                     {{-- Wrap in a div for flex and indicator --}}
+                                     <div class="flex items-center space-x-2" title="Ubah status pengiriman">
+                                        {{-- Add data-order-id instead of data-transaction-id --}}
+                                        <select name="shipping_status"
+                                                class="quick-update-select text-xs p-1 border border-gray-300 dark:border-dark-border rounded shadow-sm focus:outline-none focus:ring-pink-brand focus:border-pink-brand dark:bg-dark-card dark:text-text-light w-full sm:w-auto"
+                                                data-order-id="{{ $item->order->id }}" {{-- <<< Use Order ID --}}
+                                                data-field="shipping_status">
+                                            <option value="not_shipped" @selected($item->order->shipping_status == 'not_shipped')>Belum Kirim</option>
+                                            <option value="shipped" @selected($item->order->shipping_status == 'shipped')>Dikirim</option>
+                                            <option value="delivered" @selected($item->order->shipping_status == 'delivered')>Diterima</option>
+                                            {{-- Add other statuses if needed, e.g., returned --}}
+                                            <option value="returned" @selected($item->order->shipping_status == 'returned')>Dikembalikan</option>
+                                        </select>
+                                        {{-- Add a span for the loading/success/error indicator --}}
+                                        <span class="status-indicator text-xs"></span>
+                                    </div>
                                 </td>
 
-                                {{-- *** Display Order Creation Date *** --}}
+                                {{-- Display Order Creation Date --}}
                                 <td class="px-4 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400 hidden md:table-cell">
                                      {{ $item->order->created_at->format('d M Y H:i') ?? 'N/A' }}
                                 </td>
@@ -144,11 +148,12 @@
                                          {{-- Link to View the Parent Order (Recommended) --}}
                                          {{-- Assume you have an Admin\OrderController with a 'show' method and corresponding route named 'admin.orders.show' --}}
                                          @if($item->order)
+                                             {{-- Link to the Order show page --}}
                                              <a href="{{ route('admin.transactions.show', $item->order->id) }}" class="text-blue-600 dark:text-blue-400 hover:underline text-sm" data-turbo="false">
                                                 View Order
                                             </a>
                                          @else
-                                              <span class="text-gray-500 dark:text-gray-400 text-sm">No Order</span> {{-- Fallback if somehow item has no order --}}
+                                              <span class="text-gray-500 dark:text-gray-400 text-sm">No Order</span>
                                          @endif
 
                                         {{-- Delete uses red --}}
@@ -168,7 +173,6 @@
                             </tr>
                             @empty
                             <tr>
-                                {{-- Colspan updated to 11 (matches number of <th>) --}}
                                 <td colspan="11" class="text-center py-8 text-gray-500 dark:text-gray-400">
                                     Tidak ada data item transaksi ditemukan.
                                      @if(request('search'))
@@ -182,7 +186,6 @@
                 </div>
 
                  {{-- Pagination --}}
-                 {{-- Updated variable name to $transactionItems --}}
                  @if ($transactionItems->hasPages())
                  <div class="flex flex-wrap justify-center sm:justify-between items-center mt-6 gap-2 px-4 sm:px-0">
                      <div>
@@ -191,15 +194,16 @@
                  </div>
                  @endif
 
-            </div> {{-- End inner container --}}
-        </div> {{-- End max-w-7xl --}}
-    </div> {{-- End py-12 --}}
+            </div>
+        </div>
+    </div>
 
-    {{-- CSRF Token Meta Tag (Still needed for Delete form) --}}
+    {{-- CSRF Token Meta Tag (Still needed for Delete form and AJAX) --}}
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    {{-- Font Awesome (if needed for SweetAlert icons) --}}
+    {{-- Font Awesome (if needed for indicator icons) --}}
     {{-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" /> --}}
+
 
     {{-- Scripts Section --}}
     @push('scripts')
@@ -207,9 +211,124 @@
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-        {{-- QUICK UPDATE JAVASCRIPT HAS BEEN REMOVED --}}
-        {{-- Quick updates for Order status, payment status, shipping status should be handled
-             on an Order management page using an Admin\OrderController. --}}
+        {{-- Quick Update JavaScript (Adapted for Order ID) --}}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+               const tableBody = document.getElementById('transaction-table-body');
+               const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+               const indicatorTimeouts = {};
+
+               // --- Function: getStatusBadgeClasses ---
+                function getStatusBadgeClasses(status) {
+                    switch (status) {
+                       case 'pending':    return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+                       case 'processing': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+                       case 'completed':  return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+                       case 'cancelled':
+                       case 'failed':     return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+                       default:           return 'bg-gray-100 text-gray-800 dark:bg-[#2d2d2d] dark:text-gray-400';
+                    }
+                }
+
+               // --- Function: updateMainStatusBadge ---
+               function updateMainStatusBadge(orderId, newStatus) {
+                   const badgeElement = document.querySelector(`.order-status-badge-${orderId}`);
+                   if (!badgeElement) { console.error(`Badge element not found for order ${orderId}`); return; }
+                   badgeElement.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                   const baseClasses = 'inline-block px-2 py-1 text-xs leading-tight font-medium rounded-full w-fit';
+                   const newColorClasses = getStatusBadgeClasses(newStatus);
+                   badgeElement.className = `${baseClasses} ${newColorClasses}`;
+               }
+
+               // --- Function: showIndicator ---
+               function showIndicator(indicatorElement, type = 'loading', message = '', orderId = null, field = null) {
+                   if (!indicatorElement) return;
+                   const timeoutKey = `${orderId}-${field}`;
+                   if (indicatorTimeouts[timeoutKey]) { clearTimeout(indicatorTimeouts[timeoutKey]); delete indicatorTimeouts[timeoutKey]; }
+                   indicatorElement.innerHTML = ''; let icon = ''; let colorClass = '';
+                   switch (type) {
+                       case 'loading': icon = '<i class="fas fa-spinner fa-spin text-blue-500"></i>'; break;
+                       case 'success': icon = '<i class="fas fa-check-circle text-green-500"></i>'; colorClass = 'text-green-500'; break;
+                       case 'error': icon = '<i class="fas fa-times-circle text-red-500"></i>'; colorClass = 'text-red-500'; message = message || 'Error'; indicatorElement.title = message; break;
+                       default: indicatorElement.innerHTML = ''; indicatorElement.title = ''; return;
+                   }
+                   indicatorElement.innerHTML = icon;
+                   if ((type === 'success' || type === 'error') && orderId && field) {
+                       indicatorTimeouts[timeoutKey] = setTimeout(() => {
+                           if (indicatorElement.innerHTML.includes('fa-check-circle') || indicatorElement.innerHTML.includes('fa-times-circle')) {
+                               indicatorElement.innerHTML = ''; indicatorElement.title = '';
+                           } delete indicatorTimeouts[timeoutKey];
+                       }, 3500);
+                   } else if (type !== 'loading') { indicatorElement.innerHTML = ''; indicatorElement.title = ''; }
+               }
+
+               // --- Function: handleQuickUpdate (Correct URL Generation) ---
+               function handleQuickUpdate(element, orderId, field, value) {
+                    // *** GENERATE URL YANG BENAR MENGGUNAKAN ROUTE NAME ***
+                    // Gunakan placeholder :orderId yang akan diganti dengan ID Order sebenarnya
+                    const updateUrlTemplate = '{{ route('admin.orders.quick-update', ['order' => ':orderId']) }}';
+                    const updateUrl = updateUrlTemplate.replace(':orderId', orderId); // Ganti placeholder dengan ID Order
+
+                    const controlWrapper = element.closest('.flex');
+                    const indicatorElement = controlWrapper ? controlWrapper.querySelector('.status-indicator') : null;
+                    if (indicatorElement) showIndicator(indicatorElement, 'loading', '', orderId, field);
+                    element.disabled = true;
+                    let originalValue = element.tagName === 'SELECT' ? element.options[element.selectedIndex].value : null;
+
+                    fetch(updateUrl, { // <<< Gunakan URL yang sudah diperbaiki
+                       method: 'PATCH',
+                       headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken},
+                       body: JSON.stringify({ field: field, value: value })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().catch(() => ({})).then(errorData => {
+                                let errorMsg = `Server error: ${response.status}.`;
+                                if (errorData && errorData.message) errorMsg += ` Pesan: ${errorData.message}`;
+                                if (errorData && errorData.errors) { errorMsg += ` Detail: ${Object.values(errorData.errors).flat().join(' ')}`; }
+                                throw new Error(errorMsg);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            console.log('Update successful:', data.message || 'Status diperbarui.');
+                            if(indicatorElement) showIndicator(indicatorElement, 'success', '', orderId, field);
+                            if (data.main_status_updated && data.new_main_status) {
+                                updateMainStatusBadge(orderId, data.new_main_status);
+                            }
+                        } else { throw new Error(data.message || 'Gagal memperbarui status dari server.'); }
+                    })
+                    .catch(error => {
+                        console.error('Update Error:', error);
+                        if(indicatorElement) showIndicator(indicatorElement, 'error', error.message, orderId, field);
+                        if (element.tagName === 'SELECT' && originalValue !== null) { element.value = originalValue; }
+                    })
+                    .finally(() => { element.disabled = false; });
+                }
+
+                // Event Listener for Quick Updates on Select elements
+                if (tableBody) {
+                   tableBody.addEventListener('change', function(event) {
+                       const target = event.target;
+                       if (target.matches('.quick-update-select') && target.tagName === 'SELECT') {
+                           const orderId = target.dataset.orderId;
+                           const field = target.dataset.field;
+                           const value = target.value;
+                           if (orderId && field) {
+                               handleQuickUpdate(target, orderId, field, value);
+                           } else {
+                               console.error("Missing data attributes for quick update select.", target);
+                           }
+                       }
+                   });
+                } else {
+                    console.warn("Element with ID 'transaction-table-body' not found. Quick updates might not work.");
+                }
+
+            });
+       </script>
 
         {{-- SweetAlert Delete Confirmation (Still needed for Delete Item) --}}
         <script>
@@ -223,15 +342,15 @@
 
                         Swal.fire({
                             title: 'Apakah Anda yakin?',
-                            text: "Item transaksi ini akan dihapus secara permanen. Tindakan ini tidak dapat diurungkan!", // Clarified text
+                            text: "Item transaksi ini akan dihapus secara permanen. Tindakan ini tidak dapat diurungkan!",
                             icon: 'warning',
                             showCancelButton: true,
-                            confirmButtonColor: '#EC4899', // pink-brand
-                            cancelButtonColor: '#6b7280', // neutral gray (standard, ok for cancel)
+                            confirmButtonColor: '#EC4899',
+                            cancelButtonColor: '#6b7280',
                             confirmButtonText: 'Ya, hapus!',
                             cancelButtonText: 'Batal',
-                            background: isDarkMode ? '#0a0a0a' : '#ffffff', // dark-bg or white
-                            color: isDarkMode ? '#EDEDEC' : '#1b1b18', // text-light or text-dark
+                            background: isDarkMode ? '#0a0a0a' : '#ffffff',
+                            color: isDarkMode ? '#EDEDEC' : '#1b1b18',
                         }).then((result) => {
                             if (result.isConfirmed) {
                                 this.submit();
@@ -241,6 +360,10 @@
                 });
             });
         </script>
+    @push('scripts')
+        {{-- Add Font Awesome if you use icons for indicators --}}
+        {{-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" /> --}}
     @endpush
+    @endpush {{-- Ensure this matches your layout's push/stack --}}
 
 </x-app-layout>
