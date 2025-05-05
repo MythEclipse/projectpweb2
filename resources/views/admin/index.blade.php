@@ -48,6 +48,7 @@
                             {{ $newOrdersCount }}
                         </p>
                     </div>
+                    {{-- Assuming admin.transactions.index route is now handled by an OrderController --}}
                     <a href="{{ route('admin.transactions.index') }}"
                        class="mt-4 text-sm text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 font-medium">
                         Lihat Pesanan →
@@ -65,6 +66,11 @@
                             {{ number_format($totalCustomers, 0, ',', '.') }}
                         </p>
                     </div>
+                    {{-- Add a link to customer management if you have one --}}
+                    {{-- <a href="{{ route('admin.users.index') }}"
+                       class="mt-4 text-sm text-green-600 hover:text-green-800 dark:hover:text-green-400 font-medium">
+                        Kelola Pelanggan →
+                    </a> --}}
                 </div>
 
                 <!-- Stat Card 4: Pendapatan Bulan Ini -->
@@ -78,6 +84,11 @@
                             {{ $formattedRevenue }}
                         </p>
                     </div>
+                    {{-- Add a link to revenue reports if you have one --}}
+                    {{-- <a href="{{ route('admin.reports.revenue') }}"
+                       class="mt-4 text-sm text-yellow-600 hover:text-yellow-800 dark:hover:text-yellow-400 font-medium">
+                        Lihat Laporan →
+                    </a> --}}
                 </div>
             </div>
 
@@ -91,6 +102,7 @@
                        class="inline-block bg-pink-brand hover:bg-pink-brand-dark text-white px-6 py-3 rounded-lg text-sm font-medium transition duration-300 text-center">
                         Tambah Produk Baru
                     </a>
+                    {{-- Assuming admin.transactions.index route is now handled by an OrderController --}}
                     <a href="{{ route('admin.transactions.index', ['status' => 'pending']) }}"
                        class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-sm font-medium transition duration-300 text-center">
                         Proses Pesanan Tertunda
@@ -101,28 +113,32 @@
             <!-- Recent Activity Section -->
             <div class="bg-white dark:bg-dark-card overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 border-b border-gray-200 dark:border-dark-border">
-                    <h3 class="text-lg font-medium text-text-dark dark:text-text-light">Aktivitas Terbaru</h3>
+                    <h3 class="text-lg font-medium text-text-dark dark:text-text-light">Aktivitas Terbaru (Pesanan)</h3> {{-- Updated title --}}
                 </div>
                 <div class="p-6">
-                    @if ($recentTransactions->isNotEmpty())
+                    {{-- Check if $recentOrders is not empty, iterate as $order --}}
+                    @if ($recentOrders->isNotEmpty())
                         <ul class="space-y-4">
-                            @foreach ($recentTransactions as $transaction)
+                            @foreach ($recentOrders as $order) {{-- Loop through recentOrders as $order --}}
                                 <li class="text-sm text-gray-700 dark:text-gray-300 flex flex-wrap items-center gap-x-2">
                                     <span class="font-semibold text-green-600 dark:text-green-400">[Pesanan Baru]</span>
-                                    <span>Pesanan #{{ $transaction->id }}</span>
-                                    @if ($transaction->user)
-                                        <span>oleh <span class="font-medium">{{ $transaction->user->name }}</span></span>
+                                    <span>Pesanan #{{ $order->id }}</span> {{-- Access $order->id --}}
+                                    {{-- Check if user exists (optional, but good practice) --}}
+                                    @if ($order->user)
+                                        <span>oleh <span class="font-medium">{{ $order->user->name }}</span></span> {{-- Access $order->user->name --}}
                                     @endif
-                                    <span>(Total: Rp {{ number_format($transaction->total, 0, ',', '.') }})</span>
-                                    <span class="text-gray-500 dark:text-gray-400">- {{ $transaction->created_at->diffForHumans() }}</span>
+                                    <span>(Total: Rp {{ number_format($order->total_amount, 0, ',', '.') }})</span> {{-- Access $order->total_amount --}}
+                                    <span class="text-gray-500 dark:text-gray-400">- {{ $order->created_at->diffForHumans() }}</span> {{-- Access $order->created_at --}}
                                 </li>
                             @endforeach
                         </ul>
                     @else
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Belum ada aktivitas terbaru.</p>
+                        {{-- Check if $recentOrders is empty --}}
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Belum ada aktivitas pesanan terbaru.</p> {{-- Updated message --}}
                     @endif
 
                     <div class="mt-4">
+                        {{-- Link might need to go to admin.orders.index now --}}
                         {{-- <a href="{{ route('admin.activity.log') }}"
                             class="text-sm text-pink-brand hover:text-pink-brand-dark font-medium">
                             Lihat Semua Aktivitas →

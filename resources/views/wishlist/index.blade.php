@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-text-dark dark:text-text-light leading-tight">
-            {{ __('My Wishlist') }}
+            {{ __('Daftar Keinginan Saya') }} {{-- Mengubah teks judul header --}}
         </h2>
     </x-slot>
 
@@ -22,7 +22,7 @@
                         </div>
                     @endif
 
-                    <h3 class="text-2xl font-semibold mb-6 border-b border-gray-200 dark:border-dark-border pb-3">{{ __("Your Wishlisted Items") }}</h3>
+                    <h3 class="text-2xl font-semibold mb-6 border-b border-gray-200 dark:border-dark-border pb-3">{{ __("Item di Daftar Keinginan Anda") }}</h3> {{-- Mengubah teks judul bagian --}}
 
                     {{-- Kondisi Wishlist Kosong (Tidak Berubah) --}}
                     @if ($wishlistItems->isEmpty())
@@ -30,7 +30,7 @@
                              <svg class="mx-auto h-16 w-16 text-gray-300 dark:text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
                              </svg>
-                             <h4 class="mt-4 text-lg font-medium text-text-dark dark:text-text-light">{{ __("Wishlist Anda Kosong") }}</h4>
+                             <h4 class="mt-4 text-lg font-medium text-text-dark dark:text-text-light">{{ __("Daftar Keinginan Anda Kosong") }}</h4>
                             <p class="mt-2 text-sm text-gray-500 dark:text-text-light/70">{{ __("Sepertinya Anda belum menambahkan item favorit.") }}</p>
                             <a href="{{ route('homepage') }}" class="mt-6 inline-flex items-center px-6 py-2.5 bg-pink-brand border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-pink-brand-dark focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-card transition ease-in-out duration-150">
                                  <svg class="w-4 h-4 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

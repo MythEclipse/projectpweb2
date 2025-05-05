@@ -2,7 +2,7 @@
     {{-- Slot untuk Judul Halaman di Header (konsisten dengan layout) --}}
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Dashboard') }}
+            {{ __('Dashboard') }} {{-- Menggunakan 'Dashboard' karena umum --}}
         </h2>
     </x-slot>
 
@@ -17,11 +17,11 @@
                 {{-- Header Card --}}
                 <div class="p-6 md:p-8 border-b border-gray-200 dark:border-gray-700">
                     <h3 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white mb-2">
-                        {{ __('Welcome back, ') }} <span
+                        {{ __('Selamat datang kembali, ') }} <span
                             class="text-pink-600 dark:text-pink-400">{{ Auth::user()->name }}</span>! 👋
                     </h3>
                     <p class="text-base text-gray-600 dark:text-gray-300">
-                        {{ __("Here's a quick overview of your account.") }}
+                        {{ __("Berikut adalah ringkasan cepat mengenai akun Anda.") }}
                     </p>
                 </div>
 
@@ -41,9 +41,9 @@
                             </div>
                             <div>
                                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                                    {{ __('Account Status') }}</dt>
+                                    {{ __('Status Akun') }}</dt>
                                 <dd class="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">
-                                    {{ __('Active') }}</dd>
+                                    {{ __('Aktif') }}</dd>
                             </div>
                         </div>
                     </div>
@@ -61,9 +61,9 @@
                             </div>
                             <div>
                                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                                    {{ __('Member Since') }}</dt>
+                                    {{ __('Bergabung Sejak') }}</dt>
                                 <dd class="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">
-                                    {{ Auth::user()->created_at->format('M d, Y') }}</dd>
+                                    {{ Auth::user()->created_at->format('M d, Y') }}</dd> {{-- Format tanggal tetap --}}
                             </div>
                         </div>
                     </div>
@@ -77,10 +77,10 @@
             <div class="bg-white dark:bg-[#1a1a1a] overflow-hidden shadow-lg sm:rounded-xl">
                 <div class="p-6 md:p-8 border-b border-gray-200 dark:border-gray-700">
                     <h3 class="text-xl font-bold leading-6 text-gray-900 dark:text-white">
-                        {{ __('Quick Access') }}
+                        {{ __('Akses Cepat') }}
                     </h3>
                     <p class="mt-1 text-base text-gray-600 dark:text-gray-300">
-                        {{ __('Navigate to frequently used sections.') }}
+                        {{ __('Navigasi ke bagian yang sering digunakan.') }}
                     </p>
                 </div>
                 <div class="p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -100,8 +100,8 @@
                          </svg>
                          </div>
                          <div>
-                             <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-100 group-hover:text-purple-700 dark:group-hover:text-purple-300">{{ __('My Orders') }}</h4>
-                             <p class="text-sm text-gray-600 dark:text-gray-400">{{ __('View your order history') }}</p>
+                             <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-100 group-hover:text-purple-700 dark:group-hover:text-purple-300">{{ __('Pesanan Saya') }}</h4>
+                             <p class="text-sm text-gray-600 dark:text-gray-400">{{ __('Lihat riwayat pesanan Anda') }}</p>
                          </div>
                      </div>
                  </a>
@@ -122,8 +122,8 @@
                             <div>
                                 <h4
                                     class="text-lg font-semibold text-gray-800 dark:text-gray-100 group-hover:text-red-700 dark:group-hover:text-red-300">
-                                    {{ __('My Wishlist') }}</h4>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ __('See your saved items') }}
+                                    {{ __('Daftar Keinginan Saya') }}</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ __('Lihat item yang Anda simpan') }}
                                 </p>
                             </div>
                         </div>
@@ -145,15 +145,12 @@
                             <div>
                                 <h4
                                     class="text-lg font-semibold text-gray-800 dark:text-gray-100 group-hover:text-green-700 dark:group-hover:text-green-300">
-                                    {{ __('Account Settings') }}</h4>
+                                    {{ __('Pengaturan Akun') }}</h4>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                                    {{ __('Manage your profile & preferences') }}</p>
+                                    {{ __('Kelola profil & preferensi Anda') }}</p>
                             </div>
                         </div>
                     </a>
-
-
-
                 </div>
             </div>
 

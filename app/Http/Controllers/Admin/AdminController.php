@@ -20,56 +20,56 @@ class AdminController extends Controller
     {
         // --- Fetch Quick Stats Data ---
 
-        // 1. Total Products
+        // 1. Total Products (still the same)
         $totalProducts = Product::count();
 
         // 2. New Orders in the last 24 hours
-        // We now count *Orders*, not individual transaction items, for "new orders" stat.
+        // Now count from the 'orders' table
         $newOrdersCount = Order::where('created_at', '>=', Carbon::now()->subDay())->count();
 
-        // 3. Total Customers
-        $totalCustomers = User::count(); // Counts all registered users
+        // 3. Total Customers (assuming User model represents customers)
+        $totalCustomers = User::count();
 
         // 4. Revenue This Month
-        // Revenue is calculated from the *total_amount* in the *orders* table,
-        // filtering by a successful payment status (e.g., 'settlement' or 'paid').
-        // The 'status' column is now in the 'orders' table, not 'transactions'.
-        // *** ASSUMPTION: A successfully paid order has payment_status = 'settlement' ***
-        // *** Adjust the 'settlement' string below if your order status logic uses a different value (e.g., 'paid') ***
-        $revenueThisMonth = Order::where('payment_status', 'settlement') // Filter by successful payment status in Orders table
+        // Revenue is calculated from 'total_amount' in the 'orders' table
+        // Filter by a status indicating successful payment (e.g., 'settlement')
+        // ADJUST 'settlement' if your Order model uses a different status for completed payments.
+        $revenueThisMonth = Order::where('payment_status', 'settlement') // Assuming 'settlement' means paid
             ->whereMonth('created_at', Carbon::now()->month)
             ->whereYear('created_at', Carbon::now()->year)
             ->sum('total_amount'); // Sum the 'total_amount' from the Orders table
 
-        // Format the revenue into a more readable string
-        $formattedRevenue = 'Rp ' . number_format($revenueThisMonth / 1000000, 1, ',', '.') . 'jt';
-        // Or full format: $formattedRevenue = 'Rp ' . number_format($revenueThisMonth, 0, ',', '.');
+        // Format the revenue
+        // Keep the original formatting if that's desired, or use full format
+        // Example 1: Rp X.Xjt format for millions
+        if ($revenueThisMonth >= 1000000) {
+             $formattedRevenue = 'Rp ' . number_format($revenueThisMonth / 1000000, 1, ',', '.') . 'jt';
+        } else {
+             // Example 2: Full format for smaller amounts
+             $formattedRevenue = 'Rp ' . number_format($revenueThisMonth, 0, ',', '.');
+        }
 
 
         // --- Fetch Recent Activity Data ---
 
-        // Example: Get the 5 most recent orders (formerly called transactions in the old schema context)
-        // We now fetch *Order* models, eager loading the 'user' relationship.
-        $recentOrders = Order::with('user') // 'user' relation exists on the Order model
+        // Example: Get the 5 most recent orders (from the 'orders' table)
+        // Eager load the 'user' relation as user_id is on the Order model
+        $recentOrders = Order::with('user')
             ->latest() // Order by created_at descending (newest first)
             ->take(5)  // Limit the results
             ->get();
-
-        // You could add more activity types here if needed:
-        $recentUsers = User::latest()->take(3)->get();
-        // $recentProductUpdates = Product::latest('updated_at')->take(3)->get();
 
 
         // --- Pass Data to the View ---
 
         // Return the admin dashboard view and pass the fetched data as variables
+        // We'll pass the recent orders using a variable name that reflects they are orders.
         return view('admin.index', [
             'totalProducts'     => $totalProducts,
             'newOrdersCount'    => $newOrdersCount,
             'totalCustomers'    => $totalCustomers,
-            'formattedRevenue'  => $formattedRevenue,    // Pass the pre-formatted string
-            'recentTransactions' => $recentOrders,      // Pass the collection of recent Orders, maybe rename variable in view?
-            'recentUsers' => $recentUsers,           // Pass other activity data if you fetched it
+            'formattedRevenue'  => $formattedRevenue,
+            'recentOrders'      => $recentOrders, // Use a variable name like recentOrders
         ]);
     }
 
