@@ -14,6 +14,7 @@ use App\Http\Controllers\OrderController; // Import OrderController untuk orders
 use App\Http\Controllers\PublicProductController; // Import PublicProductController untuk produk publik
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\MidtransNotificationController; // Import MidtransNotificationController untuk notifikasi Midtrans
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -71,6 +72,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/profile/update-image', [ProfileController::class, 'updateImage'])->name('profile.updateImage');
 });
+Route::middleware(['auth'])->group(function () {
+    // Checkout routes
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('checkout.process');
+
+    // ... other authenticated routes (like cart, orders, etc.)
+});
+
+// Midtrans Notification Route (DO NOT require authentication!)
+Route::post('/midtrans/notification', [MidtransNotificationController::class, 'handle'])->name('midtrans.notification')->withoutMiddleware(['auth', 'csrf']); // CSRF protection is not needed/wanted for webhooks
 
 
 Route::middleware(['auth', 'verified', IsAdmin::class]) // Terapkan semua middleware di grup

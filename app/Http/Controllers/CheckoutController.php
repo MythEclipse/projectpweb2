@@ -3,28 +3,36 @@
 namespace App\Http\Controllers;
 
 use App\Models\CartItem;
+use App\Models\Order;
 use App\Models\Transaction;
 use App\Models\ProductSizeColor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse; // Import JsonResponse
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException; // Pastikan ini di-import
+use Illuminate\Validation\ValidationException;
 use Illuminate\Routing\Controller;
+use Midtrans\Config;
+use Midtrans\Snap;
 
 class CheckoutController extends Controller
 {
     public function __construct()
     {
         $this->middleware('auth');
+        // Konfigurasi Midtrans
+        Config::$serverKey = config('services.midtrans.server_key');
+        Config::$isProduction = config('services.midtrans.is_production');
+        Config::$isSanitized = config('services.midtrans.is_sanitized');
+        Config::$is3ds = config('services.midtrans.is_3ds');
     }
 
     /**
      * Menampilkan halaman checkout.
-     *
-     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     * ... (method index tetap sama) ...
      */
     public function index(): View | RedirectResponse
     {
@@ -34,137 +42,169 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Keranjang Anda kosong. Silakan tambahkan produk terlebih dahulu.');
         }
 
-        // Lakukan cek stok final sebelum menampilkan halaman checkout
         try {
-             $this->checkStockForCheckout($cartItems);
+            $this->checkStockForCheckout($cartItems);
         } catch (ValidationException $e) {
-             // Jika stok tidak mencukupi, kembalikan user ke keranjang dengan error
-             return redirect()->route('cart.index')
-                 ->with('error', 'Beberapa item di keranjang memiliki stok tidak mencukupi. Silakan periksa kembali.');
+            return redirect()->route('cart.index')
+                ->with('error', 'Beberapa item di keranjang memiliki stok tidak mencukupi. Silakan periksa kembali.');
         }
 
-
-        $cartTotal = $cartItems->sum(function($item) {
+        $cartTotal = $cartItems->sum(function ($item) {
             return $item->quantity * $item->product->price;
         });
 
-        // Ambil alamat user jika ada, atau siapkan field kosong
-        $userAddress = Auth::user()->address; // Asumsikan user punya relasi hasOne/hasMany ke Address Model
-
-        // Anda mungkin perlu melewatkan opsi metode pembayaran/pengiriman di sini
+        $userAddress = Auth::user()->address;
 
         return view('checkout.index', compact('cartItems', 'cartTotal', 'userAddress'));
     }
 
     /**
-     * Memproses data checkout dan membuat transaksi.
+     * Memproses data checkout, membuat order, dan menginisiasi transaksi Midtrans (Snap Token).
+     * Mengembalikan JSON response berisi snap_token.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
-    public function process(Request $request): RedirectResponse
+    public function process(Request $request): JsonResponse | RedirectResponse // Return type bisa JSON atau Redirect (jika ada error redirect)
     {
         $user = Auth::user();
-        $cartItems = $user->cartItems()->with(['product'])->get(); // Load product to get price
+        $cartItems = $user->cartItems()->with(['product', 'size', 'color'])->get();
 
         if ($cartItems->isEmpty()) {
-             return redirect()->route('cart.index')->with('error', 'Keranjang Anda kosong.');
+            // Ini bisa jadi redirect, bukan JSON, karena ini error pra-form
+            return redirect()->route('cart.index')->with('error', 'Keranjang Anda kosong.');
         }
 
-        // Validasi data checkout (alamat pengiriman, metode pembayaran, dll.)
+        // Validasi data checkout
         $validated = $request->validate([
-            // Validasi field alamat (sesuaikan dengan struktur Address Model Anda)
-            'shipping_address' => 'required|string', // Atau field alamat detail lainnya
-            // 'payment_method' => 'required|string', // Jika Anda punya pilihan metode pembayaran di form
+            'shipping_address' => 'required|string',
             'notes' => 'nullable|string|max:500'
         ]);
 
         DB::beginTransaction();
         try {
-            // --- Final Stock Check (Locked) ---
-            $this->checkStockForCheckout($cartItems, true); // true for locking
+            // --- Final Stock Check (No Lock here, Lock happens on notification) ---
+            $this->checkStockForCheckout($cartItems, false);
 
-            // --- Proses Pengurangan Stok dan Pembuatan Transaksi ---
-            foreach ($cartItems as $item) {
-                 // Temukan ProductSizeColor dengan lock for update
-                 $stock = ProductSizeColor::where('product_id', $item->product_id)
-                     ->where('size_id', $item->size_id)
-                     ->where('color_id', $item->color_id)
-                     ->lockForUpdate() // Lock baris ini saat transaksi berjalan
-                     ->first();
-
-                 // Ini seharusnya sudah dicheck di checkStockForCheckout, tapi double check
-                 if (!$stock || $stock->stock < $item->quantity) {
-                      // Rollback jika ada ketidaksesuaian stok terakhir
-                      DB::rollBack();
-                      throw ValidationException::withMessages(['cart' => 'Stok tidak mencukupi untuk item: ' . $item->product->name . ' (' . ($item->size->name ?? '') . '/' . ($item->color->name ?? '') . '). Stok tersedia ' . ($stock ? $stock->stock : 0)]);
-                 }
-
-                // Kurangi stok
-                $stock->decrement('stock', $item->quantity);
-
-                // Hapus ProductSizeColor jika stok habis
-                if ($stock->stock <= 0) {
-                    $stock->delete();
+            // --- Hitung Total ---
+            $totalAmount = $cartItems->sum(function ($item) {
+                if (!$item->product) {
+                    throw new \Exception("Product not found for cart item {$item->id}");
                 }
+                return $item->quantity * $item->product->price;
+            });
 
-                // Buat record transaksi untuk item ini
+            // Pastikan totalAmount adalah integer untuk Midtrans IDR
+            $totalAmountInteger = (int) round($totalAmount); // Gunakan round() untuk pembulatan jika ada nilai koma kecil
+
+            // --- Buat Order di Database ---
+            $orderId = 'ORDER-' . date('YmdHi') . '-' . $user->id . '-' . uniqid();
+
+            $order = Order::create([
+                'user_id' => $user->id,
+                'midtrans_order_id' => $orderId,
+                'total_amount' => $totalAmountInteger, // Simpan nilai integer
+                'status' => 'pending',
+                'payment_status' => 'unpaid',
+                'payment_method' => $validated['payment_method'] ?? 'Midtrans Snap',
+                'shipping_address' => $validated['shipping_address'],
+                'shipping_status' => 'not_shipped',
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            // --- Pindahkan Cart Items ke Order Items (Tabel transactions) ---
+            foreach ($cartItems as $item) {
                 Transaction::create([
-                    'user_id' => $user->id,
+                    'order_id' => $order->id,
                     'product_id' => $item->product_id,
                     'size_id' => $item->size_id,
                     'color_id' => $item->color_id,
                     'quantity' => $item->quantity,
-                    'price' => $item->product->price, // Ambil harga dari produk saat ini
-                    'total' => $item->quantity * $item->product->price,
-                    'status' => 'pending', // Status awal
-                    'payment_method' => $validated['payment_method'] ?? null, // Ambil dari validasi atau default
-                    'payment_status' => 'unpaid', // Status awal pembayaran
-                    'shipping_address' => $validated['shipping_address'], // Ambil dari validasi
-                    'tracking_number' => null,
-                    'shipping_status' => 'not_shipped', // Status awal pengiriman
-                    'notes' => $validated['notes'] ?? null,
+                    'price' => (int) round($item->product->price), // Pastikan harga item juga integer
                 ]);
             }
 
-            // Setelah semua transaksi berhasil dibuat, hapus item dari keranjang
+            // --- Buat Transaksi di Midtrans (Dapatkan Snap Token) ---
+            $params = [
+                'transaction_details' => [
+                    'order_id' => $orderId,
+                    'gross_amount' => $totalAmountInteger, // Pastikan ini integer
+                ],
+                'customer_details' => [
+                    'first_name' => $user->name,
+                    'email' => $user->email,
+                    // Tambahkan field lain seperti last_name, phone, dll. jika ada
+                    'shipping_address' => [ // Midtrans expects nested structure for address
+                        'first_name' => $user->name, // Atau nama penerima jika berbeda
+                        'address' => $validated['shipping_address'],
+                        'city' => 'N/A', // Ganti dengan field kota jika ada
+                        'postal_code' => 'N/A', // Ganti dengan field kode pos jika ada
+                        'phone' => $user->phone ?? 'N/A', // Ganti dengan field telepon jika ada
+                        'country_code' => 'IDN', // Ganti jika mendukung negara lain
+                    ],
+                    // 'billing_address' => [ ... ] // Jika ada alamat billing yang berbeda
+                ],
+                'item_details' => $cartItems->map(function ($item) {
+                    return [
+                        'id' => $item->product->id,
+                        'price' => (int) round($item->product->price), // Pastikan ini integer
+                        'quantity' => $item->quantity,
+                        'name' => $item->product->name . ($item->size || $item->color ? ' (' . ($item->size->name ?? '') . ($item->size && $item->color ? '/' : '') . ($item->color->name ?? '') . ')' : ''),
+                        'category' => $item->product->category->name ?? 'Lainnya',
+                        'merchant_name' => config('app.name'),
+                    ];
+                })->toArray(),
+                // Optional: Add callbacks for Snap.js (frontend JS)
+                // 'callbacks' => [
+                //     'finish' => route('orders.index'),
+                //     'unfinish' => route('checkout.index'),
+                //     'error' => route('checkout.index'),
+                // ] // Callbacks di Snap.js lebih umum dikelola di frontend
+            ];
+
+            // Panggil Snap API
+            $snap = Snap::createTransaction($params);
+
+            // Simpan Snap Token dan Redirect URL ke database Order
+            $order->midtrans_snap_token = $snap->token;
+            $order->midtrans_redirect_url = $snap->redirect_url; // Tetap simpan, bisa berguna
+            $order->save();
+
+            // --- Hapus item dari keranjang ---
             $user->cartItems()->delete();
 
             DB::commit();
 
-            // Redirect ke halaman sukses atau order summary
-            return redirect()->route('orders.index')->with('success', 'Checkout berhasil! Pesanan Anda sedang diproses.');
-
+            // --- Kembalikan Snap Token dalam bentuk JSON ---
+            return response()->json(['snap_token' => $snap->token]);
         } catch (ValidationException $e) {
             DB::rollBack();
-            Log::warning('Checkout Stock Validation Failed:', [
+            Log::warning('Checkout Validation Failed:', [
                 'user_id' => Auth::id(),
                 'errors' => $e->errors()
             ]);
-            return redirect()->route('checkout.index')
-                             ->withInput($request->except('password'))
-                             ->withErrors($e->errors())
-                             ->with('error', 'Checkout gagal: ' . $e->getMessage()); // Menampilkan pesan error spesifik stok
+            // Mengembalikan error validasi dalam bentuk JSON agar bisa ditangkap di frontend
+            return response()->json([
+                'message' => 'Validasi gagal.',
+                'errors' => $e->errors(),
+            ], 422); // Status code 422 Unprocessable Entity untuk validasi
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Checkout Processing Error: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
                 'exception' => $e
             ]);
-            return redirect()->route('checkout.index')
-                             ->withInput($request->except('password'))
-                             ->with('error', 'Terjadi kesalahan internal saat memproses checkout. Silakan coba lagi nanti.');
+            // Mengembalikan error umum dalam bentuk JSON
+            return response()->json([
+                'message' => 'Terjadi kesalahan internal saat memproses checkout. Silakan coba lagi nanti.',
+                'error' => $e->getMessage(), // Opsional: untuk debugging
+            ], 500);
         }
     }
 
     /**
      * Helper method to check stock availability for items in the cart.
-     * Can optionally apply a pessimistic lock.
-     *
-     * @param  \Illuminate\Support\Collection $cartItems
-     * @param  bool $lock Whether to apply lockForUpdate
-     * @return void
-     * @throws \Illuminate\Validation\ValidationException If stock is insufficient
+     * ... (method checkStockForCheckout tetap sama) ...
      */
     private function checkStockForCheckout($cartItems, bool $lock = false): void
     {
@@ -175,24 +215,24 @@ class CheckoutController extends Controller
                 ->where('color_id', $item->color_id);
 
             if ($lock) {
-                $query->lockForUpdate(); // Apply lock during the final check within the transaction
+                // Warning: Locking here is generally NOT recommended for modal flow.
+                // Stock check before payment is advisory, the real check + decrement
+                // happens in the notification handler with lock.
+                $query->lockForUpdate();
             }
 
             $stock = $query->first();
 
             if (!$stock || $stock->stock < $item->quantity) {
-                 $productName = $item->product->name;
-                 $variation = ($item->size->name ?? '') . ($item->size && $item->color ? '/' : '') . ($item->color->name ?? '');
-                 $availableStock = $stock ? $stock->stock : 0;
-                 $errors["item_{$item->id}"] = "Stok tidak mencukupi untuk {$productName} ({$variation}). Tersedia hanya {$availableStock} pcs.";
+                $productName = $item->product->name;
+                $variation = ($item->size->name ?? '') . ($item->size && $item->color ? '/' : '') . ($item->color->name ?? '');
+                $availableStock = $stock ? $stock->stock : 0;
+                $errors["item_{$item->id}"] = "Stok tidak mencukupi untuk {$productName} ({$variation}). Tersedia hanya {$availableStock} pcs.";
             }
         }
 
         if (!empty($errors)) {
-            // Jika ada error, throw ValidationException untuk memicu rollback atau redirect with errors
             throw ValidationException::withMessages($errors);
         }
     }
-
-    // Anda mungkin perlu method lain untuk menampilkan halaman sukses order, dll.
 }

@@ -5,48 +5,40 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Transaction extends Model
+class Transaction extends Model // Model ini sekarang berperan sebagai OrderItem
 {
     use HasFactory;
 
     protected $fillable = [
+        'order_id', // Tambahkan ini
         'product_id',
         'size_id',
         'color_id',
         'quantity',
         'price',
-        'total',
-        'user_id',
-        'status',
-        'payment_method',
-        'payment_status',
-        'shipping_address',
-        'tracking_number',
-        'shipping_status',
-        'notes',
+        // Hapus field yang dipindah ke Order model (user_id, status, total, dll.)
     ];
 
-    // Relasi dengan tabel produk
+     // Jika Anda mengganti nama tabel:
+     // protected $table = 'order_items';
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
+
     public function product()
     {
         return $this->belongsTo(Product::class);
     }
 
-    // Relasi dengan tabel ukuran
     public function size()
     {
         return $this->belongsTo(Size::class);
     }
 
-    // Relasi dengan tabel warna
     public function color()
     {
         return $this->belongsTo(Color::class);
-    }
-
-    // Relasi dengan tabel pengguna
-    public function user()
-    {
-        return $this->belongsTo(User::class);
     }
 }
