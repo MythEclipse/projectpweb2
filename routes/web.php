@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ProductController;
+use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\HomePageController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\Admin\AdminController; // Pastikan namespace benar
@@ -11,6 +11,7 @@ use App\Http\Middleware\IsAdmin; // Pastikan middleware di-import4
 use App\Http\Controllers\Admin\UserController; // Import UserController untuk admin
 use App\Http\Controllers\WishlistController; // Import WishlistController untuk wishlist
 use App\Http\Controllers\OrderController; // Import OrderController untuk orders
+use App\Http\Controllers\PublicProductController; // Import PublicProductController untuk produk publik
 
 /*
 |--------------------------------------------------------------------------
@@ -52,8 +53,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/wishlist/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle'); // Pakai POST karena mengubah data
     // Homepage dan interaksi produk user
     Route::get('/homepage', [HomePageController::class, 'index'])->name('homepage');
-    Route::post('/products/{product}/purchase', [HomePageController::class, 'purchase'])->name('products.purchase');
-    Route::get('/products/{product}/options', [HomePageController::class, 'options'])->name('products.options'); // Beri nama jika belum
+
+    Route::get('/products/{product}', [PublicProductController::class, 'show'])->name('products.show');
+    Route::post('/products/{product}/purchase', [PublicProductController::class, 'processPurchase'])->name('products.purchase');
+    // Route::post('/products/{product}/purchase', [HomePageController::class, 'purchase'])->name('products.purchase');
+    // Route::get('/products/{product}/options', [HomePageController::class, 'options'])->name('products.options'); // Beri nama jika belum
     // User Orders Route
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     // Optional: Route for order detail page

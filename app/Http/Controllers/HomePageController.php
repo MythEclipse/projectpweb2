@@ -5,226 +5,50 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\ProductSizeColor;
-use App\Models\Transaction;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str; // Import Str facade for slug generation
+use Illuminate\Support\Facades\DB; // Keep for stock aggregation
+// use Illuminate\Support\Str; // Only if needed for slug
 
 class HomePageController extends Controller
 {
     /**
-     * Display the product listing page.
-     * Handles search functionality.
-     * Provides necessary data for the view, including stock combinations and slugs.
+     * Display the product listing page (homepage).
      */
     public function index(Request $request)
     {
         $search = $request->query('search');
-        $perPage = 24; // Or take from config/request if dynamic needed
+        $perPage = 24;
 
-        // Start building the query for products
-        $productsQuery = Product::query()
-            // Eager load relationships FOR DISPLAY after the query runs.
-            // DO NOT filter stock here if you need the sum for sorting below.
-            ->with([
-                'stockCombinations' => function ($query) {
-                    // Load related size and color for combinations
-                    $query->with(['size', 'color']);
-                }
-                // We don't need to load 'stockCombinations.size', 'stockCombinations.color' separately
-                // as they are handled within the nested 'with'.
-            ]);
+        $productsQuery = Product::query();
 
-        // Subquery to calculate total stock per product_id
+        // Calculate Total Stock
         $stockAggregationSubQuery = ProductSizeColor::select(
-                'product_id',
-                DB::raw('SUM(stock) as aggregated_stock')
-            )
-            ->groupBy('product_id');
-
-        // Perform a LEFT JOIN from products to the aggregated stock subquery
+                'product_id', DB::raw('SUM(stock) as aggregated_stock')
+            )->groupBy('product_id');
         $productsQuery->leftJoinSub(
-            $stockAggregationSubQuery,
-            'stock_summary', // Alias for the subquery result table
-            function ($join) {
-                $join->on('products.id', '=', 'stock_summary.product_id');
-            }
+            $stockAggregationSubQuery, 'stock_summary',
+            fn ($join) => $join->on('products.id', '=', 'stock_summary.product_id')
         );
-
-        // Select all product columns AND the calculated total stock.
-        // Use COALESCE to ensure products with no stock records get 0, not NULL.
         $productsQuery->select(
             'products.*',
             DB::raw('COALESCE(stock_summary.aggregated_stock, 0) as total_stock')
         );
 
-        // Apply search filter if present (searches columns in the 'products' table)
+        // Apply search
         if ($search) {
-            $productsQuery->where(function ($query) use ($search) {
-                $query->where('products.name', 'like', '%' . $search . '%')
-                      ->orWhere('products.description', 'like', '%' . $search . '%'); // Optional: search description too
-            });
+            $productsQuery->where(fn ($q) => $q->where('name', 'like', "%$search%")->orWhere('description', 'like', "%$search%"));
         }
 
-        // Apply Sorting:
-        // 1. Primary Sort: Use a CASE statement. Assign 0 to items with stock, 1 to items without. Sort ASC.
-        // 2. Secondary Sort: Within each group, sort by creation date descending.
+        // Apply Sorting
         $productsQuery
             ->orderByRaw('CASE WHEN COALESCE(stock_summary.aggregated_stock, 0) > 0 THEN 0 ELSE 1 END ASC')
-            ->orderBy('products.created_at', 'desc'); // Newest first within the stock groups
+            ->orderBy('products.created_at', 'desc');
 
-        // Paginate the results
+        // Paginate
         $products = $productsQuery->paginate($perPage)->withQueryString();
 
-        // Add a 'slug' attribute and process combinations *after* fetching and sorting
-        $products->through(function ($product) {
-            // Add slug - ensure Str::slug is available (use Illuminate\Support\Str;)
-            $product->slug = Str::slug($product->name);
-
-            // Process combinations if they were loaded (check if relation exists and is not null)
-            if ($product->relationLoaded('stockCombinations') && $product->stockCombinations) {
-                 $product->stockCombinations->each(function ($combination) {
-                    // Add helper attributes, checking if size/color objects exist
-                    $combination->size_name = $combination->size ? $combination->size->name : null;
-                    $combination->color_name = $combination->color ? $combination->color->name : null;
-                    $combination->color_code = $combination->color ? $combination->color->code : null;
-                    // Optional: unset relations if not needed further to reduce data size sent to view/js
-                    // unset($combination->size);
-                    // unset($combination->color);
-                });
-            }
-            return $product;
-        });
-
-
-        // --- Debugging (Optional) ---
-        // Uncomment the following line to see the raw SQL query generated by the builder.
-        // dd($productsQuery->toSql(), $productsQuery->getBindings());
-
-        // Uncomment to see the calculated total_stock for the products on the current page.
-        // dd($products->map(fn($p) => ['name' => $p->name, 'total_stock' => $p->total_stock])->all());
-        // -------------
-
-
-        // Return the view with the paginated products and search term
         return view('homepage', compact('products', 'search'));
     }
 
-    /**
-     * Process the product purchase request.
-     * Validates input, checks stock, performs DB transaction, and redirects.
-     * Assumes route binding resolves Product by ID.
-     */
-    public function purchase(Request $request, Product $product) // Route binding by ID
-    {
-        // Pastikan user sudah login (jika belum ditangani oleh middleware)
-        if (!Auth::check()) {
-             return back()->with('error', 'Anda harus login untuk melakukan pembelian.');
-             // Atau redirect ke halaman login:
-             // return redirect()->route('login')->with('error', 'Anda harus login untuk melakukan pembelian.');
-        }
-
-        // Validasi input
-        $validated = $request->validate([
-            // product_id tidak perlu divalidasi karena sudah didapat dari route model binding ($product)
-            'size_id' => 'required|exists:sizes,id',
-            'color_id' => 'required|exists:colors,id', // Mungkin ada produk tanpa warna? Sesuaikan jika perlu 'nullable|exists:...'
-            'quantity' => 'required|integer|min:1', // Hapus max:1000, validasi max dilakukan terhadap stok
-        ]);
-
-        // Mulai transaksi database untuk memastikan konsistensi data
-        DB::beginTransaction();
-
-        try {
-            // Cari kombinasi stok yang spesifik DAN lock row untuk mencegah race condition
-            $stock = ProductSizeColor::where([
-                'product_id' => $product->id,
-                'size_id' => $validated['size_id'],
-                'color_id' => $validated['color_id'],
-            ])
-            ->lockForUpdate() // Lock row ini selama transaksi
-            ->first();
-
-            // Periksa apakah kombinasi ditemukan
-            if (!$stock) {
-                DB::rollBack(); // Batalkan transaksi jika kombinasi tidak ada
-                return back()->with('error', 'Kombinasi ukuran dan warna tidak tersedia untuk produk ini.');
-            }
-
-            // Validasi stok tersedia (dibandingkan dengan stok terbaru dari DB karena lockForUpdate)
-            if ($stock->stock < $validated['quantity']) {
-                DB::rollBack(); // Batalkan transaksi jika stok kurang
-                return back()->with('error', "Stok tidak mencukupi. Tersedia: {$stock->stock} pcs.");
-            }
-
-            // Hitung harga total
-            $price = $product->price; // Ambil harga dari produk utama
-            $total = $price * $validated['quantity'];
-
-            // Kurangi stok
-            // decrement() aman digunakan dalam transaksi
-            $stock->decrement('stock', $validated['quantity']);
-
-            // Simpan data transaksi
-            $transaction = Transaction::create([
-                'product_id' => $product->id,
-                'size_id' => $validated['size_id'],
-                'color_id' => $validated['color_id'],
-                'quantity' => $validated['quantity'],
-                'price' => $price,
-                'total' => $total,
-                'user_id' => Auth::id(), // Ambil ID user yang sedang login
-                // Tambahkan field lain jika perlu (status, payment_id, dll.)
-            ]);
-
-            // Jika semua operasi berhasil, commit transaksi
-            DB::commit();
-
-            // Redirect kembali ke halaman sebelumnya dengan pesan sukses
-            // Turbo akan menangkap redirect ini dan me-refresh frame yang sesuai
-            return back()->with('success', 'Pembelian berhasil ditambahkan!');
-
-        } catch (\Throwable $e) { // Tangkap semua jenis error/exception
-            // Jika terjadi error, batalkan semua perubahan database
-            DB::rollBack();
-
-            // Log error untuk debugging
-            Log::error('Purchase Error: ' . $e->getMessage(), [
-                'user_id' => Auth::id(),
-                'product_id' => $product->id,
-                'request_data' => $request->all(),
-                'exception' => $e
-            ]);
-
-            // Redirect kembali dengan pesan error umum
-            return back()->with('error', 'Terjadi kesalahan saat memproses pembelian. Silakan coba lagi nanti.');
-        }
-    }
-
-    // Metode options() dihapus karena tidak lagi diperlukan
-    public function options(Product $product)
-    {
-        $sizes = $product->stockCombinations->pluck('size')->unique('id')->values()->map(function ($size) {
-            return [
-                'id' => $size->id,
-                'name' => $size->name,
-            ];
-        });
-
-        $colors = $product->stockCombinations->pluck('color')->unique('id')->values()->map(function ($color) {
-            return [
-                'id' => $color->id,
-                'name' => $color->name,
-            ];
-        });
-
-        $maxStock = $product->stockCombinations->max('stock') ?? 0;
-
-        return response()->json([
-            'sizes' => $sizes,
-            'colors' => $colors,
-            'max_stock' => $maxStock,
-        ]);
-    }
+    // purchase() method removed
+    // options() method removed
 }

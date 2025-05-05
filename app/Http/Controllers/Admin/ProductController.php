@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+
+namespace App\Http\Controllers\Admin;
 
 use App\Models\Product;
 use App\Models\Size;
@@ -13,7 +14,8 @@ use Illuminate\Support\Facades\Http;      // Diperlukan untuk request API
 use Illuminate\Http\Client\ConnectionException; // Untuk menangani error koneksi API
 use Illuminate\Support\Facades\Log;      // Untuk logging error
 use Illuminate\Support\Str;              // Diperlukan untuk cek http/https
-use Illuminate\Support\Facades\DB;       // Untuk query database
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller; // Import base Controller     // Untuk query database
 
 class ProductController extends Controller
 {

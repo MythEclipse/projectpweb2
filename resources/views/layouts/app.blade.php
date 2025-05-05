@@ -2,7 +2,7 @@
 
 @php
     $isAdmin = auth()->check() && auth()->user()->is_admin;
-    $onAdminPage = request()->is('products*') || request()->is('admin*') || request()->is('transactions*');
+    $onAdminPage =  request()->is('admin*') || request()->is('transactions*');
 @endphp
 
 <!DOCTYPE html>
