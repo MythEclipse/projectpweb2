@@ -20,75 +20,34 @@
             </div>
             @endif
 
-
             <div class="bg-white dark:bg-dark-card overflow-hidden shadow-lg rounded-2xl">
                 <div class="p-6 text-text-dark dark:text-text-light">
 
                     <h3 class="text-2xl font-semibold mb-6 border-b border-gray-200 dark:border-dark-border pb-3">{{ __('Daftar Pesanan') }}</h3>
 
+                    {{-- Loop melalui setiap ORDER --}}
                     @forelse ($orders as $order)
                         {{-- Card per Order --}}
                         <div class="mb-6 bg-gray-50 dark:bg-dark-subcard p-4 sm:p-6 rounded-xl border border-gray-200 dark:border-dark-border shadow-sm transition-shadow hover:shadow-md">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-                                {{-- Kolom 1: Info Produk --}}
-                                <div class="md:col-span-1 flex items-start space-x-4">
-                                    {{-- Gambar Produk --}}
-                                    <div class="flex-shrink-0">
-                                        @if($order->product?->image_url)
-                                            <img src="{{ $order->product->image_url }}" alt="{{ $order->product->name }}"
-                                                 class="w-20 h-20 sm:w-24 sm:h-24 rounded-lg object-cover bg-gray-200 dark:bg-dark-border">
-                                        @else
-                                            <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-lg bg-gray-200 dark:bg-dark-border flex items-center justify-center text-gray-400 dark:text-gray-600">
-                                                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                            </div>
-                                        @endif
-                                    </div>
-                                    {{-- Detail Produk --}}
-                                    <div class="flex-grow">
-                                        <h4 class="text-base sm:text-lg font-semibold text-text-dark dark:text-text-light mb-1">
-                                            {{ $order->product?->name ?? 'Produk Dihapus' }}
-                                        </h4>
-                                        <p class="text-xs sm:text-sm text-gray-500 dark:text-text-light/70">
-                                            Ukuran: <span class="font-medium">{{ $order->size?->name ?? 'N/A' }}</span>
-                                        </p>
-                                        <p class="text-xs sm:text-sm text-gray-500 dark:text-text-light/70">
-                                            Warna: <span class="font-medium">{{ $order->color?->name ?? 'N/A' }}</span>
-                                            {{-- Optional Color Swatch --}}
-                                            @if($order->color?->code)
-                                                <span class="inline-block w-3 h-3 rounded-full ml-1 border border-gray-400 dark:border-dark-border" style="background-color: {{ $order->color->code }};"></span>
-                                            @endif
-                                        </p>
-                                        <p class="text-xs sm:text-sm text-gray-500 dark:text-text-light/70">
-                                            Jumlah: <span class="font-medium">{{ $order->quantity }}</span>
-                                        </p>
-                                        <p class="text-sm sm:text-base font-bold text-pink-brand dark:text-pink-brand-dark mt-2">
-                                            Rp {{ number_format($order->total, 0, ',', '.') }}
-                                        </p>
-                                    </div>
+                            {{-- Header Order: ID, Tanggal, Total, Status Utama --}}
+                            <div class="border-b border-gray-200 dark:border-dark-border pb-4 mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {{-- Info Utama Order --}}
+                                <div>
+                                    <h4 class="text-base sm:text-lg font-semibold text-text-dark dark:text-text-light mb-1">
+                                        Pesanan #{{ $order->id }}
+                                    </h4>
+                                    <p class="text-xs sm:text-sm text-gray-500 dark:text-text-light/70">
+                                        Tanggal: {{ $order->created_at->isoFormat('D MMMM YYYY, HH:mm') }}
+                                    </p>
+                                    <p class="text-sm sm:text-base font-bold text-pink-brand dark:text-pink-brand-dark mt-2">
+                                        Total Pesanan: Rp {{ number_format($order->total_amount, 0, ',', '.') }} {{-- Mengakses total_amount dari Order --}}
+                                    </p>
                                 </div>
-
-                                {{-- Kolom 2: Info Order & Pengiriman --}}
-                                <div class="md:col-span-1 text-xs sm:text-sm text-gray-600 dark:text-text-light/80 space-y-1.5">
-                                    <p><strong>ID Pesanan:</strong> #{{ $order->id }}</p>
-                                    <p><strong>Tanggal:</strong> {{ $order->created_at->isoFormat('D MMMM YYYY, HH:mm') }}</p>
-                                    <p><strong>Metode Bayar:</strong> {{ Str::title(str_replace('_', ' ', $order->payment_method ?? 'N/A')) }}</p>
-                                    <div>
-                                        <strong>Alamat Kirim:</strong>
-                                        <p class="pl-2">{{ $order->shipping_address ?? '-' }}</p>
-                                    </div>
-                                     @if($order->tracking_number && in_array($order->shipping_status, ['shipped', 'delivered']))
-                                     <p><strong>No. Resi:</strong> <span class="font-semibold text-text-dark dark:text-text-light bg-gray-200 dark:bg-dark-border px-1.5 py-0.5 rounded">{{ $order->tracking_number }}</span></p>
-                                    @endif
-                                    @if($order->notes)
-                                        <p class="mt-2 pt-2 border-t border-gray-200 dark:border-dark-border"><strong>Catatan:</strong> {{ $order->notes }}</p>
-                                    @endif
-                                </div>
-
-                                {{-- Kolom 3: Status --}}
-                                <div class="md:col-span-1 space-y-2 flex flex-col justify-start items-start md:items-end">
-                                     <h5 class="text-sm font-medium mb-1 text-text-dark dark:text-text-light md:text-right">Status Pesanan:</h5>
-                                    {{-- Status Utama --}}
+                                {{-- Status Order --}}
+                                <div class="space-y-1.5 flex flex-col items-start md:items-end">
+                                    <h5 class="text-sm font-medium text-text-dark dark:text-text-light md:text-right">Status Pesanan:</h5>
+                                    {{-- Status Utama Order --}}
                                     <span @class([
                                         'inline-block px-2.5 py-1 text-xs font-semibold rounded-full',
                                         'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' => $order->status == 'pending',
@@ -100,9 +59,9 @@
                                         {{ Str::title(str_replace('_', ' ', $order->status)) }}
                                     </span>
 
-                                     <h5 class="text-sm font-medium mt-3 mb-1 text-text-dark dark:text-text-light md:text-right">Status Detail:</h5>
+                                    <h5 class="text-sm font-medium mt-3 mb-1 text-text-dark dark:text-text-light md:text-right">Status Detail:</h5>
                                      <div class="flex flex-col items-start md:items-end space-y-1.5">
-                                        {{-- Status Pembayaran --}}
+                                        {{-- Status Pembayaran Order --}}
                                         <span @class([
                                             'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full',
                                             'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' => $order->payment_status == 'paid',
@@ -114,7 +73,7 @@
                                             Pembayaran: {{ Str::title(str_replace('_', ' ', $order->payment_status)) }}
                                         </span>
 
-                                        {{-- Status Pengiriman --}}
+                                        {{-- Status Pengiriman Order --}}
                                         <span @class([
                                             'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full',
                                             'bg-gray-100 text-gray-800 dark:bg-dark-border dark:text-text-light/80' => $order->shipping_status == 'not_shipped',
@@ -127,18 +86,92 @@
                                             Pengiriman: {{ Str::title(str_replace('_', ' ', $order->shipping_status)) }}
                                         </span>
                                     </div>
-
-                                    {{-- Optional: Button Detail --}}
-                                    {{--
-                                    <div class="mt-4 pt-2 border-t border-gray-200 dark:border-dark-border md:text-right">
-                                        <a href="{{ route('orders.show', $order->id) }}" class="text-sm text-pink-brand dark:text-pink-brand-dark hover:underline">
-                                            Lihat Detail
-                                        </a>
-                                    </div>
-                                     --}}
                                 </div>
+                            </div> {{-- End Order Header --}}
 
-                            </div> {{-- End Grid --}}
+                            {{-- List of Transaction Items within this Order --}}
+                            <div class="space-y-4">
+                                <h5 class="text-base font-medium text-text-dark dark:text-text-light mb-2">{{ __('Item Pesanan:') }}</h5>
+                                {{-- Loop melalui setiap ITEM dalam Order ini --}}
+                                @forelse ($order->transactionItems as $item) {{-- Mengakses relasi transactionItems --}}
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pb-4 border-b border-gray-100 dark:border-dark-border last:border-b-0 last:pb-0"> {{-- Sesuaikan layout untuk item --}}
+
+                                        {{-- Kolom 1 (Item): Info Produk --}}
+                                        <div class="sm:col-span-1 flex items-start space-x-4">
+                                            {{-- Gambar Produk --}}
+                                            <div class="flex-shrink-0">
+                                                @if($item->product?->image_url) {{-- Akses product dari $item --}}
+                                                    <img src="{{ $item->product->image_url }}" alt="{{ $item->product->name }}"
+                                                         class="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover bg-gray-200 dark:bg-dark-border">
+                                                @else
+                                                    <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-gray-200 dark:bg-dark-border flex items-center justify-center text-gray-400 dark:text-gray-600">
+                                                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                            {{-- Detail Produk Item --}}
+                                            <div class="flex-grow">
+                                                <h5 class="text-sm sm:text-base font-semibold text-text-dark dark:text-text-light mb-0.5">
+                                                    {{ $item->product?->name ?? 'Produk Dihapus' }} {{-- Akses product dari $item --}}
+                                                </h5>
+                                                <p class="text-xs sm:text-sm text-gray-500 dark:text-text-light/70">
+                                                    Ukuran: <span class="font-medium">{{ $item->size?->name ?? 'N/A' }}</span> {{-- Akses size dari $item --}}
+                                                </p>
+                                                <p class="text-xs sm:text-sm text-gray-500 dark:text-text-light/70">
+                                                    Warna: <span class="font-medium">{{ $item->color?->name ?? 'N/A' }}</span> {{-- Akses color dari $item --}}
+                                                    {{-- Optional Color Swatch --}}
+                                                    @if($item->color?->code)
+                                                        <span class="inline-block w-3 h-3 rounded-full ml-1 border border-gray-400 dark:border-dark-border" style="background-color: {{ $item->color->code }};"></span>
+                                                    @endif
+                                                </p>
+                                                <p class="text-xs sm:text-sm text-gray-500 dark:text-text-light/70">
+                                                    Jumlah: <span class="font-medium">{{ $item->quantity }}</span> {{-- Akses quantity dari $item --}}
+                                                </p>
+                                                <p class="text-sm sm:text-base font-bold text-pink-brand dark:text-pink-brand-dark mt-1">
+                                                    Rp {{ number_format($item->price * $item->quantity, 0, ',', '.') }} {{-- Hitung subtotal item --}}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {{-- Kolom 2 & 3 (Item): Bisa digunakan untuk detail item tambahan jika ada,
+                                             atau dibiarkan kosong/digunakan untuk tata letak --}}
+
+                                        {{-- Catatan: Informasi shipping, payment, notes, dll. adalah di level Order, bukan Item.
+                                             Mereka sudah ditampilkan di header atau footer Order card. --}}
+
+                                    </div> {{-- End Item Grid --}}
+                                @empty
+                                    <p class="text-sm text-gray-500 dark:text-text-light/70 italic">{{ __('Tidak ada item dalam pesanan ini.') }}</p>
+                                @endforelse
+                            </div> {{-- End List of Items --}}
+
+                            {{-- Footer Order: Alamat, Resi, Catatan --}}
+                            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-dark-border text-xs sm:text-sm text-gray-600 dark:text-text-light/80 space-y-1.5">
+                                 <p><strong>Metode Bayar:</strong> {{ Str::title(str_replace('_', ' ', $order->payment_method ?? 'N/A')) }}</p> {{-- Akses dari Order --}}
+                                <div>
+                                    <strong>Alamat Kirim:</strong>
+                                    <p class="pl-2">{{ $order->shipping_address ?? '-' }}</p> {{-- Akses dari Order --}}
+                                </div>
+                                 @if($order->tracking_number && in_array($order->shipping_status, ['shipped', 'delivered'])) {{-- Akses dari Order --}}
+                                     <p><strong>No. Resi:</strong> <span class="font-semibold text-text-dark dark:text-text-light bg-gray-200 dark:bg-dark-border px-1.5 py-0.5 rounded">{{ $order->tracking_number }}</span></p>
+                                    @endif
+                                    @if($order->notes) {{-- Akses dari Order --}}
+                                        <p class="mt-2 pt-2 border-t border-gray-200 dark:border-dark-border"><strong>Catatan:</strong> {{ $order->notes }}</p>
+                                    @endif
+                            </div> {{-- End Order Footer --}}
+
+
+                            {{-- Optional: Button Detail --}}
+                            {{-- Tombol ini seharusnya menuju detail Order, bukan item. --}}
+                            {{--
+                            <div class="mt-4 pt-2 border-t border-gray-200 dark:border-dark-border md:text-right">
+                                {{-- Pastikan route 'orders.show' ada dan menerima ID Order --}}
+                                {{-- <a href="{{ route('orders.show', $order->id) }}" class="text-sm text-pink-brand dark:text-pink-brand-dark hover:underline">
+                                    Lihat Detail Pesanan
+                                </a>
+                            </div>
+                            --}}
+
                         </div> {{-- End Order Card --}}
                     @empty
                         {{-- Tampilan Jika Tidak Ada Order --}}

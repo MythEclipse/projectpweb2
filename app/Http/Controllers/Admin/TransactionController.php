@@ -162,100 +162,111 @@ class TransactionController extends Controller
                 ->with('error', 'Gagal menghapus item transaksi. Mungkin terkait dengan data lain.');
         }
     }
-    public function quickUpdate(Request $request, Order $order): JsonResponse // <<< METHOD quickUpdate DIKEMBALIKAN & DIUBAH SIGNATURENYA
+
+
+
+
+
+    /**
+     * Handle quick updates for specific fields on the *Order* model from the item list.
+     * This method receives an Order ID via route binding.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Order  $order (Route Model Binding - Now binds to Order)
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function quickUpdate(Request $request, Order $order): JsonResponse
     {
-        // Validator now targets fields on the Order model
+        // Log untuk debugging Route Model Binding
+        Log::info('Quick Update received Order object', [
+            'order_id_from_route' => request()->route('order'), // ID dari parameter route
+            'order_object_id' => $order->id ?? 'null', // ID dari objek model
+            'order_object_exists' => $order->exists, // Status exists
+            // 'order_object_attributes' => $order->getAttributes(), // Opsional: lihat atribut
+        ]);
+
+        // Jika Route Model Binding gagal (model tidak ditemukan), $order->exists akan false
+        // Laravel seharusnya melempar 404 secara default, tapi jika tidak,
+        // kita bisa tambahkan cek eksplisit untuk memastikan model ditemukan.
+        if (!$order->exists) {
+             Log::error('Quick Update failed: Order model not found by Route Model Binding', ['order_id_from_route' => request()->route('order')]);
+             return response()->json(['success' => false, 'message' => 'Pesanan tidak ditemukan.'], 404);
+        }
+
+
         $validator = Validator::make($request->all(), [
-             // Hanya izinkan update shipping_status dari view ini
              'field' => ['required', 'string', Rule::in(['shipping_status'])],
              'value' => ['required', function ($attribute, $value, $fail) use ($request) {
-                 // Validasi nilai berdasarkan field yang diupdate pada model Order
                  if ($request->input('field') === 'shipping_status') {
-                     // Check against valid shipping statuses for the Order model
-                     if (!in_array($value, ['not_shipped', 'shipped', 'delivered', 'returned'])) { // Add 'returned' if needed
+                     if (!in_array($value, ['not_shipped', 'shipped', 'delivered', 'returned'])) {
                          $fail('Nilai status pengiriman tidak valid.');
                      }
                  }
-                 // Tambahkan validasi untuk field lain jika quickUpdate diperluas
              }],
         ]);
 
         if ($validator->fails()) {
-             // Return JSON response for validation errors
+            Log::warning('Quick Update validation failed', ['errors' => $validator->errors(), 'order_id' => $order->id]);
             return response()->json(['success' => false, 'message' => 'Validasi gagal.', 'errors' => $validator->errors()], 422);
         }
 
         $field = $request->input('field');
         $value = $request->input('value');
 
-        DB::beginTransaction(); // Use transaction for safety
+        DB::beginTransaction();
         try {
-            // Re-fetch the order with a lock if necessary (optional for this simple update, but good practice)
-            // $order->lockForUpdate(); // Uncomment if you anticipate race conditions on Order updates
+            // $order sudah merupakan model yang ditemukan oleh Route Model Binding
+            // Tidak perlu re-fetch kecuali Anda butuh lockForUpdate() spesifik di sini
+            // $order->lockForUpdate();
 
-            // Store original status before potential change
-            $originalMainStatus = $order->status; // Check status on the Order model
+            $originalMainStatus = $order->status;
             $mainStatusChanged = false;
 
-            // Apply the requested change to the specific field on the Order model
             $order->{$field} = $value;
 
-            // --- Revised Main Status Logic (Operates on Order) ---
-            // Only update the main status field IF the updated field is NOT the main status field itself
-            // and IF the order is not already in a final state like cancelled or completed
-            // In this case, we only allow updating 'shipping_status', so we check if main status needs recalculation
-            if (!in_array($originalMainStatus, ['completed', 'cancelled', 'failed'])) { // Don't change main status if already in final state
+            if (!in_array($originalMainStatus, ['completed', 'cancelled', 'failed'])) {
+                $newCalculatedStatus = 'pending';
 
-                 // Determine the NEW target main status based on the CURRENT state of payment/shipping on the Order model
-                $newCalculatedStatus = 'pending'; // Default
-
-                // Logic based on Order's payment and shipping statuses
-                if (in_array($order->payment_status, ['paid', 'settlement', 'capture'])) { // Order is considered paid by Midtrans
+                if (in_array($order->payment_status, ['paid', 'settlement', 'capture'])) {
                     if ($order->shipping_status === 'delivered') {
                         $newCalculatedStatus = 'completed';
                     } elseif ($order->shipping_status === 'shipped') {
-                         $newCalculatedStatus = 'processing'; // Or 'shipped' if that's a status
-                    } else { // Paid, but not shipped (not_shipped)
-                        $newCalculatedStatus = 'processing'; // Still being processed before shipping
+                         $newCalculatedStatus = 'processing';
+                    } else {
+                        $newCalculatedStatus = 'processing';
                     }
                 } elseif (in_array($order->payment_status, ['deny', 'expire', 'cancel', 'refunded'])) {
-                    $newCalculatedStatus = 'cancelled'; // If payment fails/refunded, mark order as cancelled
+                    $newCalculatedStatus = 'cancelled';
                 }
-                // If payment_status 'unpaid' or 'pending', main status remains 'pending' (default)
 
-                // Update the main status field IF the calculated status is different
                 if ($newCalculatedStatus !== $originalMainStatus) {
                     $order->status = $newCalculatedStatus;
                     $mainStatusChanged = true;
                 }
             }
-            // If the order was already completed/cancelled/failed, we only updated the shipping_status field, mainStatusChanged remains false.
 
-            // Save the Order (persists changes)
-            $order->save();
+            // Panggil save() pada model yang sudah ada
+            $order->save(); // <<< Ini seharusnya melakukan UPDATE jika $order->exists adalah true
 
-            DB::commit(); // Commit the transaction
+            DB::commit();
 
-            // --- End Revised Main Status Logic ---
+            Log::info('Quick Update successful', ['order_id' => $order->id, 'field' => $field, 'new_value' => $value, 'new_main_status' => $order->status]);
 
-            // Return success response with updated information
             return response()->json([
                 'success' => true,
                 'message' => 'Status berhasil diperbarui.',
                 'updated_field' => $field,
                 'new_value' => $value,
-                'main_status_updated' => $mainStatusChanged, // True if main status actually changed
-                'new_main_status' => $order->status, // The current main status from the DB
-                // You might want to return other relevant order details here too
+                'main_status_updated' => $mainStatusChanged,
+                'new_main_status' => $order->status,
             ]);
 
         } catch (\Throwable $e) {
-            DB::rollBack(); // Rollback the transaction if any error occurs
-            // Log the error
-            Log::error("Error quick updating order {$order->id} field {$field}: " . $e->getMessage(), ['exception' => $e]);
+            DB::rollBack();
+            Log::error("Error quick updating order {$order->id} field {$field}: " . $e->getMessage(), ['exception' => $e, 'stacktrace' => $e->getTraceAsString()]); // Log stacktrace lengkap
 
-            // Return JSON error response
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan pada server saat memperbarui status.'], 500);
         }
     }
+
 }
