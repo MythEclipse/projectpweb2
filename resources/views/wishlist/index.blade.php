@@ -45,7 +45,7 @@
                             @foreach ($wishlistItems as $item)
                                 <div class="bg-white dark:bg-dark-subcard rounded-xl shadow-md overflow-hidden flex flex-col group transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-gray-200 dark:border-dark-border hover:border-pink-300 dark:hover:border-pink-brand/50">
                                     {{-- Link ke Detail Page pada Gambar --}}
-                                    <a href="{{ route('products.show', $item) }}" class="block aspect-square w-full bg-gray-100 dark:bg-dark-border flex items-center justify-center text-gray-400 overflow-hidden relative group">
+                                    <a href="{{ route('products.show', $item) }}" class="aspect-square w-full bg-gray-100 dark:bg-dark-border flex items-center justify-center text-gray-400 overflow-hidden relative group">
                                         @if($item->image_url)
                                             <img src="{{ $item->image_url }}" alt="{{ $item->name }}"
                                                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out"

@@ -94,7 +94,7 @@
                     <div class="bg-white dark:bg-dark-subcard rounded-xl shadow-md overflow-hidden flex flex-col group transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-gray-200 dark:border-dark-border hover:border-pink-300 dark:hover:border-pink-brand/50">
                         {{-- Link ke Detail Page pada Gambar --}}
                         {{-- Removed @click --}}
-                        <a href="{{ route('products.show', $product) }}" class="block aspect-square w-full bg-gray-100 dark:bg-dark-border flex items-center justify-center text-gray-400 overflow-hidden relative group" data-turbo="false">
+                        <a href="{{ route('products.show', $product) }}" class="aspect-square w-full bg-gray-100 dark:bg-dark-border flex items-center justify-center text-gray-400 overflow-hidden relative group" data-turbo="false">
                             @if ($product->image_url)
                                 <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
                                     class="object-cover h-full w-full group-hover:scale-105 transition-transform duration-300 ease-in-out"
