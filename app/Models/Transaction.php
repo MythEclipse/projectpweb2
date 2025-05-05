@@ -5,6 +5,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Transaction extends Model // Model ini sesuai dengan struktur tabel transactions lama + order_id
 {
@@ -57,5 +58,11 @@ class Transaction extends Model // Model ini sesuai dengan struktur tabel transa
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+    public function productSizeColor(): BelongsTo // <<< TAMBAHKAN INI
+    {
+
+        // Asumsi: Ada kolom 'product_size_color_id' di tabel 'transactions'
+        return $this->belongsTo(ProductSizeColor::class); // <<< Ini relasi yang dicari
     }
 }
