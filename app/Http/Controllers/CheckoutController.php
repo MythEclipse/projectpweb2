@@ -133,7 +133,7 @@ class CheckoutController extends Controller
             DB::commit();
 
             // Redirect ke halaman sukses atau order summary
-            return redirect()->route('order.success')->with('success', 'Checkout berhasil! Pesanan Anda sedang diproses.');
+            return redirect()->route('orders.index')->with('success', 'Checkout berhasil! Pesanan Anda sedang diproses.');
 
         } catch (ValidationException $e) {
             DB::rollBack();
