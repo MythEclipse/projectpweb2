@@ -12,7 +12,8 @@ use App\Http\Controllers\Admin\UserController; // Import UserController untuk ad
 use App\Http\Controllers\WishlistController; // Import WishlistController untuk wishlist
 use App\Http\Controllers\OrderController; // Import OrderController untuk orders
 use App\Http\Controllers\PublicProductController; // Import PublicProductController untuk produk publik
-
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -55,7 +56,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/homepage', [HomePageController::class, 'index'])->name('homepage');
 
     Route::get('/products/{product}', [PublicProductController::class, 'show'])->name('products.show');
-    Route::post('/products/{product}/purchase', [PublicProductController::class, 'processPurchase'])->name('products.purchase');
+    // Route::post('/products/{product}/purchase', [PublicProductController::class, 'processPurchase'])->name('products.purchase');
     // Route::post('/products/{product}/purchase', [HomePageController::class, 'purchase'])->name('products.purchase');
     // Route::get('/products/{product}/options', [HomePageController::class, 'options'])->name('products.options'); // Beri nama jika belum
     // User Orders Route
@@ -96,7 +97,25 @@ Route::middleware(['auth', 'verified', IsAdmin::class]) // Terapkan semua middle
 
         // Tambahkan route admin lainnya di sini jika ada...
     });
+Route::middleware(['auth'])->group(function () {
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    // Endpoint POST dari form produk.show untuk tambah ke keranjang
+    Route::post('/cart/add/{product}', [CartController::class, 'store'])->name('cart.store');
+    // Endpoint PUT/PATCH dari form keranjang untuk update kuantitas
+    Route::put('/cart/update/{cartItem}', [CartController::class, 'update'])->name('cart.update');
+    // Endpoint DELETE dari form keranjang untuk hapus item
+    Route::delete('/cart/remove/{cartItem}', [CartController::class, 'destroy'])->name('cart.destroy');
+});
 
+
+// Route untuk Checkout
+Route::middleware(['auth'])->group(function () {
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('checkout.process');
+
+    // Tambahkan route untuk halaman sukses order jika diperlukan
+    // Route::get('/order/success', [CheckoutController::class, 'success'])->name('order.success'); // Contoh
+});
 // == API Routes (Sebaiknya di routes/api.php) ==
 // Route ini akan menggunakan middleware group 'web' jika diletakkan di sini.
 // Pindahkan ke routes/api.php untuk menggunakan middleware 'api' (stateless, dll).

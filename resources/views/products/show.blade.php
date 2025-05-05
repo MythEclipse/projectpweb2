@@ -75,11 +75,11 @@
             <div class="bg-white dark:bg-dark-card overflow-hidden shadow-xl rounded-2xl border border-gray-200 dark:border-dark-border">
                 {{-- Inisialisasi Alpine.js --}}
                 <div class="p-6 md:p-8 lg:flex lg:gap-10"
-                     x-data="productPurchaseForm({
+                     x-data="productForm({ {{-- Renamed from productPurchaseForm to productForm to be more general --}}
                          stockCombinations: {{ json_encode($product->stockCombinations->map(fn($c) => ['size_id' => $c->size_id, 'color_id' => $c->color_id, 'stock' => $c->stock])) }},
                          initialSizeId: '{{ old('size_id') }}',
                          initialColorId: '{{ old('color_id') }}',
-                         initialQuantity: {{ old('quantity', 'null') }} // Default null agar bisa kosong
+                         initialQuantity: {{ old('quantity', '1') }} // Default quantity to 1 for Add to Cart
                      })">
 
                     {{-- Kolom Kiri: Gambar --}}
@@ -93,7 +93,7 @@
                         </div>
                     </div>
 
-                    {{-- Kolom Kanan: Info & Form Pembelian --}}
+                    {{-- Kolom Kanan: Info & Form Add to Cart --}}
                     <div class="lg:w-7/12 xl:w-8/12 text-text-dark dark:text-text-light">
                         {{-- Nama & Harga --}}
                         <h1 class="text-3xl lg:text-4xl font-extrabold mb-2 tracking-tight">{{ $product->name }}</h1>
@@ -114,78 +114,135 @@
                             </form>
                         @endauth
 
-                        {{-- Form Pembelian dengan Alpine --}}
-                        <form method="POST" action="{{ route('products.purchase', $product) }}" class="mt-6 border-t border-gray-200 dark:border-dark-border pt-6 space-y-4">
+                        {{-- Form Add to Cart dengan Alpine --}}
+                        <form method="POST" action="{{ route('cart.store', $product) }}" class="mt-6 border-t border-gray-200 dark:border-dark-border pt-6 space-y-4"
+                              x-data="productForm({
+                                 stockCombinations: {{ json_encode($product->stockCombinations->map(fn($c) => ['size_id' => $c->size_id, 'color_id' => $c->color_id, 'stock' => $c->stock])) }},
+                                 initialSizeId: '{{ old('size_id') }}',
+                                 initialColorId: '{{ old('color_id') }}',
+                                 initialQuantity: {{ old('quantity', '1') }} // Default quantity to 1 for Add to Cart
+                              })">
                             @csrf
-                             <h2 class="text-xl font-semibold mb-1">Pesan Sekarang</h2>
-                             <p class="text-sm text-gray-500 dark:text-text-light/70 mb-4 min-h-[20px]"
-                                x-text="formInstruction"
-                                :class="{ 'text-red-500 dark:text-red-400 font-medium': clientError }">
-                             </p>
+                             <h2 class="text-xl font-semibold mb-1">Tambahkan ke Keranjang</h2>
+                             {{-- Pesan instruksi/error dari Alpine atau server --}}
+                              <p class="text-sm text-gray-500 dark:text-text-light/70 mb-4 min-h-[20px]"
+                                 x-text="formInstruction" {{-- Menggunakan getter formInstruction --}}
+                                 :class="{ 'text-red-500 dark:text-red-400 font-medium': clientError }"> {{-- Class applied if clientError exists --}}
+                                 Pilih ukuran dan warna yang Anda inginkan dan masukkan jumlah.
+                              </p>
 
                              {{-- Pilihan Ukuran & Warna --}}
-                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                 {{-- Pilih Ukuran --}}
-                                 <div>
-                                    <label for="size_id" class="block text-sm font-medium mb-1.5 text-text-dark dark:text-text-light/90">Ukuran</label>
-                                    <select id="size_id" name="size_id" {{-- required dihapus --}}
-                                            x-model="selectedSizeId" @change="updateMaxStock()"
-                                            class="block w-full p-2.5 border rounded-lg shadow-sm dark:bg-dark-subcard dark:text-text-light focus:ring-pink-brand focus:border-pink-brand text-sm {{ $errors->has('size_id') ? 'border-red-500 ring-1 ring-red-500 dark:border-red-500' : 'border-gray-300 dark:border-dark-border dark:focus:border-pink-brand focus:border-pink-brand' }}">
-                                        <option value="">-- Pilih Ukuran --</option>
-                                        @forelse ($availableSizes as $size) <option value="{{ $size->id }}">{{ $size->name }}</option>
-                                        @empty <option value="" disabled>Ukuran tidak tersedia</option>
-                                        @endforelse
-                                    </select>
-                                    @error('size_id') <p class="text-red-500 dark:text-red-400 text-xs mt-1.5">{{ $message }}</p> @enderror
+                             {{-- Hanya tampilkan dropdown jika produk punya variasi ukuran/warna --}}
+                            @php
+                                // Determine if the product has size or color variations (i.e., not just one null/null combination)
+                                $hasVariations = $product->stockCombinations->count() > 1 ||
+                                                 ($product->stockCombinations->count() === 1 && ($product->stockCombinations->first()->size_id !== null || $product->stockCombinations->first()->color_id !== null));
+                            @endphp
+
+                            @if($hasVariations)
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {{-- Pilih Ukuran --}}
+                                    @if($availableSizes->count() > 0)
+                                        <div>
+                                            <label for="size_id" class="block text-sm font-medium mb-1.5 text-text-dark dark:text-text-light/90">Ukuran</label>
+                                            <select id="size_id" name="size_id"
+                                                    x-model="selectedSizeId" @change="updateMaxStock()"
+                                                    class="block w-full p-2.5 border rounded-lg shadow-sm dark:bg-dark-subcard dark:text-text-light focus:ring-pink-brand focus:border-pink-brand text-sm {{ $errors->has('size_id') ? 'border-red-500 ring-1 ring-red-500 dark:border-red-500' : 'border-gray-300 dark:border-dark-border dark:focus:border-pink-brand focus:border-pink-brand' }}">
+                                                <option value="">-- Pilih Ukuran --</option>
+                                                @foreach ($availableSizes as $size) <option value="{{ $size->id }}">{{ $size->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('size_id') <p class="text-red-500 dark:text-red-400 text-xs mt-1.5">{{ $message }}</p> @enderror
+                                        </div>
+                                    @endif
+                                    {{-- Pilih Warna --}}
+                                    @if($availableColors->count() > 0)
+                                        <div>
+                                            <label for="color_id" class="block text-sm font-medium mb-1.5 text-text-dark dark:text-text-light/90">Warna</label>
+                                            <select id="color_id" name="color_id"
+                                                    x-model="selectedColorId" @change="updateMaxStock()"
+                                                    class="block w-full p-2.5 border rounded-lg shadow-sm dark:bg-dark-subcard dark:text-text-light focus:ring-pink-brand focus:border-pink-brand text-sm {{ $errors->has('color_id') ? 'border-red-500 ring-1 ring-red-500 dark:border-red-500' : 'border-gray-300 dark:border-dark-border dark:focus:border-pink-brand focus:border-pink-brand' }}">
+                                                <option value="">-- Pilih Warna --</option>
+                                                @foreach ($availableColors as $color) <option value="{{ $color->id }}">{{ $color->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('color_id') <p class="text-red-500 dark:text-red-400 text-xs mt-1.5">{{ $message }}</p> @enderror
+                                        </div>
+                                    @endif
                                 </div>
-                                 {{-- Pilih Warna --}}
-                                 <div>
-                                    <label for="color_id" class="block text-sm font-medium mb-1.5 text-text-dark dark:text-text-light/90">Warna</label>
-                                    <select id="color_id" name="color_id" {{-- required dihapus --}}
-                                            x-model="selectedColorId" @change="updateMaxStock()"
-                                            class="block w-full p-2.5 border rounded-lg shadow-sm dark:bg-dark-subcard dark:text-text-light focus:ring-pink-brand focus:border-pink-brand text-sm {{ $errors->has('color_id') ? 'border-red-500 ring-1 ring-red-500 dark:border-red-500' : 'border-gray-300 dark:border-dark-border dark:focus:border-pink-brand focus:border-pink-brand' }}">
-                                         <option value="">-- Pilih Warna --</option>
-                                        @forelse ($availableColors as $color) <option value="{{ $color->id }}">{{ $color->name }}</option>
-                                        @empty <option value="" disabled>Warna tidak tersedia</option>
-                                        @endforelse
-                                    </select>
-                                    @error('color_id') <p class="text-red-500 dark:text-red-400 text-xs mt-1.5">{{ $message }}</p> @enderror
-                                 </div>
-                             </div>
+                                {{-- Hidden inputs for null values if only one type of variation exists (e.g., only sizes, no colors) --}}
+                                @if($availableSizes->count() > 0 && $availableColors->count() === 0)
+                                    <input type="hidden" name="color_id" value=""> {{-- Ensure color_id is submitted as null if no color options --}}
+                                @endif
+                                @if($availableColors->count() > 0 && $availableSizes->count() === 0)
+                                     <input type="hidden" name="size_id" value=""> {{-- Ensure size_id is submitted as null if no size options --}}
+                                @endif
+                            @else
+                                {{-- Produk tanpa variasi, kirim size_id dan color_id null secara otomatis --}}
+                                <input type="hidden" name="size_id" value="">
+                                <input type="hidden" name="color_id" value="">
+                            @endif {{-- End if product has variations --}}
+
 
                             {{-- Jumlah --}}
                             <div class="pt-2">
                                 <label for="quantity" class="block text-sm font-medium mb-1.5 text-text-dark dark:text-text-light/90">Jumlah</label>
                                 <div class="flex items-center">
-                                    {{-- required & min="1" dihapus --}}
                                     <input id="quantity" type="number" name="quantity"
                                             :max="maxStock > 0 ? maxStock : undefined"
                                             x-model.number="quantity"
                                             @input="validateQuantity()"
                                             placeholder="Jumlah"
-                                            {{-- Tetap disable jika combo belum dipilih / tidak tersedia --}}
+                                            {{-- Tetap disable jika combo belum dipilih ATAU tidak tersedia --}}
                                             :disabled="!isCombinationSelected || !isCombinationAvailable"
                                             class="block w-full p-2.5 border rounded-lg shadow-sm dark:bg-dark-subcard dark:text-text-light focus:ring-pink-brand focus:border-pink-brand text-sm {{ $errors->has('quantity') ? 'border-red-500 ring-1 ring-red-500 dark:border-red-500' : 'border-gray-300 dark:border-dark-border dark:focus:border-pink-brand focus:border-pink-brand' }} disabled:opacity-60 disabled:bg-gray-100 dark:disabled:bg-dark-border">
                                     {{-- Info Stok / Habis --}}
                                     <span x-show="isCombinationSelected && isCombinationAvailable && maxStock > 0" class="ml-3 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap"> Stok: <span x-text="maxStock"></span> </span>
                                      <span x-show="isCombinationSelected && !isCombinationAvailable" class="ml-3 text-xs text-red-500 dark:text-red-400 whitespace-nowrap font-medium"> Stok Habis </span>
                                 </div>
-                                {{-- Client & Server side error --}}
-                                <p x-show="clientError && clientError !== formInstruction" class="text-red-500 dark:text-red-400 text-xs mt-1.5" x-text="clientError"></p>
+                                {{-- Client side error untuk kuantitas --}}
+                                {{-- Tampilkan error kuantitas hanya jika clientError terkait kuantitas --}}
+                                <p x-show="clientError && (clientError.includes('Jumlah') || clientError.includes('minimal') || clientError.includes('melebihi'))" class="text-red-500 dark:text-red-400 text-xs mt-1.5" x-text="clientError"></p>
                                 @error('quantity') <p class="text-red-500 dark:text-red-400 text-xs mt-1.5">{{ $message }}</p> @enderror
                              </div>
 
-                             {{-- Tombol Submit --}}
+                             {{-- Catatan (Opsional) - DIHAPUS karena catatan di level Transaksi, bukan CartItem --}}
+
+                             {{-- Tombol Submit (Add to Cart) --}}
                             <div class="pt-4">
-                                <button type="submit" id="buy-now-button"
-                                    {{-- Kondisi disable: combo belum dipilih ATAU tidak tersedia ATAU quantity kosong/invalid (<1) ATAU ada error client --}}
-                                    :disabled="!isCombinationSelected || !isCombinationAvailable || !quantity || quantity < 1 || !!clientError"
-                                    class="w-full flex items-center justify-center px-8 py-3 bg-pink-brand text-base font-medium text-white rounded-lg shadow-lg hover:bg-pink-brand-dark transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-card disabled:opacity-50 disabled:cursor-not-allowed">
-                                    <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
-                                    Beli Sekarang
-                                </button>
+                                @guest
+                                    {{-- Jika belum login, arahkan ke halaman login --}}
+                                    <a href="{{ route('login') }}" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-pink-brand hover:bg-pink-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 dark:focus:ring-offset-dark-card transition-colors duration-150">
+                                        <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" /></svg> {{-- Icon login --}}
+                                        Login untuk Tambah ke Keranjang
+                                    </a>
+                                @else
+                                    {{-- Jika sudah login, tampilkan tombol Add to Cart --}}
+                                    <button type="submit" id="add-to-cart-button"
+                                        {{-- Kondisi disable:
+                                           - Ada clientError (error kombinasi atau kuantitas)
+                                           - Kombinasi belum dipilih (hanya berlaku jika produk punya variasi)
+                                           - Kombinasi tidak tersedia (stok 0)
+                                           - Kuantitas kosong atau < 1 (hanya relevan jika combo sudah dipilih & tersedia)
+                                        --}}
+                                        :disabled="!!clientError || !isCombinationSelected || !isCombinationAvailable || !quantity || quantity < 1"
+                                        class="w-full flex items-center justify-center px-8 py-3 bg-pink-brand text-base font-medium text-white rounded-lg shadow-lg hover:bg-pink-brand-dark transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-card disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> {{-- Icon plus circle --}}
+                                        Tambah ke Keranjang
+                                    </button>
+                                @endguest
                             </div>
                         </form>
+
+                        {{-- Link ke Halaman Keranjang --}}
+                        <div class="mt-4 text-center text-sm">
+                             @guest
+                                 <span class="text-gray-500 dark:text-gray-400">Belum punya akun? <a href="{{ route('register') }}" class="text-pink-brand hover:text-pink-brand-dark dark:text-pink-brand-dark dark:hover:text-pink-brand underline transition-colors duration-150">Daftar di sini</a></span>
+                             @else
+                                <a href="{{ route('cart.index') }}" class="text-pink-brand hover:text-pink-brand-dark dark:text-pink-brand-dark dark:hover:text-pink-brand underline transition-colors duration-150">Lihat Keranjang Anda</a>
+                            @endguest
+                        </div>
+
 
                          {{-- Deskripsi Produk --}}
                          <div class="mt-10 border-t border-gray-200 dark:border-dark-border pt-6">
@@ -200,27 +257,44 @@
         </div> {{-- End max-w-7xl --}}
     </div> {{-- End py-12 --}}
 
-    {{-- Script Alpine.js untuk Form Pembelian --}}
+    {{-- Script Alpine.js untuk Form Add to Cart --}}
     @push('scripts')
     <script>
-        function productPurchaseForm(config) {
+        function productForm(config) {
             return {
                 // Data
                 stockCombinations: config.stockCombinations || [],
                 // State
-                selectedSizeId: config.initialSizeId || '',
-                selectedColorId: config.initialColorId || '',
-                quantity: config.initialQuantity === 'null' ? null : (parseInt(config.initialQuantity) || null), // Handle 'null' string from PHP
+                selectedSizeId: config.initialSizeId || '', // Use '' for initial empty dropdown state
+                selectedColorId: config.initialColorId || '', // Use '' for initial empty dropdown state
+                quantity: config.initialQuantity === 'null' ? null : (parseInt(config.initialQuantity) || null),
                 maxStock: 0,
-                isCombinationSelected: false,
-                isCombinationAvailable: false,
+                isCombinationSelected: false, // True when size/color selected OR product is simple
+                isCombinationAvailable: false, // True when selected combo exists and stock > 0
                 clientError: '',
-                defaultInstruction: 'Pilih ukuran dan warna yang Anda inginkan.',
+                defaultInstruction: 'Pilih ukuran dan warna yang Anda inginkan dan masukkan jumlah.',
+
+                // Determine if product has variations based on stockCombinations
+                get hasVariations() {
+                    return this.stockCombinations.length > 0 &&
+                           (this.stockCombinations[0].size_id !== null || this.stockCombinations[0].color_id !== null);
+                },
 
                 // Init
                 init() {
                     this.$nextTick(() => {
-                        // Initial check based on old() values passed from PHP
+                        // If product has no variations, treat the single combo as selected initially
+                        if (!this.hasVariations) {
+                             // Explicitly set internal state to nulls matching the single combo
+                             this.selectedSizeId = null;
+                             this.selectedColorId = null;
+                        } else {
+                             // For products *with* variations, ensure old() values are parsed correctly
+                             // and dropdowns start with '' if old() was empty/invalid
+                             if (config.initialSizeId === '') this.selectedSizeId = ''; // Keep empty string for dropdown
+                             if (config.initialColorId === '') this.selectedColorId = ''; // Keep empty string for dropdown
+                        }
+                        // Now update state based on initial values
                         this.updateMaxStock();
                     });
                      // DEBUG: Initial state
@@ -229,95 +303,104 @@
                         color: this.selectedColorId,
                         qty: this.quantity,
                         combos: this.stockCombinations,
-                        initialConfig: config // Log the raw config data
-                    });
+                        hasVariations: this.hasVariations,
+                        initialConfig: config
+                     });
                 },
 
                 // Computed Property (Getter) - Mencari kombinasi stok berdasarkan size & color ID terpilih
                 get selectedCombination() {
-                    // Memastikan kedua ID terpilih dan valid
-                    if (!this.selectedSizeId || !this.selectedColorId) return null;
-                    const sizeId = parseInt(this.selectedSizeId);
-                    const colorId = parseInt(this.selectedColorId);
-                    if (isNaN(sizeId) || isNaN(colorId)) return null;
+                    // Handle simple product case (no variations)
+                    if (!this.hasVariations && this.stockCombinations.length === 1) {
+                         return this.stockCombinations[0];
+                    }
 
-                    // Cari dalam array stockCombinations
+                    // For products with variations, require both size and color ID to be selected and valid
+                    // Convert '' to null for lookup if needed, but lookup uses parsed ints anyway
+                    const sizeId = this.selectedSizeId === '' ? null : parseInt(this.selectedSizeId);
+                    const colorId = this.selectedColorId === '' ? null : parseInt(this.selectedColorId);
+
+                    // Return null if variations are required but not both selected
+                     if (this.hasVariations && (this.selectedSizeId === '' || this.selectedColorId === '')) {
+                         return null;
+                     }
+
+                    // Find the matching combo in the array based on parsed IDs
                     const combo = this.stockCombinations.find(
                         c => c.size_id === sizeId && c.color_id === colorId
                     );
-                    // DEBUG: Log combo yang ditemukan
-                    // console.log(`[Getter selectedCombination] Size: ${sizeId}, Color: ${colorId}, Found:`, combo);
-                    return combo || null; // Kembalikan null jika tidak ditemukan
+
+                    return combo || null; // Return the combo or null if not found
                 },
 
-                // Computed property untuk menampilkan instruksi atau error
+                // Computed property for displaying instructions or errors
                 get formInstruction() {
-                    if (this.clientError && this.clientError !== this.defaultInstruction) {
+                    if (this.clientError) { // Show clientError if it exists
                         return this.clientError;
                     }
+                     // Show default instruction if no error
                     return this.defaultInstruction;
                 },
-
-                // Computed Property (Getter) - Menentukan apakah tombol submit bisa diaktifkan
-                get canSubmit() {
-                    const qtyValid = this.quantity !== null && !isNaN(this.quantity) && this.quantity >= 1;
-                    const comboValidAndAvailable = this.isCombinationSelected && this.isCombinationAvailable;
-                    const noClientError = !this.clientError || this.clientError === this.defaultInstruction; // Allow default instruction
-
-                    // DEBUG: Log kondisi canSubmit
-                    // console.log('[Getter canSubmit] Conditions:', {
-                    //     comboValidAndAvailable,
-                    //     qtyValid,
-                    //     noClientError,
-                    //     qty: this.quantity,
-                    //     maxStock: this.maxStock
-                    // });
-
-                    return comboValidAndAvailable && qtyValid && noClientError;
-                },
-
 
                 // Methods
                 // Method utama untuk update state berdasarkan pilihan size/color
                 updateMaxStock() {
-                    // 1. Reset error & status ketersediaan
+                    // Clear previous error at the start of updating state
                     this.clientError = '';
-                    this.isCombinationSelected = !!(this.selectedSizeId && this.selectedColorId);
-                    this.isCombinationAvailable = false; // Default tidak tersedia
-                    this.maxStock = 0; // Default stok 0
 
-                    // 2. Dapatkan kombinasi terpilih menggunakan getter
-                    const combination = this.selectedCombination;
-
-                    // 3. Update state berdasarkan hasil pencarian kombinasi
-                    if (this.isCombinationSelected) { // Hanya jika KEDUA size & color dipilih
-                        if (combination) { // Jika kombinasi ditemukan di data
-                            this.maxStock = parseInt(combination.stock) || 0;
-                            this.isCombinationAvailable = this.maxStock > 0; // Tersedia jika stok > 0
-                            if (!this.isCombinationAvailable) {
-                                this.clientError = 'Stok untuk kombinasi ini habis.';
-                            }
-                            // Jika available, clientError tetap kosong (atau diisi oleh validateQuantity nanti)
-                        } else { // Jika kombinasi TIDAK ditemukan (size/color dipilih tapi tidak cocok)
-                            this.clientError = 'Kombinasi ukuran dan warna ini tidak tersedia.';
-                        }
-                    } else { // Jika salah satu atau kedua dropdown belum dipilih
-                        // Jangan set error spesifik, biarkan formInstruction menampilkan default
-                         if (this.selectedSizeId || this.selectedColorId) {
-                           // Beri tahu user apa yg kurang
-                           this.clientError = 'Pilih ' + (!this.selectedSizeId ? 'ukuran' : '') + (!this.selectedColorId ? 'warna' : '') + '.';
-                        } else {
-                           // Jika keduanya kosong, tidak perlu error, hanya instruksi default
-                           this.clientError = '';
-                        }
+                    // Determine if a combination is "selected" based on product type
+                    if (this.hasVariations) {
+                        // For products with variations, both dropdowns must have a non-empty value
+                        this.isCombinationSelected = !!(this.selectedSizeId && this.selectedColorId);
+                    } else {
+                        // For simple products (no variations), the combination is always considered selected if there's a combo
+                         this.isCombinationSelected = this.stockCombinations.length > 0;
+                         // Ensure internal model reflects null IDs for simple products if dropdowns are hidden
+                         this.selectedSizeId = null;
+                         this.selectedColorId = null;
                     }
 
-                    // 4. Validasi ulang kuantitas setelah maxStock diupdate
+                    this.isCombinationAvailable = false; // Default to false
+                    this.maxStock = 0; // Default stock to 0
+
+                    // Get the selected/relevant combination
+                    const combination = this.selectedCombination;
+
+                    // Update state based on the combination found
+                    if (this.isCombinationSelected) { // If a combo *could* be selected (either variaitonless or both selected)
+                        if (combination) { // If the combination (based on current selections or simple product) is found
+                            this.maxStock = parseInt(combination.stock) || 0;
+                            this.isCombinationAvailable = this.maxStock > 0; // Available if stock > 0
+                            if (!this.isCombinationAvailable) {
+                                // Specific error if combination found but stock is zero
+                                this.clientError = 'Stok untuk kombinasi ini habis.';
+                                this.quantity = null; // Reset quantity if stock is zero for the selected combo
+                            }
+                            // If available and has stock, clientError remains cleared (will be set by validateQuantity if qty is bad)
+                        } else { // If the selected combo (for variated products) is NOT found (invalid selection)
+                            this.clientError = 'Kombinasi ukuran dan warna ini tidak tersedia.';
+                            this.quantity = null; // Reset quantity for invalid combo
+                            this.isCombinationAvailable = false; // Ensure availability is false
+                        }
+                    } else { // If one or both dropdowns are NOT selected (and product has variations)
+                         // Instruct user to select (only for variated products where selection is incomplete)
+                         if (this.hasVariations) {
+                             this.clientError = 'Pilih ' + (!this.selectedSizeId ? 'ukuran' : '') + ((this.selectedSizeId === '' && this.selectedColorId === '') ? ' ukuran dan warna' : ((this.selectedSizeId !== '' && this.selectedColorId === '') ? 'warna' : 'ukuran')) + '.';
+                         } else {
+                             // For simple product that has no combinations at all (very rare, should be handled server-side too)
+                              this.clientError = 'Produk tidak tersedia.';
+                         }
+                         this.quantity = null; // Reset quantity if combo is incomplete/invalid
+                         this.isCombinationAvailable = false; // Ensure availability is false
+                    }
+
+                    // Always call validateQuantity to check quantity state AFTER combo state is updated
                     this.validateQuantity();
 
-                    // DEBUG: Log state setelah updateMaxStock
-                    console.log('[updateMaxStock] State updated:', {
+                    // DEBUG: Log state after updateMaxStock
+                     console.log('[updateMaxStock] State updated:', {
                         size: this.selectedSizeId, color: this.selectedColorId,
+                        hasVariations: this.hasVariations,
                         comboSelected: this.isCombinationSelected, comboAvailable: this.isCombinationAvailable,
                         maxStock: this.maxStock, error: this.clientError, qty: this.quantity
                      });
@@ -325,62 +408,63 @@
 
                 // Method untuk validasi input kuantitas secara real-time
                 validateQuantity() {
-                    // Hapus error *kuantitas* sebelumnya, tapi pertahankan error *kombinasi* jika ada
-                     if (this.clientError.includes('Jumlah') || this.clientError.includes('melebihi')) {
-                        // Jika error sebelumnya BUKAN tentang kuantitas, jangan dihapus
-                        if(!(this.clientError.includes('habis') || this.clientError.includes('tersedia') || this.clientError.includes('Pilih'))) {
-                           this.clientError = '';
-                        }
+                     // This validation is only relevant if a valid and available combination is selected
+                     if (!this.isCombinationSelected || !this.isCombinationAvailable || this.maxStock <= 0) {
+                         // If combo is not valid/available, quantity input is disabled.
+                         // No quantity-specific error should be set here.
+                         // The clientError will already reflect the combo issue set by updateMaxStock.
+                         // console.log('[validateQuantity] Skipping quantity validation: Combo not selected/available or stock is zero.');
+                         return;
+                     }
+
+                     // If combo IS valid and available, proceed to validate quantity.
+                     // Clear any *previous* quantity-specific errors as we are re-validating.
+                     // IMPORTANT: Do NOT clear combination errors here. updateMaxStock handles that.
+                     if (this.clientError.includes('Jumlah') || this.clientError.includes('minimal') || this.clientError.includes('melebihi')) {
+                         this.clientError = ''; // Clear previous quantity errors
                      }
 
 
-                    // Jika input KOSONG (null dari .number), biarkan kosong & hapus error kuantitas
-                    if (this.quantity === null || this.quantity === undefined) {
-                         // Hapus error spesifik kuantitas jika ada
-                         if (this.clientError.includes('Jumlah') || this.clientError.includes('melebihi')) {
-                             this.clientError = ''; // Kosong = valid sementara, tombol akan disable
-                         }
-                        console.log('[validateQuantity] Quantity is empty/null.');
-                        return; // Stop validasi
+                    // Check if quantity input is empty, null, or undefined AFTER combo is selected
+                    if (this.quantity === null || this.quantity === undefined || this.quantity === '') {
+                        this.clientError = 'Jumlah harus diisi.';
+                        // console.log('[validateQuantity] Quantity is empty/null/"" after combo selected.');
+                        return;
                     }
 
-                    // Jika BUKAN ANGKA valid
+                    // Check if it's a valid number
                     if (isNaN(this.quantity)) {
                         this.clientError = 'Jumlah harus berupa angka.';
-                         console.log('[validateQuantity] Quantity is NaN.');
+                        // console.log('[validateQuantity] Quantity is NaN.');
                         return;
                     }
 
-                    // Konversi ke integer
+                    // Parse as integer
                     let qty = parseInt(this.quantity);
 
-                    // Jika < 1 (setelah dipastikan angka)
+                    // Check minimum quantity
                     if (qty < 1) {
                         this.clientError = 'Jumlah minimal 1.';
-                         console.log(`[validateQuantity] Quantity ${qty} < 1.`);
-                        // Jangan auto-correct
+                        // console.log(`[validateQuantity] Quantity ${qty} < 1.`);
                         return;
                     }
 
-                    // Batasi agar TIDAK MELEBIHI maxStock (jika combo tersedia)
-                    if (this.isCombinationAvailable && this.maxStock > 0) {
-                        if (qty > this.maxStock) {
-                            this.quantity = this.maxStock; // Koreksi otomatis ke maxStock
-                             console.log(`[validateQuantity] Quantity corrected to maxStock: ${this.maxStock}.`);
-                            // Hapus error spesifik kuantitas karena sudah dikoreksi
-                             if (this.clientError.includes('Jumlah') || this.clientError.includes('melebihi')) {
-                                this.clientError = '';
-                             }
-                        }
-                    } else if (this.isCombinationSelected && !this.isCombinationAvailable) {
-                        // Jika combo dipilih tapi stok habis, set qty ke null/kosong
-                        // agar user harus input lagi jika combo lain dipilih
-                         console.log(`[validateQuantity] Combo not available, resetting quantity.`);
-                         this.quantity = null; // Reset quantity
+                    // Check against max stock
+                    if (this.maxStock > 0 && qty > this.maxStock) {
+                        this.clientError = `Jumlah melebihi stok tersedia (${this.maxStock} pcs).`;
+                        // console.log(`[validateQuantity] Quantity ${qty} > maxStock ${this.maxStock}.`);
+                        // Do not auto-correct, let user fix it
+                        return;
                     }
 
+                    // If all quantity validations pass, ensure no quantity-specific error remains
+                    // If there was a non-quantity error (like a combo error), updateMaxStock should have cleared it
+                    // when the combo became valid, or it shouldn't be cleared here anyway.
+                    // So, if we reach here, the quantity is valid, and any existing clientError is either related to a combo (which shouldn't happen if we're in this branch) or should be cleared.
+                    // The updateMaxStock handles clearing combination errors when a valid combo is found.
+                    // So simply clearing specific quantity errors at the start of THIS method is sufficient.
 
-                    // DEBUG: Log state akhir validasi kuantitas
+                    // DEBUG: Log state after valid quantity validation
                     // console.log(`[validateQuantity] Final: Qty=${this.quantity}, Max=${this.maxStock}, Available=${this.isCombinationAvailable}, Error='${this.clientError}'`);
                 }
             }

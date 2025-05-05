@@ -6,15 +6,16 @@ use App\Models\Transaction;
 use App\Models\Product;
 use App\Models\Size;
 use App\Models\Color;
-use App\Models\User;
+use App\Models\User; // Pastikan User di-import
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule; // Pastikan Rule di-import
-use Illuminate\View\View; // Import View
-use Illuminate\Http\RedirectResponse; // Import RedirectResponse
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log; // Import Log untuk error handling
-use Illuminate\Support\Facades\Validator; // Import Validator untuk validasi manual
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException; // Import ini untuk digunakan di Quick Update jika perlu
 
 class TransactionController extends Controller
 {
@@ -45,14 +46,24 @@ class TransactionController extends Controller
         $products = Product::orderBy('name')->get();
         $sizes = Size::orderBy('name')->get();
         $colors = Color::orderBy('name')->get();
-        // $users = User::orderBy('name')->get(); // Uncomment jika admin perlu memilih user saat create
+        $users = User::orderBy('name')->get(); // Admin kemungkinan perlu memilih user
+
+        // Opsi status transaksi
+        $statuses = ['pending', 'processing', 'completed', 'cancelled'];
+        // Opsi status pembayaran
+        $paymentStatuses = ['unpaid', 'paid', 'refunded']; // Tambahkan status 'refunded' jika ada
+        // Opsi status pengiriman
+        $shippingStatuses = ['not_shipped', 'shipped', 'delivered'];
 
         // Pastikan view 'admin.transactions.create' ada
         return view('admin.transactions.create', compact(
             'products',
             'sizes',
-            'colors'
-            // ,'users' // Uncomment jika admin perlu memilih user
+            'colors',
+            'users',
+            'statuses',
+            'paymentStatuses',
+            'shippingStatuses'
         ));
     }
 
@@ -64,24 +75,27 @@ class TransactionController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        // 1. Validasi input dari form create
-        //    Pertimbangkan menggunakan Form Request (e.g., StoreTransactionRequest) untuk validasi yang lebih kompleks/reusable
+        // Validasi input dari form create, termasuk field-field tambahan
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
             'size_id' => 'required|exists:sizes,id',
             'color_id' => 'required|exists:colors,id',
             'quantity' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',
-            // 'user_id' => 'required|exists:users,id', // Uncomment jika admin memilih user
-            // 'payment_method' => 'required|string|max:255', // Contoh validasi field tambahan
-            // 'shipping_address' => 'required|string',       // Contoh validasi field tambahan
-            'notes' => 'nullable|string',                   // Contoh validasi field tambahan
+            'user_id' => 'required|exists:users,id', // Admin memilih user
+            'status' => ['required', Rule::in(['pending', 'processing', 'completed', 'cancelled'])],
+            'payment_method' => 'nullable|string|max:255', // Bisa null saat dibuat
+            'payment_status' => ['required', Rule::in(['unpaid', 'paid', 'refunded'])],
+            'shipping_address' => 'nullable|string', // Bisa null saat dibuat (mungkin diisi belakangan)
+            'tracking_number' => 'nullable|string|max:255', // Default null saat create
+            'shipping_status' => ['required', Rule::in(['not_shipped', 'shipped', 'delivered'])],
+            'notes' => 'nullable|string',
         ]);
 
-        // 2. Hitung total berdasarkan input yang valid
+        // Hitung total berdasarkan input yang valid
         $total = $validated['quantity'] * $validated['price'];
 
-        // 3. Buat transaksi baru
+        // Buat transaksi baru dengan SEMUA field yang diminta
         Transaction::create([
             'product_id' => $validated['product_id'],
             'size_id' => $validated['size_id'],
@@ -89,35 +103,39 @@ class TransactionController extends Controller
             'quantity' => $validated['quantity'],
             'price' => $validated['price'],
             'total' => $total,
-            'notes' => $validated['notes'] ?? null, // Ambil notes jika ada
+            'user_id' => $validated['user_id'], // Ambil dari input admin
+            'status' => $validated['status'], // Ambil dari input admin
+            'payment_method' => $validated['payment_method'], 
+            'payment_status' => $validated['payment_status'], // Ambil dari input admin
+            'shipping_address' => $validated['shipping_address'], 
+            'tracking_number' => $validated['tracking_number'], 
+            'shipping_status' => $validated['shipping_status'], // Ambil dari input admin
+            'notes' => $validated['notes'] ?? null, 
 
-            // !! Penting: Saat ini user_id diisi dengan ID admin yang sedang login.
-            // Jika admin seharusnya bisa membuat transaksi UNTUK user lain, uncomment validasi 'user_id'
-            // dan ubah baris ini menjadi: 'user_id' => $validated['user_id'],
-            'user_id' => Auth::id(),
-
-            // Isi field lain dengan nilai default saat create
-            'status' => 'pending', // Nilai default status
-            'payment_status' => 'unpaid', // Nilai default status pembayaran
-            'shipping_status' => 'not_shipped', // Nilai default status pengiriman
-            // 'payment_method' => $validated['payment_method'] ?? null, // Contoh mengisi field tambahan
-            // 'shipping_address' => $validated['shipping_address'] ?? null, // Contoh mengisi field tambahan
-            'tracking_number' => null, // Default null saat create
+            // id, created_at, updated_at biasanya otomatis.
         ]);
 
-        // 4. Redirect ke halaman index admin dengan pesan sukses
-        //    Pastikan nama route 'admin.transactions.index' sesuai definisi di routes/web.php
+        // Redirect ke halaman index admin dengan pesan sukses
         return redirect()->route('admin.transactions.index')
             ->with('success', 'Transaksi berhasil ditambahkan.');
     }
-    public function quickUpdate(Request $request, Transaction $transaction)
+
+    /**
+     * Handle quick updates for specific transaction fields (like payment or shipping status).
+     * This is likely an AJAX endpoint.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Transaction  $transaction (Route Model Binding)
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function quickUpdate(Request $request, Transaction $transaction): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            // ... (validation rules remain the same) ...
-             'field' => ['required', 'string', Rule::in(['payment_status', 'shipping_status'])],
+             'field' => ['required', 'string', Rule::in(['payment_status', 'shipping_status'])], // Hanya izinkan update 2 field ini
              'value' => ['required', function ($attribute, $value, $fail) use ($request) {
+                 // Validasi nilai berdasarkan field yang diupdate
                  if ($request->input('field') === 'payment_status') {
-                     if (!in_array($value, ['paid', 'unpaid'])) {
+                     if (!in_array($value, ['unpaid', 'paid', 'refunded'])) { // Tambahkan 'refunded'
                          $fail('Nilai status pembayaran tidak valid.');
                      }
                  } elseif ($request->input('field') === 'shipping_status') {
@@ -125,10 +143,12 @@ class TransactionController extends Controller
                          $fail('Nilai status pengiriman tidak valid.');
                      }
                  }
+                 // Tambahkan validasi untuk field lain jika quickUpdate diperluas
              }],
         ]);
 
         if ($validator->fails()) {
+             // Return JSON response for validation errors
             return response()->json(['success' => false, 'message' => 'Validasi gagal.', 'errors' => $validator->errors()], 422);
         }
 
@@ -136,70 +156,69 @@ class TransactionController extends Controller
         $value = $request->input('value');
 
         try {
-            $originalMainStatus = $transaction->status; // Store original status
+            // Store original status before potential change
+            $originalMainStatus = $transaction->status;
+            $mainStatusChanged = false;
 
-            // --- Revised Status Logic ---
+            // --- Revised Status Logic (from previous iteration, keeps 'cancelled' untouched) ---
 
-            // 1. Never automatically change status IF it's 'cancelled'
-            if ($originalMainStatus === 'cancelled') {
-                 // If cancelled, only update the specific field requested
-                 $transaction->{$field} = $value;
-                 $mainStatusChanged = false; // Main status deliberately not changed
+            // Only proceed with calculated status update if the transaction is not cancelled
+            if ($originalMainStatus !== 'cancelled') {
+                // Apply the requested change to the specific field (in memory)
+                $transaction->{$field} = $value;
 
-                 // Optional: Depending on business rules, you might prevent *any* updates.
-                 // If so, return early:
-                 // return response()->json([
-                 //     'success' => false, // Or true, depending if updating the field is allowed
-                 //     'message' => 'Transaksi yang dibatalkan tidak dapat diubah.',
-                 //     // ... potentially include current values ...
-                 // ]);
+                // Determine the NEW target main status based on the CURRENT state of payment/shipping
+                $newTargetStatus = 'pending'; // Default
 
+                if ($transaction->payment_status === 'paid') {
+                    if ($transaction->shipping_status === 'delivered') {
+                        $newTargetStatus = 'completed';
+                    } elseif ($transaction->shipping_status === 'shipped') {
+                         $newTargetStatus = 'processing'; // Atau status lain yang sesuai setelah dikirim
+                    } else { // Paid, but not shipped (not_shipped)
+                        $newTargetStatus = 'processing'; // Masih diproses sebelum dikirim
+                    }
+                } elseif ($transaction->payment_status === 'refunded') {
+                    $newTargetStatus = 'cancelled'; // Jika refund, anggap cancelled (sesuaikan logika bisnis Anda)
+                }
+                // Jika payment_status 'unpaid', status tetap 'pending' (default)
+
+                // Update the main status field IF the calculated status is different AND it's not cancelled
+                if ($newTargetStatus !== $originalMainStatus) {
+                    $transaction->status = $newTargetStatus;
+                    $mainStatusChanged = true;
+                }
             } else {
-                 // 2. Apply the requested change to the specific field first (in memory)
+                 // If transaction is cancelled, just update the specific field IF it's allowed
+                 // (Current logic allows updating payment/shipping status even if main is cancelled)
                  $transaction->{$field} = $value;
-
-                 // 3. Determine the NEW target main status based on CURRENT payment/shipping state
-                 $newTargetStatus = 'pending'; // Default status if no other condition matches
-
-                 if ($transaction->payment_status == 'paid') {
-                     if ($transaction->shipping_status == 'delivered') {
-                         $newTargetStatus = 'completed';
-                     } else { // Paid, but not delivered (shipped or not_shipped)
-                         $newTargetStatus = 'processing';
-                     }
-                 } else { // Payment is unpaid
-                     $newTargetStatus = 'pending';
-                 }
-
-                 // 4. Update the main status field IF the calculated status is different
-                 if ($newTargetStatus !== $originalMainStatus) {
-                     $transaction->status = $newTargetStatus;
-                     $mainStatusChanged = true;
-                 } else {
-                     $mainStatusChanged = false;
-                 }
+                 // mainStatusChanged remains false
             }
 
-            // 5. Save the transaction (persists changes to $field and potentially $status)
+            // Save the transaction (persists changes to the field and potentially the main status)
             $transaction->save();
 
             // --- End Revised Status Logic ---
 
-            // Return the outcome, including the *final* main status
+            // Return success response with updated information
             return response()->json([
                 'success' => true,
                 'message' => 'Status berhasil diperbarui.',
                 'updated_field' => $field,
                 'new_value' => $value,
-                'main_status_updated' => $mainStatusChanged, // True if status actually changed
+                'main_status_updated' => $mainStatusChanged, // True if main status actually changed
                 'new_main_status' => $transaction->status   // The current status from the DB
             ]);
 
         } catch (\Exception $e) {
-            Log::error("Error updating transaction {$transaction->id}: " . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan pada server.'], 500);
+            // Log the error
+            Log::error("Error quick updating transaction {$transaction->id} field {$field}: " . $e->getMessage(), ['exception' => $e]);
+
+            // Return JSON error response
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan pada server saat memperbarui status.'], 500);
         }
     }
+
 
     /**
      * Menampilkan detail transaksi spesifik.
@@ -209,8 +228,7 @@ class TransactionController extends Controller
      */
     public function show(Transaction $transaction): View
     {
-        // Load relasi jika belum ter-load (biasanya sudah oleh `with` jika datang dari index,
-        // tapi aman untuk memastikan jika diakses langsung)
+        // Load relasi jika belum ter-load
         $transaction->loadMissing(['product', 'size', 'color', 'user']);
 
         // Pastikan view 'admin.transactions.show' ada
@@ -228,11 +246,13 @@ class TransactionController extends Controller
         $products = Product::orderBy('name')->get();
         $sizes = Size::orderBy('name')->get();
         $colors = Color::orderBy('name')->get();
-        // $users = User::orderBy('name')->get(); // Jika diperlukan
+        $users = User::orderBy('name')->get(); // Jika diperlukan
 
-        // Opsi status transaksi (masih diperlukan jika ada dropdown)
+        // Opsi status transaksi (untuk dropdown)
         $statuses = ['pending', 'processing', 'completed', 'cancelled'];
-        // Opsi status pengiriman (untuk radio button group)
+        // Opsi status pembayaran (untuk dropdown/radio)
+        $paymentStatuses = ['unpaid', 'paid', 'refunded']; // Tambahkan status 'refunded'
+        // Opsi status pengiriman (untuk dropdown/radio)
         $shippingStatuses = ['not_shipped', 'shipped', 'delivered'];
 
         return view('admin.transactions.edit', compact(
@@ -240,9 +260,10 @@ class TransactionController extends Controller
             'products',
             'sizes',
             'colors',
-            // 'users',
-            'statuses', // Masih dikirim jika status transaksi tetap dropdown
-            'shippingStatuses' // Dikirim untuk radio button
+            'users', // Pastikan ini ada di compact jika digunakan di view
+            'statuses',
+            'paymentStatuses', // Kirim opsi status pembayaran
+            'shippingStatuses' // Kirim opsi status pengiriman
         ));
     }
 
@@ -255,40 +276,28 @@ class TransactionController extends Controller
      */
     public function update(Request $request, Transaction $transaction): RedirectResponse
     {
-        // 1. Validasi input dasar
+        // Validasi semua field yang bisa diubah di form edit
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
             'size_id' => 'required|exists:sizes,id',
             'color_id' => 'required|exists:colors,id',
             'quantity' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',
+            'user_id' => 'required|exists:users,id', // Admin memilih user
             'status' => ['required', Rule::in(['pending', 'processing', 'completed', 'cancelled'])],
-            // Validasi untuk input status pengiriman (dari radio)
-            'shipping_status' => ['required', Rule::in(['not_shipped', 'shipped', 'delivered'])],
+            'payment_method' => 'nullable|string|max:255',
+            'payment_status' => ['required', Rule::in(['unpaid', 'paid', 'refunded'])], // Validasi status pembayaran
+            'shipping_address' => 'nullable|string',
             'tracking_number' => 'nullable|string|max:255',
+            'shipping_status' => ['required', Rule::in(['not_shipped', 'shipped', 'delivered'])], // Validasi status pengiriman
             'notes' => 'nullable|string',
-            // Validasi untuk input toggle payment status (opsional, tapi bagus untuk memastikan boolean atau 'on')
-            // Kita akan proses nilainya di bawah, jadi validasi dasar bisa 'nullable' atau 'sometimes'
-            'payment_toggle' => 'nullable|string|in:on', // Checkbox mengirim 'on' jika dicentang
+             // Remove 'payment_toggle' validation if using standard dropdown/radio for payment_status
         ]);
 
-        // 2. Proses Nilai Toggle Status Pembayaran
-        // Jika checkbox 'payment_toggle' dicentang (ada di request dan nilainya 'on'), statusnya 'paid'.
-        // Jika tidak dicentang (tidak ada di request), statusnya 'unpaid'.
-        // Kita tidak langsung memasukkan 'payment_toggle' ke $updateData
-        $paymentStatus = $request->has('payment_toggle') && $request->input('payment_toggle') === 'on' ? 'paid' : 'unpaid';
-
-        // !! PENTING: Periksa apakah status 'refunded' perlu ditangani secara terpisah.
-        // Jika ya, toggle ini mungkin tidak cocok, atau perlu logika tambahan.
-        // Asumsi saat ini: toggle hanya untuk 'paid' / 'unpaid'.
-        // Jika status sebelumnya 'refunded', toggle ini akan menimpanya jadi 'paid' atau 'unpaid'.
-        // Pertimbangkan jika ini perilaku yang diinginkan.
-
-        // 3. Hitung ulang total
+        // Hitung ulang total
         $total = $validated['quantity'] * $validated['price'];
 
-        // 4. Siapkan data untuk update
-        // Gunakan $validated untuk field lain, tapi gunakan $paymentStatus yang sudah diproses
+        // Siapkan data untuk update, ambil semua dari $validated
         $updateData = [
             'product_id' => $validated['product_id'],
             'size_id' => $validated['size_id'],
@@ -296,28 +305,23 @@ class TransactionController extends Controller
             'quantity' => $validated['quantity'],
             'price' => $validated['price'],
             'total' => $total,
-            'status' => $validated['status'],
-            'payment_status' => $paymentStatus, // Gunakan status pembayaran yang diproses
-            'shipping_status' => $validated['shipping_status'], // Dari radio button
-            'tracking_number' => $validated['tracking_number'],
-            'notes' => $validated['notes'],
+            'user_id' => $validated['user_id'], // Ambil dari input
+            'status' => $validated['status'], // Ambil dari input
+            'payment_method' => $validated['payment_method'], // Ambil dari input
+            'payment_status' => $validated['payment_status'], // Ambil dari input
+            'shipping_address' => $validated['shipping_address'], // Ambil dari input
+            'tracking_number' => $validated['tracking_number'], // Ambil dari input
+            'shipping_status' => $validated['shipping_status'], // Ambil dari input
+            'notes' => $validated['notes'], // Ambil dari input
         ];
 
-        // 5. Update transaksi
+        // Update transaksi
         $transaction->update($updateData);
 
-        // 6. Redirect
+        // Redirect
         return redirect()->route('admin.transactions.index')
             ->with('success', 'Transaksi berhasil diperbarui.');
     }
-
-    /**
-     * Memperbarui transaksi yang ada di database.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Transaction  $transaction (Route Model Binding)
-     * @return \Illuminate\Http\RedirectResponse
-     */
 
 
     /**
@@ -337,11 +341,11 @@ class TransactionController extends Controller
                 ->with('success', 'Transaksi berhasil dihapus.');
         } catch (\Exception $e) {
             // Tangani jika terjadi error saat menghapus (misal: relasi database)
-            // Log error untuk debugging: \Log::error("Error deleting transaction {$transaction->id}: " . $e->getMessage());
+            Log::error("Error deleting transaction {$transaction->id}: " . $e->getMessage(), ['exception' => $e]);
 
             // Redirect ke halaman index admin dengan pesan error
             return redirect()->route('admin.transactions.index')
-                ->with('error', 'Gagal menghapus transaksi. Mungkin terkait dengan data lain.'); // Pesan lebih umum
+                ->with('error', 'Gagal menghapus transaksi. Mungkin terkait dengan data lain.');
         }
     }
 }
