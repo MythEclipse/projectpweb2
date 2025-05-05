@@ -97,7 +97,7 @@ $watch('darkMode', value => {
             @if (!request()->routeIs('cart.index'))
                 {{-- Container untuk kedua versi tombol --}}
                 {{-- Atur `right` agar tidak bertabrakan dengan tombol wishlist (jika ada) --}}
-                <div class="fixed bottom-6 right-20 md:right-24 z-40"> {{-- Posisi fixed, bottom-right, z-index. Sesuaikan `right` jika perlu --}}
+                <div class="fixed bottom-6 right-6 z-40"> {{-- Posisi fixed, bottom-right, z-index. Sesuaikan `right` jika perlu --}}
 
                     {{-- ============================================= --}}
                     {{-- Versi Mobile (Simple)                       --}}
@@ -195,7 +195,7 @@ $watch('darkMode', value => {
             @if (!request()->routeIs('wishlist.index'))
                 {{-- Container untuk kedua versi tombol --}}
                 {{-- Atur `right` agar di sebelah kanan tombol cart --}}
-                <div class="fixed bottom-6 right-6 z-40"> {{-- Posisi fixed, bottom-right, z-index --}}
+                <div class="fixed bottom-6 right-20 md:right-24 z-40"> {{-- Posisi fixed, bottom-right, z-index --}}
 
                     {{-- ============================================= --}}
                     {{-- Versi Mobile (Simple)                       --}}
