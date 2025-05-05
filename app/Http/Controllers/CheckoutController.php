@@ -123,7 +123,8 @@ class CheckoutController extends Controller
                     'price' => (int) round($item->product->price), // Pastikan harga item juga integer
                 ]);
             }
-
+            $notificationUrl = route('midtrans.notification');
+            Log::info('Generated Midtrans Notification URL', ['url' => $notificationUrl]);
             // --- Buat Transaksi di Midtrans (Dapatkan Snap Token) ---
             $params = [
                 'transaction_details' => [
@@ -155,11 +156,13 @@ class CheckoutController extends Controller
                     ];
                 })->toArray(),
                 // Optional: Add callbacks for Snap.js (frontend JS)
-                // 'callbacks' => [
-                //     'finish' => route('orders.index'),
-                //     'unfinish' => route('checkout.index'),
-                //     'error' => route('checkout.index'),
-                // ] // Callbacks di Snap.js lebih umum dikelola di frontend
+                'callbacks' => [
+                    'notification' => $notificationUrl, // Use the route name defined below
+                    // Optional: Add 'finish', 'unfinish', 'error' for frontend redirects
+                    // 'finish' => route('orders.index'),
+                    // 'unfinish' => route('checkout.index'),
+                    // 'error' => route('checkout.index'),
+                ]
             ];
 
             // Panggil Snap API

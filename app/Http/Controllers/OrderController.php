@@ -45,25 +45,25 @@ class OrderController extends Controller
      * @param  \App\Models\Order  $order The Order model instance (Route Model Binding)
      * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
      */
-    public function show(Order $order): View | RedirectResponse
-    {
-        $user = Auth::user();
+    // public function show(Order $order): View | RedirectResponse
+    // {
+    //     $user = Auth::user();
 
-        // Ensure the order belongs to the authenticated user
-        if ($order->user_id !== $user->id) {
-            // Use abort(403) for forbidden access, or redirect
-             abort(403, 'Unauthorized access.');
-            // return redirect()->route('orders.index')->with('error', 'Order tidak ditemukan atau Anda tidak memiliki akses.');
-        }
+    //     // Ensure the order belongs to the authenticated user
+    //     if ($order->user_id !== $user->id) {
+    //         // Use abort(403) for forbidden access, or redirect
+    //          abort(403, 'Unauthorized access.');
+    //         // return redirect()->route('orders.index')->with('error', 'Order tidak ditemukan atau Anda tidak memiliki akses.');
+    //     }
 
-        // Eager load the transaction items and their details for this specific order
-        $order->loadMissing([
-            'transactionItems.product',
-            'transactionItems.size',
-            'transactionItems.color'
-        ]);
+    //     // Eager load the transaction items and their details for this specific order
+    //     $order->loadMissing([
+    //         'transactionItems.product',
+    //         'transactionItems.size',
+    //         'transactionItems.color'
+    //     ]);
 
-        // Pass the single Order model (with items loaded) to the view
-        return view('orders.show', compact('order'));
-    }
+    //     // Pass the single Order model (with items loaded) to the view
+    //     return view('orders.show', compact('order'));
+    // }
 }

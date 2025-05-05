@@ -15,6 +15,7 @@ use App\Http\Controllers\PublicProductController; // Import PublicProductControl
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\MidtransNotificationController; // Import MidtransNotificationController untuk notifikasi Midtrans
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken; // Import VerifyCsrfToken middleware
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -81,8 +82,9 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Midtrans Notification Route (DO NOT require authentication!)
-Route::post('/midtrans/notification', [MidtransNotificationController::class, 'handle'])->name('midtrans.notification')->withoutMiddleware(['auth', 'csrf']); // CSRF protection is not needed/wanted for webhooks
-
+Route::post('/midtrans-notification', [MidtransNotificationController::class, 'handle'])
+     ->withoutMiddleware([VerifyCsrfToken::class])
+     ->name('midtrans.notification'); // <<< Ini PENTING!
 
 Route::middleware(['auth', 'verified', IsAdmin::class]) // Terapkan semua middleware di grup
     ->prefix('admin') // Tambahkan prefix URL '/admin'
