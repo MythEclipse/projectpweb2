@@ -1,32 +1,42 @@
 <?php
 
+// app/Models/Transaction.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Transaction extends Model // Model ini sekarang berperan sebagai OrderItem
+class Transaction extends Model // Model ini sesuai dengan struktur tabel transactions lama + order_id
 {
     use HasFactory;
 
+    protected $table = 'transactions'; // Pastikan ini benar
+
     protected $fillable = [
-        'order_id', // Tambahkan ini
+        'order_id', // Tambahkan ini untuk link ke Order
         'product_id',
         'size_id',
         'color_id',
         'quantity',
         'price',
-        // Hapus field yang dipindah ke Order model (user_id, status, total, dll.)
+        'total', // Field dari struktur lama
+        'user_id', // Field dari struktur lama
+        'status', // Field dari struktur lama (status item/pesanan)
+        'payment_method', // Field dari struktur lama
+        'payment_status', // Field dari struktur lama
+        'shipping_address', // Field dari struktur lama
+        'tracking_number', // Field dari struktur lama
+        'shipping_status', // Field dari struktur lama
+        'notes', // Field dari struktur lama
     ];
 
-     // Jika Anda mengganti nama tabel:
-     // protected $table = 'order_items';
-
+    // Relasi ke Order
     public function order()
     {
         return $this->belongsTo(Order::class);
     }
 
+    // Relasi ke Product, Size, Color tetap sama
     public function product()
     {
         return $this->belongsTo(Product::class);
@@ -40,5 +50,12 @@ class Transaction extends Model // Model ini sekarang berperan sebagai OrderItem
     public function color()
     {
         return $this->belongsTo(Color::class);
+    }
+
+    // Relasi ke User (Ini diperlukan agar kode lama Auth::user()->transactions() bekerja)
+    // Meskipun redundan secara data, ini menjaga kompatibilitas kode.
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

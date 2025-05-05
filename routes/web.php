@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\HomePageController;
-use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\Admin\TransactionController;
 use App\Http\Controllers\Admin\AdminController; // Pastikan namespace benar
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Middleware\IsAdmin; // Pastikan middleware di-import4

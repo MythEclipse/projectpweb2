@@ -5,6 +5,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
@@ -41,5 +42,11 @@ class Order extends Model
     {
         // Sesuaikan dengan nama model jika Anda mengganti nama model Transaction
         return $this->hasMany(Transaction::class); // Assuming Transaction model now represents OrderItems
+    }
+    public function transactionItems(): HasMany // *** Define the relationship here ***
+    {
+        // The Transaction model represents the items in the 'transactions' table.
+        // Eloquent will look for 'order_id' column on the related model (Transaction) by default.
+        return $this->hasMany(Transaction::class);
     }
 }

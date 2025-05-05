@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -73,5 +74,10 @@ class User extends Authenticatable
     public function orders() // <-- Pastikan relasi ke Order sudah benar
 {
     return $this->hasMany(\App\Models\Order::class);
+}
+public function transactions(): HasMany // Tentukan return type hint
+{
+     // Ini akan berfungsi karena tabel 'transactions' masih punya kolom 'user_id'
+    return $this->hasMany(Transaction::class);
 }
 }

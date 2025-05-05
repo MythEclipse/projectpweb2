@@ -8,9 +8,7 @@ use App\Models\Product;        // Import the Product model
 use App\Models\Transaction;   // Import the Transaction model (representing orders)
 use App\Models\User;          // Import the User model (representing customers)
 use Carbon\Carbon;            // Import Carbon for date manipulation
-use Illuminate\Support\Facades\Auth; // Import Auth facade if needed directly (though Auth::user() works)
-use Illuminate\Support\Facades\DB;   // Optional: If needed for more complex queries
-use Illuminate\Support\Facades\Log;  // Import Log facade for logging
+use App\Models\Order;         // Import the Order model (if using a different name for transactions)
 
 class AdminController extends Controller
 {
@@ -25,56 +23,41 @@ class AdminController extends Controller
         // 1. Total Products
         $totalProducts = Product::count();
 
-        // 2. New Orders (Transactions) in the last 24 hours
-        $newOrdersCount = Transaction::where('created_at', '>=', Carbon::now()->subDay())->count();
+        // 2. New Orders in the last 24 hours
+        // We now count *Orders*, not individual transaction items, for "new orders" stat.
+        $newOrdersCount = Order::where('created_at', '>=', Carbon::now()->subDay())->count();
 
         // 3. Total Customers
-        // Adjust the query if you only want to count users with a specific role, e.g., 'customer'
-        // $totalCustomers = User::where('role', 'customer')->count();
         $totalCustomers = User::count(); // Counts all registered users
 
         // 4. Revenue This Month
-        // Sums the 'total' column for transactions marked as 'paid' within the current calendar month.
-        $revenueThisMonth = Transaction::where('status', 'complete')
-            ->whereMonth('created_at', Carbon::now()->month) // Checks CURRENT month
-            ->whereYear('created_at', Carbon::now()->year)  // Checks CURRENT year
-            ->sum('total');
-
-        // Format the revenue into a more readable string (e.g., "Rp 15.7jt" or "Rp 15.700.000")
-        // Option 1: Format as 'jt' (juta/million)
-        // --- Temporary Test ---
-        $revenueThisMonth_TestAllTime = Transaction::where('status', 'complete')
-            // ->whereMonth('created_at', Carbon::now()->month) // Temporarily disable
-            // ->whereYear('created_at', Carbon::now()->year)  // Temporarily disable
-            ->sum('total');
-
-        Log::info('Total Revenue (All Time Completed): ' . $revenueThisMonth_TestAllTime); // Check your laravel.log file
-        // dd($revenueThisMonth_TestAllTime); // Or dump and die here for immediate feedback
-        // --- End Temporary Test ---
-
-        // Original query (keep this one for the actual logic)
-        $revenueThisMonth = Transaction::where('status', 'completed')
+        // Revenue is calculated from the *total_amount* in the *orders* table,
+        // filtering by a successful payment status (e.g., 'settlement' or 'paid').
+        // The 'status' column is now in the 'orders' table, not 'transactions'.
+        // *** ASSUMPTION: A successfully paid order has payment_status = 'settlement' ***
+        // *** Adjust the 'settlement' string below if your order status logic uses a different value (e.g., 'paid') ***
+        $revenueThisMonth = Order::where('payment_status', 'settlement') // Filter by successful payment status in Orders table
             ->whereMonth('created_at', Carbon::now()->month)
             ->whereYear('created_at', Carbon::now()->year)
-            ->sum('total');
+            ->sum('total_amount'); // Sum the 'total_amount' from the Orders table
 
+        // Format the revenue into a more readable string
         $formattedRevenue = 'Rp ' . number_format($revenueThisMonth / 1000000, 1, ',', '.') . 'jt';
-        // Option 2: Format with full thousands separators
-        // $formattedRevenue = 'Rp ' . number_format($revenueThisMonth, 0, ',', '.');
+        // Or full format: $formattedRevenue = 'Rp ' . number_format($revenueThisMonth, 0, ',', '.');
 
 
         // --- Fetch Recent Activity Data ---
 
-        // Example: Get the 5 most recent transactions (orders)
-        // Eager load the 'user' relationship to avoid N+1 query issues in the view
-        $recentTransactions = Transaction::with('user')
+        // Example: Get the 5 most recent orders (formerly called transactions in the old schema context)
+        // We now fetch *Order* models, eager loading the 'user' relationship.
+        $recentOrders = Order::with('user') // 'user' relation exists on the Order model
             ->latest() // Order by created_at descending (newest first)
             ->take(5)  // Limit the results
             ->get();
 
         // You could add more activity types here if needed:
         $recentUsers = User::latest()->take(3)->get();
-        $recentProductUpdates = Product::latest('updated_at')->take(3)->get();
+        // $recentProductUpdates = Product::latest('updated_at')->take(3)->get();
 
 
         // --- Pass Data to the View ---
@@ -85,7 +68,7 @@ class AdminController extends Controller
             'newOrdersCount'    => $newOrdersCount,
             'totalCustomers'    => $totalCustomers,
             'formattedRevenue'  => $formattedRevenue,    // Pass the pre-formatted string
-            'recentTransactions' => $recentTransactions, // Pass the collection of recent transactions
+            'recentTransactions' => $recentOrders,      // Pass the collection of recent Orders, maybe rename variable in view?
             'recentUsers' => $recentUsers,           // Pass other activity data if you fetched it
         ]);
     }
