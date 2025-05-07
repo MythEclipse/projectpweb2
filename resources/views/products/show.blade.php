@@ -128,7 +128,7 @@
                               <p class="text-sm text-gray-500 dark:text-text-light/70 mb-4 min-h-[20px]"
                                  x-text="formInstruction"
                                  :class="{ 'text-red-500 dark:text-red-400 font-medium': clientError }">
-                                 Pilih variasi yang Anda inginkan dan masukkan jumlah.
+                                 Pilih variasi dan jumlah yang Anda inginkan. {{-- Default/placeholder text --}}
                               </p>
 
                              {{-- Pilihan Ukuran & Warna --}}
@@ -168,8 +168,8 @@
                             @else
                                 {{-- Produk tanpa variasi, kirim size_id dan color_id null secara otomatis --}}
                                 {{-- Alpine script akan otomatis menyetel state internal selectedSizeId=null, selectedColorId=null jika tidak ada variasi --}}
-                                <input type="hidden" name="size_id" :value="selectedSizeId">
-                                <input type="hidden" name="color_id" :value="selectedColorId">
+                                <input type="hidden" name="size_id" x-bind:value="selectedSizeId">
+                                <input type="hidden" name="color_id" x-bind:value="selectedColorId">
                             @endif {{-- End if product has variations --}}
 
 
@@ -183,7 +183,7 @@
                                             @input="validateQuantity()"
                                             placeholder="Jumlah"
                                             {{-- Disable jika combo belum dipilih ATAU tidak tersedia --}}
-                                            :disabled="!isCombinationSelected || !isCombinationAvailable"
+                                            :disabled="(!isCombinationSelected && (hasSizeVariations || hasColorVariations)) || !isCombinationAvailable"
                                             class="block w-full p-2.5 border rounded-lg shadow-sm dark:bg-dark-subcard dark:text-text-light focus:ring-pink-brand focus:border-pink-brand text-sm {{ $errors->has('quantity') ? 'border-red-500 ring-1 ring-red-500 dark:border-red-500' : 'border-gray-300 dark:border-dark-border dark:focus:border-pink-brand focus:border-pink-brand' }} disabled:opacity-60 disabled:bg-gray-100 dark:disabled:bg-dark-border">
                                     {{-- Info Stok / Habis --}}
                                     <span x-show="isCombinationSelected && isCombinationAvailable && maxStock > 0" class="ml-3 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap"> Stok: <span x-text="maxStock"></span> </span>
@@ -211,7 +211,7 @@
                                            - Kombinasi tidak tersedia (stok 0)
                                            - Kuantitas kosong atau < 1 (setelah kombinasi dipilih & tersedia)
                                         --}}
-                                        :disabled="!!clientError || !isCombinationSelected || !isCombinationAvailable || !quantity || quantity < 1"
+                                        :disabled="!!clientError || (!isCombinationSelected && (hasSizeVariations || hasColorVariations)) || !isCombinationAvailable || !quantity || quantity < 1"
                                         class="w-full flex items-center justify-center px-8 py-3 bg-pink-brand text-base font-medium text-white rounded-lg shadow-lg hover:bg-pink-brand-dark transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-card disabled:opacity-50 disabled:cursor-not-allowed">
                                         <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> {{-- Icon plus circle --}}
                                         Tambah ke Keranjang
@@ -264,7 +264,7 @@
                 isCombinationSelected: false, // True when size/color selected OR product is simple/single-variation and selection complete
                 isCombinationAvailable: false, // True when selected combo exists and stock > 0
                 clientError: '',
-                defaultInstruction: 'Pilih variasi yang Anda inginkan dan masukkan jumlah.',
+                defaultInstruction: 'Pilih variasi dan jumlah yang Anda inginkan.', // Updated default text
 
                 // Init
                 init() {
@@ -357,14 +357,16 @@
                     this.clientError = '';
 
                     // Update selection state
-                    this.isCombinationSelected = this.isSelectionComplete; // True if all required options are picked
+                    // Selection is complete only if all variation types that exist have a value selected (non-empty string)
+                    this.isCombinationSelected = this.isSelectionComplete;
 
                     this.isCombinationAvailable = false; // Default to false
                     this.maxStock = 0; // Default stock to 0
 
 
+                    // Logic branch based on whether selection is complete
                     if (!this.isSelectionComplete && (this.hasSizeVariations || this.hasColorVariations)) {
-                         // If product has variations but selection is incomplete, set specific error
+                         // Case: Product has variations, but selection is incomplete (one or both dropdowns still '-- Pilih --')
                          let missing = [];
                          if (this.hasSizeVariations && this.selectedSizeId === '') missing.push('ukuran');
                          if (this.hasColorVariations && this.selectedColorId === '') missing.push('warna');
@@ -372,11 +374,11 @@
                          this.quantity = null; // Reset quantity if selection incomplete
                          // isCombinationAvailable remains false
                     } else {
-                         // Selection is complete (either simple product or variated & options picked)
-                         const combination = this.selectedCombination; // Find the combo based on state
+                         // Case: Selection is complete (either simple product OR variated product with both options picked)
+                         const combination = this.selectedCombination; // Find the combo based on state (will be null if not found)
 
                          if (combination) {
-                             // Combo found based on selection (or is the simple combo)
+                             // Combo found based on selection (or is the single simple combo)
                              this.maxStock = parseInt(combination.stock) || 0;
                              this.isCombinationAvailable = this.maxStock > 0;
 
@@ -387,13 +389,14 @@
                              // If available and has stock, clientError is cleared (unless validateQuantity adds one)
 
                          } else {
-                             // Combo was not found. This means:
-                             // - Variated product, and the *combination* (e.g., Size XL, Color Green) doesn't exist in the DB for the selected options.
-                             // - Or very rare: Simple product, but stockCombinations was empty (shouldn't happen).
+                             // Combo was not found. This happens when:
+                             // - Variated product, and the *specific* combination (e.g., Size XL, Color Green) selected by the user doesn't exist in the passed stockCombinations data.
+                             // - Very rare: Simple product, but stockCombinations was empty array passed to Alpine (shouldn't happen if product exists).
                              if(this.stockCombinations.length === 0) {
-                                  this.clientError = 'Produk tidak memiliki stok kombinasi.';
+                                  this.clientError = 'Produk tidak memiliki stok kombinasi.'; // Should ideally not happen if product exists
                              } else {
-                                   this.clientError = 'Kombinasi pilihan tidak tersedia.'; // More general error for existing variations
+                                   // Combination not found for the selected variations
+                                   this.clientError = 'Kombinasi pilihan tidak tersedia.';
                              }
                              this.quantity = null; // Reset quantity
                              // isCombinationAvailable remains false
@@ -416,24 +419,28 @@
                 // Method untuk validasi input kuantitas secara real-time
                 validateQuantity() {
                      // This validation is only relevant if a valid and available combination is selected
+                     // Also, only validate if the quantity input is NOT disabled by the combination state
                      if (!this.isCombinationSelected || !this.isCombinationAvailable || this.maxStock <= 0) {
                          // If combo is not valid/available, quantity input is disabled or irrelevant.
-                         // No quantity-specific error should be set here.
-                         // The clientError will already reflect the combo issue set by updateMaxStock.
-                         // console.log('[validateQuantity] Skipping quantity validation.');
+                         // No quantity-specific error should be set here. The clientError should reflect the combo issue.
+                         // console.log('[validateQuantity] Skipping quantity validation: Combo state prevents it.');
                          return;
                      }
 
                      // If combo IS valid and available, proceed to validate quantity.
-                     // Clear any *previous* quantity-specific errors as we are re-validating.
-                     if (this.clientError.includes('Jumlah') || this.clientError.includes('minimal') || this.clientError.includes('melebihi') || this.clientError.includes('harus diisi')) {
+                     // Clear any *previous* quantity-specific errors as we are re-validating due to input change.
+                     // IMPORTANT: Do NOT clear combination errors here. updateMaxStock handles that.
+                     if (this.clientError && (this.clientError.includes('Jumlah') || this.clientError.includes('minimal') || this.clientError.includes('melebihi') || this.clientError.includes('harus diisi'))) {
                          this.clientError = ''; // Clear previous quantity errors
                      }
 
-                    // Check if quantity input is empty, null, or undefined AFTER combo is selected
+                    // Check if quantity input is empty, null, or undefined AFTER combo is selected AND available
                     if (this.quantity === null || this.quantity === undefined || this.quantity === '') {
+                        // Only set this error if the input is NOT disabled.
+                        // The disabled check above already handles the case where it's disabled.
+                        // So, if we reach here and it's empty, it's a client-side validation error.
                         this.clientError = 'Jumlah harus diisi.';
-                        // console.log('[validateQuantity] Quantity is empty/null/"" after combo selected.');
+                        // console.log('[validateQuantity] Quantity is empty/null/"" after combo selected & available.');
                         return;
                     }
 
@@ -444,10 +451,10 @@
                         return;
                     }
 
-                    // Parse as integer
+                    // Parse as integer (though x-model.number helps)
                     let qty = parseInt(this.quantity);
 
-                    // Check minimum quantity
+                    // Check minimum quantity (should be >= 1)
                     if (qty < 1) {
                         this.clientError = 'Jumlah minimal 1.';
                         // console.log(`[validateQuantity] Quantity ${qty} < 1.`);
@@ -462,7 +469,8 @@
                     }
 
                     // If all quantity validations pass, ensure no quantity-specific error remains.
-                    // If there was a non-quantity error, updateMaxStock already handled it.
+                    // If there was a non-quantity error (e.g., combo not found, handled by updateMaxStock),
+                    // it would not be cleared here.
                      // console.log(`[validateQuantity] Final: Qty=${this.quantity}, Max=${this.maxStock}, Available=${this.isCombinationAvailable}, Error='${this.clientError}'`);
                 }
             }
