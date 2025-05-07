@@ -22,35 +22,37 @@ class PublicProductController extends Controller
      * @param Product $product The product instance resolved by route model binding.
      * @return View The view for the product detail page.
      */
-    public function show(Product $product): View
+    public function show(Product $product)
     {
-        // Eager load relasi yang dibutuhkan: stockCombinations, dan relasi size/color di dalamnya
+        // Eager load relasi yang dibutuhkan
         $product->load(['stockCombinations.size', 'stockCombinations.color']);
 
-        // Ambil size yang tersedia (yang memiliki stockCombination).
-        // Gunakan map untuk mendapatkan objek size, filter untuk buang null, unique, dan sort.
-        $availableSizes = $product->stockCombinations
-            ->map(fn($sc) => $sc->size) // Ambil objek Size dari relasi 'size' di stock combination
-            ->filter()                  // Filter/buang entri yang null (kombinasi tanpa size)
-            ->unique('id')              // Ambil objek Size yang unik berdasarkan ID
-            ->sortBy('name')            // Urutkan berdasarkan nama
-            ->values();                 // Reset keys array agar menjadi list sederhana (0, 1, 2, ...)
+        // Ambil ukuran unik yang ada di stockCombinations untuk produk ini
+        $distinctSizes = $product->stockCombinations
+            ->map(fn($sc) => $sc->size) // Ambil objek Size dari setiap kombinasi
+            ->filter() // Hapus null jika ada kombinasi tanpa ukuran (misalnya produk hanya variasi warna)
+            ->unique('id') // Ambil yang unik berdasarkan ID
+            ->sortBy('name') // Urutkan (opsional, bisa juga berdasarkan order_column jika ada)
+            ->values(); // Reset keys collection
 
-        // Ambil color yang tersedia (yang memiliki stockCombination) dengan cara yang sama
-        $availableColors = $product->stockCombinations
-            ->map(fn($sc) => $sc->color) // Ambil objek Color dari relasi 'color' di stock combination
-            ->filter()                   // Filter/buang entri yang null (kombinasi tanpa color)
-            ->unique('id')               // Ambil objek Color yang unik berdasarkan ID
-            ->sortBy('name')             // Urutkan berdasarkan nama
-            ->values();                  // Reset keys array
+        // Ambil warna unik yang ada di stockCombinations untuk produk ini
+        $distinctColors = $product->stockCombinations
+            ->map(fn($sc) => $sc->color) // Ambil objek Color dari setiap kombinasi
+            ->filter() // Hapus null jika ada kombinasi tanpa warna
+            ->unique('id') // Ambil yang unik berdasarkan ID
+            ->sortBy('name') // Urutkan
+            ->values(); // Reset keys collection
 
-        // Tentukan apakah produk ini punya variasi (ukuran atau warna)
-        // Produk punya variasi jika ADA setidaknya satu kombinasi stok di mana size_id BUKAN null ATAU color_id BUKAN null.
-        $hasVariations = $product->stockCombinations->some(fn($c) => $c->size_id !== null || $c->color_id !== null);
+        // Tentukan apakah produk ini secara keseluruhan punya variasi (ukuran atau warna)
+        // Ini untuk @if($hasVariations) di Blade yang membungkus bagian pilihan variasi
+        $hasOverallVariations = $distinctSizes->isNotEmpty() || $distinctColors->isNotEmpty();
 
-
-        // Lewatkan product, availableSizes, availableColors, dan hasVariations ke view
-        return view('products.show', compact('product', 'availableSizes', 'availableColors', 'hasVariations'));
+        return view('products.show', [
+            'product' => $product,
+            'hasVariations' => $hasOverallVariations, // Untuk blok @if utama variasi
+            'availableSizes' => $distinctSizes,     // Untuk dropdown & data Alpine
+            'availableColors' => $distinctColors,   // Untuk dropdown & data Alpine
+        ]);
     }
     public function getStockCombinations(Product $product): JsonResponse
     {
