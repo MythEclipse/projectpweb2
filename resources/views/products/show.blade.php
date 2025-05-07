@@ -1,4 +1,3 @@
-{{-- File: resources/views/products/show.blade.php --}}
 <x-app-layout>
     {{-- Header dengan Breadcrumbs --}}
     <x-slot name="header">
@@ -79,7 +78,7 @@
                          stockCombinations: {{ json_encode($product->stockCombinations->map(fn($c) => ['size_id' => $c->size_id, 'color_id' => $c->color_id, 'stock' => $c->stock])) }},
                          initialSizeId: '{{ old('size_id') }}',
                          initialColorId: '{{ old('color_id') }}',
-                         initialQuantity: {{ old('quantity', '1') }}
+                         initialQuantity: {{ old('quantity') ? old('quantity') : 'null' }} {{-- Pass null if old('quantity') is empty --}}
                      })">
 
                     {{-- Kolom Kiri: Gambar --}}
@@ -115,20 +114,14 @@
                         @endauth
 
                         {{-- Form Add to Cart dengan Alpine --}}
-                        <form method="POST" action="{{ route('cart.store', $product) }}" class="mt-6 border-t border-gray-200 dark:border-dark-border pt-6 space-y-4"
-                              x-data="productForm({
-                                 stockCombinations: {{ json_encode($product->stockCombinations->map(fn($c) => ['size_id' => $c->size_id, 'color_id' => $c->color_id, 'stock' => $c->stock])) }},
-                                 initialSizeId: '{{ old('size_id') }}',
-                                 initialColorId: '{{ old('color_id') }}',
-                                 initialQuantity: {{ old('quantity', '1') }}
-                              })">
+                        <form method="POST" action="{{ route('cart.store', $product) }}" class="mt-6 border-t border-gray-200 dark:border-dark-border pt-6 space-y-4">
                             @csrf
                              <h2 class="text-xl font-semibold mb-1">Tambahkan ke Keranjang</h2>
                              {{-- Pesan instruksi/error dari Alpine atau server --}}
                               <p class="text-sm text-gray-500 dark:text-text-light/70 mb-4 min-h-[20px]"
                                  x-text="formInstruction"
                                  :class="{ 'text-red-500 dark:text-red-400 font-medium': clientError }">
-                                 Pilih variasi dan jumlah yang Anda inginkan. {{-- Default/placeholder text --}}
+                                 {{-- Placeholder text will be replaced by Alpine's formInstruction --}}
                               </p>
 
                              {{-- Pilihan Ukuran & Warna --}}
@@ -163,13 +156,11 @@
                                         </div>
                                     @endif
                                 </div>
-                                {{-- Alpine script akan menangani apakah size_id atau color_id dianggap 'selected' berdasarkan apakah dropdownnya ditampilkan atau tidak,
-                                     jadi kita tidak perlu hidden input value="" di sini lagi. --}}
                             @else
                                 {{-- Produk tanpa variasi, kirim size_id dan color_id null secara otomatis --}}
                                 {{-- Alpine script akan otomatis menyetel state internal selectedSizeId=null, selectedColorId=null jika tidak ada variasi --}}
-                                <input type="hidden" name="size_id" x-bind:value="selectedSizeId">
-                                <input type="hidden" name="color_id" x-bind:value="selectedColorId">
+                                <input type="hidden" name="size_id" x-bind:value="selectedSizeId"> {{-- Will be null --}}
+                                <input type="hidden" name="color_id" x-bind:value="selectedColorId"> {{-- Will be null --}}
                             @endif {{-- End if product has variations --}}
 
 
@@ -178,19 +169,24 @@
                                 <label for="quantity" class="block text-sm font-medium mb-1.5 text-text-dark dark:text-text-light/90">Jumlah</label>
                                 <div class="flex items-center">
                                     <input id="quantity" type="number" name="quantity" min="1"
-                                            :max="maxStock > 0 ? maxStock : undefined"
+                                            :max="maxStock > 0 ? maxStock : undefined" {{-- Allow undefined if maxStock is 0 to prevent invalid "max" attribute --}}
                                             x-model.number="quantity"
                                             @input="validateQuantity()"
                                             placeholder="Jumlah"
-                                            {{-- Disable jika combo belum dipilih ATAU tidak tersedia --}}
-                                            :disabled="(!isCombinationSelected && (hasSizeVariations || hasColorVariations)) || !isCombinationAvailable"
+                                            {{-- Disable jika:
+                                                - Ada variasi tapi belum dipilih lengkap (isSelectionComplete is false)
+                                                - ATAU kombinasi terpilih tidak tersedia (isCombinationAvailable is false)
+                                            --}}
+                                            :disabled="((hasSizeVariations || hasColorVariations) && !isSelectionComplete) || !isCombinationAvailable"
                                             class="block w-full p-2.5 border rounded-lg shadow-sm dark:bg-dark-subcard dark:text-text-light focus:ring-pink-brand focus:border-pink-brand text-sm {{ $errors->has('quantity') ? 'border-red-500 ring-1 ring-red-500 dark:border-red-500' : 'border-gray-300 dark:border-dark-border dark:focus:border-pink-brand focus:border-pink-brand' }} disabled:opacity-60 disabled:bg-gray-100 dark:disabled:bg-dark-border">
-                                    {{-- Info Stok / Habis --}}
-                                    <span x-show="isCombinationSelected && isCombinationAvailable && maxStock > 0" class="ml-3 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap"> Stok: <span x-text="maxStock"></span> </span>
-                                     <span x-show="isCombinationSelected && !isCombinationAvailable" class="ml-3 text-xs text-red-500 dark:text-red-400 whitespace-nowrap font-medium"> Stok Habis </span>
+
+                                    {{-- Info Stok / Habis. Show only if selection is complete and relevant. --}}
+                                    <span x-show="isSelectionComplete && isCombinationAvailable && maxStock > 0" class="ml-3 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap"> Stok: <span x-text="maxStock"></span> </span>
+                                     <span x-show="isSelectionComplete && !isCombinationAvailable && selectedCombination" class="ml-3 text-xs text-red-500 dark:text-red-400 whitespace-nowrap font-medium"> Stok Habis </span>
+                                     {{-- Don't show "Stok Habis" if the combination itself wasn't found (selectedCombination is null) --}}
                                 </div>
                                 {{-- Client side error untuk kuantitas --}}
-                                <p x-show="clientError && (clientError.includes('Jumlah') || clientError.includes('minimal') || clientError.includes('melebihi'))" class="text-red-500 dark:text-red-400 text-xs mt-1.5" x-text="clientError"></p>
+                                <p x-show="clientError && (clientError.includes('Jumlah') || clientError.includes('minimal') || clientError.includes('melebihi') || clientError.includes('harus diisi'))" class="text-red-500 dark:text-red-400 text-xs mt-1.5" x-text="clientError"></p>
                                 @error('quantity') <p class="text-red-500 dark:text-red-400 text-xs mt-1.5">{{ $message }}</p> @enderror
                              </div>
 
@@ -198,7 +194,7 @@
                             <div class="pt-4">
                                 @guest
                                     {{-- Jika belum login, arahkan ke halaman login --}}
-                                    <a href="{{ route('login') }}" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-pink-brand hover:bg-pink-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 dark:focus:ring-offset-dark-card transition-colors duration-150">
+                                    <a href="{{ route('login', ['redirect' => url()->current()]) }}" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-pink-brand hover:bg-pink-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 dark:focus:ring-offset-dark-card transition-colors duration-150">
                                         <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" /></svg> {{-- Icon login --}}
                                         Login untuk Tambah ke Keranjang
                                     </a>
@@ -207,11 +203,11 @@
                                     <button type="submit" id="add-to-cart-button"
                                         {{-- Kondisi disable:
                                            - Ada clientError
-                                           - Kombinasi belum dipilih (hanya relevan jika produk punya variasi yg ditampilkan)
-                                           - Kombinasi tidak tersedia (stok 0)
+                                           - Jika ada variasi, tapi pilihan belum lengkap (isSelectionComplete is false)
+                                           - Kombinasi tidak tersedia (stok 0 atau kombinasi tidak ada) (isCombinationAvailable is false)
                                            - Kuantitas kosong atau < 1 (setelah kombinasi dipilih & tersedia)
                                         --}}
-                                        :disabled="!!clientError || (!isCombinationSelected && (hasSizeVariations || hasColorVariations)) || !isCombinationAvailable || !quantity || quantity < 1"
+                                        :disabled="!!clientError || ((hasSizeVariations || hasColorVariations) && !isSelectionComplete) || !isCombinationAvailable || !quantity || quantity < 1"
                                         class="w-full flex items-center justify-center px-8 py-3 bg-pink-brand text-base font-medium text-white rounded-lg shadow-lg hover:bg-pink-brand-dark transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:focus:ring-offset-dark-card disabled:opacity-50 disabled:cursor-not-allowed">
                                         <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> {{-- Icon plus circle --}}
                                         Tambah ke Keranjang
@@ -248,230 +244,195 @@
     <script>
         function productForm(config) {
             return {
-                // Data
+                // Data from Blade
                 stockCombinations: config.stockCombinations || [],
 
-                // State
-                selectedSizeId: config.initialSizeId || '',
-                selectedColorId: config.initialColorId || '',
-                quantity: config.initialQuantity === 'null' ? null : (parseInt(config.initialQuantity) || null),
+                // State based on user interaction and config
+                selectedSizeId: '',   // Will be set in init()
+                selectedColorId: '',  // Will be set in init()
+                quantity: null,       // Will be set in init()
                 maxStock: 0,
 
-                // Flags derived from stockCombinations data
-                hasSizeVariations: false,
-                hasColorVariations: false,
+                // Flags derived from stockCombinations data or config
+                hasSizeVariations: false,    // Determined in init()
+                hasColorVariations: false,   // Determined in init()
 
-                isCombinationSelected: false, // True when size/color selected OR product is simple/single-variation and selection complete
-                isCombinationAvailable: false, // True when selected combo exists and stock > 0
+                // State flags derived from selections
+                isSelectionComplete: false,  // True when all relevant dropdowns have a value
+                isCombinationAvailable: false, // True when selected combo exists AND stock > 0
                 clientError: '',
-                defaultInstruction: 'Pilih variasi dan jumlah yang Anda inginkan.', // Updated default text
 
-                // Init
+                // Init method to set up initial state
                 init() {
-                    // Determine if product has size/color variations based on combinations data
+                    // Determine if product has size/color variations based on actual combinations data
                     this.hasSizeVariations = this.stockCombinations.some(c => c.size_id !== null);
                     this.hasColorVariations = this.stockCombinations.some(c => c.color_id !== null);
 
-                    // For simple products or products with only one variation type,
-                    // ensure the internal state for the *missing* variation type is null,
-                    // regardless of whether old() had a value or ''.
-                    // This simplifies the lookup logic.
-                    if (!this.hasSizeVariations) {
-                        this.selectedSizeId = null;
-                    } else {
-                         // Keep old() value for dropdown if variations exist
-                        this.selectedSizeId = config.initialSizeId || '';
-                    }
+                    // Set initial selectedSizeId:
+                    // If product has size variations, use initialSizeId from config (old input) or default to ''.
+                    // If no size variations, force selectedSizeId to null.
+                    this.selectedSizeId = this.hasSizeVariations ? (config.initialSizeId || '') : null;
 
-                    if (!this.hasColorVariations) {
-                         this.selectedColorId = null;
-                    } else {
-                         // Keep old() value for dropdown if variations exist
-                         this.selectedColorId = config.initialColorId || '';
-                    }
+                    // Set initial selectedColorId (similar logic as size)
+                    this.selectedColorId = this.hasColorVariations ? (config.initialColorId || '') : null;
 
-                     // Ensure quantity is correctly null if initial value was not a valid number > 0
-                     this.quantity = (parseInt(config.initialQuantity) > 0) ? parseInt(config.initialQuantity) : null;
+                    // Set initial quantity:
+                    // Parse initialQuantity from config. If it's a positive number, use it. Otherwise, null.
+                    const initialQty = parseInt(config.initialQuantity);
+                    this.quantity = (initialQty > 0) ? initialQty : null;
 
-
+                    // Trigger initial state update after Alpine has initialized everything
                     this.$nextTick(() => {
-                        this.updateMaxStock(); // Trigger initial state update and validation
+                        this.updateMaxStock();
                     });
 
-                     // DEBUG: Initial state
-                     console.log('[INIT] Alpine Initial State:', {
-                        size: this.selectedSizeId,
-                        color: this.selectedColorId,
-                        qty: this.quantity,
-                        hasSizeVariations: this.hasSizeVariations,
-                        hasColorVariations: this.hasColorVariations
-                     });
+                    // DEBUG: Initial state
+                    // console.log('[INIT] Alpine Initial State:', {
+                    //     size: this.selectedSizeId, color: this.selectedColorId, qty: this.quantity,
+                    //     hasSize: this.hasSizeVariations, hasColor: this.hasColorVariations,
+                    //     stockCombs: this.stockCombinations.length
+                    // });
                 },
 
-                // Computed Property (Getter) - Mencari kombinasi stok berdasarkan state terpilih (size & color)
+                // Computed Property: Get the currently selected stock combination object
                 get selectedCombination() {
-                    // Determine the target size_id and color_id based on selected values
-                    // If a variation type exists (hasSizeVariations/hasColorVariations), use the selected value (mapping '' to null)
-                    // If a variation type does NOT exist, the target must be null.
-                    const targetSizeId = this.hasSizeVariations ? (this.selectedSizeId === '' ? null : parseInt(this.selectedSizeId)) : null;
-                    const targetColorId = this.hasColorVariations ? (this.selectedColorId === '' ? null : parseInt(this.selectedColorId)) : null;
+                    // Target IDs for lookup. Default to null.
+                    // If a variation type exists, use the selected value (mapping '' from dropdown to null for lookup).
+                    const targetSizeId = this.hasSizeVariations
+                        ? (this.selectedSizeId === '' ? null : parseInt(this.selectedSizeId))
+                        : null;
+                    const targetColorId = this.hasColorVariations
+                        ? (this.selectedColorId === '' ? null : parseInt(this.selectedColorId))
+                        : null;
 
-                    // Find the matching combo in the array
-                    const combo = this.stockCombinations.find(
+                    return this.stockCombinations.find(
                         c => c.size_id === targetSizeId && c.color_id === targetColorId
-                    );
-
-                    return combo || null; // Return the combo or null if not found
+                    ) || null;
                 },
 
-                 // Computed property to check if selection is complete (all relevant dropdowns have a value)
-                 get isSelectionComplete() {
-                     let complete = true;
-                     if (this.hasSizeVariations && this.selectedSizeId === '') complete = false;
-                     if (this.hasColorVariations && this.selectedColorId === '') complete = false;
-                     return complete;
-                 },
-
-
-                // Computed property for displaying instructions or errors
+                // Computed property: Instruction/Error message for the user
                 get formInstruction() {
-                    if (this.clientError) { // Show clientError if it exists
-                        return this.clientError;
+                    if (this.clientError) {
+                        return this.clientError; // Prioritize explicit client-side errors
                     }
-                    // Determine instruction based on what needs selecting
+                    // Provide guidance based on what needs selecting
                     if (this.hasSizeVariations && this.hasColorVariations) {
-                         return 'Pilih ukuran dan warna yang Anda inginkan dan masukkan jumlah.';
+                        if (this.selectedSizeId === '' && this.selectedColorId === '') return 'Pilih ukuran dan warna.';
+                        if (this.selectedSizeId === '') return 'Pilih ukuran.';
+                        if (this.selectedColorId === '') return 'Pilih warna.';
+                        return 'Masukkan jumlah yang Anda inginkan.';
                     } else if (this.hasSizeVariations) {
-                         return 'Pilih ukuran yang Anda inginkan dan masukkan jumlah.';
+                        if (this.selectedSizeId === '') return 'Pilih ukuran.';
+                        return 'Masukkan jumlah yang Anda inginkan.';
                     } else if (this.hasColorVariations) {
-                         return 'Pilih warna yang Anda inginkan dan masukkan jumlah.';
-                    } else {
-                         return 'Masukkan jumlah yang Anda inginkan.'; // Simple product
+                        if (this.selectedColorId === '') return 'Pilih warna.';
+                        return 'Masukkan jumlah yang Anda inginkan.';
                     }
+                    return 'Masukkan jumlah yang Anda inginkan.'; // Simple product
                 },
 
-                // Methods
-                // Method utama untuk update state berdasarkan pilihan size/color
+                // Main method to update state when size/color changes
                 updateMaxStock() {
-                    // Clear previous error at the start of updating state
-                    this.clientError = '';
+                    this.clientError = ''; // Clear previous client error
 
-                    // Update selection state
-                    // Selection is complete only if all variation types that exist have a value selected (non-empty string)
-                    this.isCombinationSelected = this.isSelectionComplete;
+                    // 1. Determine if selection is complete
+                    // Selection is complete if all *existing* variation types have a non-empty value
+                    let selectionIsActuallyComplete = true;
+                    if (this.hasSizeVariations && this.selectedSizeId === '') selectionIsActuallyComplete = false;
+                    if (this.hasColorVariations && this.selectedColorId === '') selectionIsActuallyComplete = false;
+                    this.isSelectionComplete = selectionIsActuallyComplete;
 
-                    this.isCombinationAvailable = false; // Default to false
-                    this.maxStock = 0; // Default stock to 0
+                    // Reset availability and stock before re-evaluating
+                    this.isCombinationAvailable = false;
+                    this.maxStock = 0;
 
-
-                    // Logic branch based on whether selection is complete
+                    // 2. Logic based on selection completeness
                     if (!this.isSelectionComplete && (this.hasSizeVariations || this.hasColorVariations)) {
-                         // Case: Product has variations, but selection is incomplete (one or both dropdowns still '-- Pilih --')
-                         let missing = [];
-                         if (this.hasSizeVariations && this.selectedSizeId === '') missing.push('ukuran');
-                         if (this.hasColorVariations && this.selectedColorId === '') missing.push('warna');
-                         this.clientError = 'Pilih ' + missing.join(' dan ') + '.';
-                         this.quantity = null; // Reset quantity if selection incomplete
-                         // isCombinationAvailable remains false
+                        // Case: Product has variations, but selection is incomplete
+                        // Error message is handled by formInstruction getter.
+                        // No need to set clientError here unless more specific message is needed.
+                        this.quantity = null; // Reset quantity if selection is now incomplete
                     } else {
-                         // Case: Selection is complete (either simple product OR variated product with both options picked)
-                         const combination = this.selectedCombination; // Find the combo based on state (will be null if not found)
+                        // Case: Selection is complete (or product is simple)
+                        const combination = this.selectedCombination; // Find the combo based on current state
 
-                         if (combination) {
-                             // Combo found based on selection (or is the single simple combo)
-                             this.maxStock = parseInt(combination.stock) || 0;
-                             this.isCombinationAvailable = this.maxStock > 0;
+                        if (combination) {
+                            // Combo found in stockCombinations
+                            this.maxStock = parseInt(combination.stock) || 0;
+                            this.isCombinationAvailable = this.maxStock > 0;
 
-                             if (!this.isCombinationAvailable) {
-                                 this.clientError = 'Stok untuk kombinasi ini habis.';
-                                 this.quantity = null; // Reset quantity if stock is 0 for the selected combo
-                             }
-                             // If available and has stock, clientError is cleared (unless validateQuantity adds one)
-
-                         } else {
-                             // Combo was not found. This happens when:
-                             // - Variated product, and the *specific* combination (e.g., Size XL, Color Green) selected by the user doesn't exist in the passed stockCombinations data.
-                             // - Very rare: Simple product, but stockCombinations was empty array passed to Alpine (shouldn't happen if product exists).
-                             if(this.stockCombinations.length === 0) {
-                                  this.clientError = 'Produk tidak memiliki stok kombinasi.'; // Should ideally not happen if product exists
-                             } else {
-                                   // Combination not found for the selected variations
-                                   this.clientError = 'Kombinasi pilihan tidak tersedia.';
-                             }
-                             this.quantity = null; // Reset quantity
-                             // isCombinationAvailable remains false
-                         }
+                            if (!this.isCombinationAvailable) {
+                                this.clientError = 'Stok untuk kombinasi ini habis.';
+                                this.quantity = null; // Reset quantity
+                            }
+                        } else {
+                            // Combo NOT found in stockCombinations (for the current selections)
+                            // This occurs if product has variations and the specific user selection doesn't exist
+                            // OR if a simple product somehow has no stockCombinations entry (shouldn't happen).
+                            if (this.hasSizeVariations || this.hasColorVariations) {
+                                 // Only show this if variations exist and were selected, but the combo is invalid
+                                 this.clientError = 'Kombinasi pilihan tidak tersedia.';
+                            } else if (this.stockCombinations.length === 0) {
+                                // Edge case: simple product with no stock data at all
+                                this.clientError = 'Produk tidak memiliki data stok.';
+                            }
+                            // If it's a simple product and stockCombinations[0] exists but was somehow not matched,
+                            // it implies an issue with selectedCombination logic for simple products or bad data.
+                            // For now, isCombinationAvailable remains false, maxStock 0.
+                            this.quantity = null; // Reset quantity
+                        }
                     }
 
-                    // Always call validateQuantity AFTER updating stock and availability state
+                    // 3. Validate quantity after stock and availability are updated
                     this.validateQuantity();
 
                     // DEBUG: Log state after updateMaxStock
-                     console.log('[updateMaxStock] State updated:', {
-                        size: this.selectedSizeId, color: this.selectedColorId,
-                        hasSizeVariations: this.hasSizeVariations, hasColorVariations: this.hasColorVariations,
-                        isSelectionComplete: this.isSelectionComplete,
-                        comboFound: !!this.selectedCombination, comboAvailable: this.isCombinationAvailable,
-                        maxStock: this.maxStock, error: this.clientError, qty: this.quantity
-                     });
+                    // console.log('[updateMaxStock]', {
+                    //     size: this.selectedSizeId, color: this.selectedColorId, qty: this.quantity,
+                    //     isSelComp: this.isSelectionComplete, isComboAvail: this.isCombinationAvailable,
+                    //     maxStock: this.maxStock, error: this.clientError, foundCombo: !!this.selectedCombination
+                    // });
                 },
 
-                // Method untuk validasi input kuantitas secara real-time
+                // Method to validate quantity input
                 validateQuantity() {
-                     // This validation is only relevant if a valid and available combination is selected
-                     // Also, only validate if the quantity input is NOT disabled by the combination state
-                     if (!this.isCombinationSelected || !this.isCombinationAvailable || this.maxStock <= 0) {
-                         // If combo is not valid/available, quantity input is disabled or irrelevant.
-                         // No quantity-specific error should be set here. The clientError should reflect the combo issue.
-                         // console.log('[validateQuantity] Skipping quantity validation: Combo state prevents it.');
-                         return;
-                     }
-
-                     // If combo IS valid and available, proceed to validate quantity.
-                     // Clear any *previous* quantity-specific errors as we are re-validating due to input change.
-                     // IMPORTANT: Do NOT clear combination errors here. updateMaxStock handles that.
-                     if (this.clientError && (this.clientError.includes('Jumlah') || this.clientError.includes('minimal') || this.clientError.includes('melebihi') || this.clientError.includes('harus diisi'))) {
-                         this.clientError = ''; // Clear previous quantity errors
-                     }
-
-                    // Check if quantity input is empty, null, or undefined AFTER combo is selected AND available
-                    if (this.quantity === null || this.quantity === undefined || this.quantity === '') {
-                        // Only set this error if the input is NOT disabled.
-                        // The disabled check above already handles the case where it's disabled.
-                        // So, if we reach here and it's empty, it's a client-side validation error.
-                        this.clientError = 'Jumlah harus diisi.';
-                        // console.log('[validateQuantity] Quantity is empty/null/"" after combo selected & available.');
+                    // Only validate quantity if the input is supposed to be active and relevant
+                    if (!this.isSelectionComplete || !this.isCombinationAvailable || this.maxStock <= 0) {
+                        // If combo isn't fully selected, or not available, or no stock,
+                        // quantity validation is deferred or quantity input is disabled.
+                        // Errors related to combo selection/availability take precedence.
+                        // However, if there's an existing quantity-specific error, clear it.
+                        if (this.clientError && (this.clientError.includes('Jumlah') || this.clientError.includes('minimal') || this.clientError.includes('melebihi'))) {
+                            this.clientError = '';
+                        }
                         return;
                     }
 
-                    // Check if it's a valid number
+                    // Clear previous quantity-specific errors if we are re-validating
+                    if (this.clientError && (this.clientError.includes('Jumlah') || this.clientError.includes('minimal') || this.clientError.includes('melebihi') || this.clientError.includes('harus diisi'))) {
+                        this.clientError = '';
+                    }
+
+                    if (this.quantity === null || this.quantity === undefined || this.quantity === '') {
+                        this.clientError = 'Jumlah harus diisi.';
+                        return;
+                    }
                     if (isNaN(this.quantity)) {
                         this.clientError = 'Jumlah harus berupa angka.';
-                        // console.log('[validateQuantity] Quantity is NaN.');
                         return;
                     }
 
-                    // Parse as integer (though x-model.number helps)
                     let qty = parseInt(this.quantity);
-
-                    // Check minimum quantity (should be >= 1)
                     if (qty < 1) {
                         this.clientError = 'Jumlah minimal 1.';
-                        // console.log(`[validateQuantity] Quantity ${qty} < 1.`);
                         return;
                     }
-
-                    // Check against max stock
                     if (this.maxStock > 0 && qty > this.maxStock) {
                         this.clientError = `Jumlah melebihi stok tersedia (${this.maxStock} pcs).`;
-                        // console.log(`[validateQuantity] Quantity ${qty} > maxStock ${this.maxStock}.`);
-                        return; // Do not auto-correct, let user fix it
+                        // Do not auto-correct here, let user fix. Button will be disabled.
+                        return;
                     }
-
-                    // If all quantity validations pass, ensure no quantity-specific error remains.
-                    // If there was a non-quantity error (e.g., combo not found, handled by updateMaxStock),
-                    // it would not be cleared here.
-                     // console.log(`[validateQuantity] Final: Qty=${this.quantity}, Max=${this.maxStock}, Available=${this.isCombinationAvailable}, Error='${this.clientError}'`);
+                    // If all checks pass, clientError (for quantity) remains empty or is cleared.
                 }
             }
         }
