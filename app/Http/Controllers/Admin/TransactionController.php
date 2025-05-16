@@ -120,14 +120,14 @@ class TransactionController extends Controller
      * @param  \App\Models\Transaction  $transactionItem (Route Model Binding - Renamed variable)
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function destroy(Transaction $transactionItem): RedirectResponse
+    public function destroy(Transaction $transaction): RedirectResponse
     {
         try {
             // Simpan ID order induk sebelum item dihapus
-            $orderId = $transactionItem->order_id;
+            $orderId = $transaction->order_id;
 
             // Coba hapus item transaksi
-            $transactionItem->delete();
+            $transaction->delete();
 
             // Setelah item dihapus, hitung ulang total_amount untuk order induknya
             $parentOrder = Order::find($orderId);
@@ -155,7 +155,7 @@ class TransactionController extends Controller
 
         } catch (\Exception $e) {
             // Tangani jika terjadi error saat menghapus
-            Log::error("Error deleting transaction item {$transactionItem->id}: " . $e->getMessage(), ['exception' => $e]);
+            Log::error("Error deleting transaction item {$transaction->id}: " . $e->getMessage(), ['exception' => $e]);
 
             // Redirect kembali dengan pesan error
             return redirect()->route('admin.transactions.index') // Keep redirecting here
