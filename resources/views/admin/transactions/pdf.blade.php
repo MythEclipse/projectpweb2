@@ -11,7 +11,7 @@
         }
         h1 {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
         table {
             width: 100%;
@@ -25,6 +25,7 @@
         }
         th {
             background: #f4f4f4;
+            text-align: center;
         }
     </style>
 </head>
