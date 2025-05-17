@@ -43,6 +43,19 @@ class TransactionController extends Controller
         $transactionItems = $query->paginate(15);
         return view('admin.transactions.index', compact('transactionItems'));
     }
+
+    public function downloadPDF()
+    {
+        $transactions = Transaction::with(['order.user', 'product', 'size', 'color'])->get();
+
+        $pdf = PDF::loadView('admin.transactions.pdf', compact('transactions'));
+        $pdf->setPaper('A4', 'landscape'); // Set paper size and orientation
+        $pdf->setOptions(['defaultFont' => 'sans-serif']); // Set default font
+        $filename = 'laporan Transaksi ' . date('Y-m-d') . '.pdf';
+        return $pdf->stream($filename);
+    }
+
+
     /**
      * Menampilkan form untuk membuat transaksi baru.
      * CATATAN: Metode ini *tidak* sesuai dengan skema baru (membuat item tanpa order).
