@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin; // Ensure this is in the Admin namespace
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Transaction; // Now represents an Order Item (admin's detailed view)
@@ -41,6 +42,17 @@ class TransactionController extends Controller
         }
         $transactionItems = $query->paginate(15);
         return view('admin.transactions.index', compact('transactionItems'));
+    }
+
+    public function downloadPDF()
+    {
+        $transactions = Transaction::with(['order.user', 'product', 'size', 'color'])->get();
+
+        $pdf = PDF::loadView('admin.transactions.pdf', compact('transactions'));
+        $pdf->setPaper('A4', 'landscape'); // Set paper size and orientation
+        $pdf->setOptions(['defaultFont' => 'sans-serif']); // Set default font
+        $filename = 'laporan Transaksi ' . date('Y-m-d') . '.pdf';
+        return $pdf->stream($filename);
     }
 
 
