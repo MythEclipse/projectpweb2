@@ -13,19 +13,16 @@
             text-align: center;
             margin-bottom: 20px;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
         }
-
         th,
         td {
             padding: 6px 8px;
             border: 1px solid #ddd;
             text-align: left;
         }
-
         th {
             background: #f4f4f4;
         }
