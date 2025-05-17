@@ -4,7 +4,7 @@
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
             <h2 class="text-2xl font-bold text-text-dark dark:text-text-light">
-                Daftar Item Transaksi (Detail Pesanan)
+                Daftar Item Transaksi
             </h2>
         </div>
     </x-slot>

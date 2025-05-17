@@ -28,20 +28,21 @@ class TransactionController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        // Eager load relasi item (product, size, color) dan relasi ke Order + User di Order
-        // Ini penting untuk performa agar tidak N+1 problem saat mengakses order/user/product/size/color di view
-        $transactionItems = Transaction::with(['order.user', 'product', 'size', 'color'])
-            ->latest() // Urutkan berdasarkan created_at descending (tanggal item dibuat/ditambah ke order)
-            ->paginate(15); // Gunakan paginasi
+        $query = Transaction::with(['order.user', 'product', 'size', 'color'])->latest();
 
-        // Note: View ini menampilkan daftar ITEM, bukan daftar pesanan lengkap.
-        // Data pesanan (Order) diakses melalui relasi $item->order->...
-        // Anda perlu menyesuaikan view 'admin.transactions.index' untuk struktur kolom yang diminta.
-        // The view you provided in the prompt already matches this structure.
+        if ($search = $request->input('search')) {
+            $query->whereHas('product', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            })->orWhereHas('order.user', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            });
+        }
+        $transactionItems = $query->paginate(15);
         return view('admin.transactions.index', compact('transactionItems'));
     }
+
 
     /**
      * Menampilkan form untuk membuat transaksi baru.
@@ -132,20 +133,20 @@ class TransactionController extends Controller
             // Setelah item dihapus, hitung ulang total_amount untuk order induknya
             $parentOrder = Order::find($orderId);
             if ($parentOrder) {
-                 // Gunakan DB::raw() untuk menghitung total quantity * price dari item yang tersisa
-                 // Ensure 'quantity' and 'price' are column names in the 'transactions' table
-                 $newTotalAmount = $parentOrder->transactionItems()->sum(DB::raw('quantity * price'));
+                // Gunakan DB::raw() untuk menghitung total quantity * price dari item yang tersisa
+                // Ensure 'quantity' and 'price' are column names in the 'transactions' table
+                $newTotalAmount = $parentOrder->transactionItems()->sum(DB::raw('quantity * price'));
 
-                 // Perbarui total_amount di tabel orders
-                 $parentOrder->update(['total_amount' => $newTotalAmount]);
+                // Perbarui total_amount di tabel orders
+                $parentOrder->update(['total_amount' => $newTotalAmount]);
 
-                 // Opsional: Tangani kasus jika semua item dihapus dan total menjadi 0
-                 if ($newTotalAmount == 0 && $parentOrder->transactionItems()->count() == 0) {
+                // Opsional: Tangani kasus jika semua item dihapus dan total menjadi 0
+                if ($newTotalAmount == 0 && $parentOrder->transactionItems()->count() == 0) {
                     // Logika bisnis: apakah order dihapus? di-cancel?
                     // Example: If you want to delete the order too if no items remain
                     // $parentOrder->delete();
                     // Log::info("Order {$orderId} deleted as all items were removed.");
-                 }
+                }
             }
 
             // Redirect ke halaman index item transaksi (this controller's index)
@@ -189,20 +190,20 @@ class TransactionController extends Controller
         // Laravel seharusnya melempar 404 secara default, tapi jika tidak,
         // kita bisa tambahkan cek eksplisit untuk memastikan model ditemukan.
         if (!$order->exists) {
-             Log::error('Quick Update failed: Order model not found by Route Model Binding', ['order_id_from_route' => request()->route('order')]);
-             return response()->json(['success' => false, 'message' => 'Pesanan tidak ditemukan.'], 404);
+            Log::error('Quick Update failed: Order model not found by Route Model Binding', ['order_id_from_route' => request()->route('order')]);
+            return response()->json(['success' => false, 'message' => 'Pesanan tidak ditemukan.'], 404);
         }
 
 
         $validator = Validator::make($request->all(), [
-             'field' => ['required', 'string', Rule::in(['shipping_status'])],
-             'value' => ['required', function ($attribute, $value, $fail) use ($request) {
-                 if ($request->input('field') === 'shipping_status') {
-                     if (!in_array($value, ['not_shipped', 'shipped', 'delivered', 'returned'])) {
-                         $fail('Nilai status pengiriman tidak valid.');
-                     }
-                 }
-             }],
+            'field' => ['required', 'string', Rule::in(['shipping_status'])],
+            'value' => ['required', function ($attribute, $value, $fail) use ($request) {
+                if ($request->input('field') === 'shipping_status') {
+                    if (!in_array($value, ['not_shipped', 'shipped', 'delivered', 'returned'])) {
+                        $fail('Nilai status pengiriman tidak valid.');
+                    }
+                }
+            }],
         ]);
 
         if ($validator->fails()) {
@@ -231,7 +232,7 @@ class TransactionController extends Controller
                     if ($order->shipping_status === 'delivered') {
                         $newCalculatedStatus = 'completed';
                     } elseif ($order->shipping_status === 'shipped') {
-                         $newCalculatedStatus = 'processing';
+                        $newCalculatedStatus = 'processing';
                     } else {
                         $newCalculatedStatus = 'processing';
                     }
@@ -260,7 +261,6 @@ class TransactionController extends Controller
                 'main_status_updated' => $mainStatusChanged,
                 'new_main_status' => $order->status,
             ]);
-
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error("Error quick updating order {$order->id} field {$field}: " . $e->getMessage(), ['exception' => $e, 'stacktrace' => $e->getTraceAsString()]); // Log stacktrace lengkap
@@ -268,5 +268,4 @@ class TransactionController extends Controller
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan pada server saat memperbarui status.'], 500);
         }
     }
-
 }
