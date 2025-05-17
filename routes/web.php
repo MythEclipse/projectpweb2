@@ -112,7 +112,6 @@ Route::middleware(['auth', 'verified', IsAdmin::class]) // Terapkan semua middle
 
         // Tambahkan route admin lainnya di sini jika ada...
     });
-    Route::get('/transactions/download', [TransactionController::class, 'downloadPdf'])->name('admin.transactions.download');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');

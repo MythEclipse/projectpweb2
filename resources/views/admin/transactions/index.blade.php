@@ -5,11 +5,7 @@
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
             <h2 class="text-2xl font-bold text-text-dark dark:text-text-light">
                 Daftar Item Transaksi
-            </h2>
-            <a href="{{ route('admin.transactions.download') }}" target="_blank"
-               class="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 bg-pink-brand hover:bg-pink-brand-dark text-white rounded-lg shadow-md transition-transform transform hover:scale-105">
-                Download Laporan
-            </a>
+            </h2>        
         </div>
     </x-slot>
 
