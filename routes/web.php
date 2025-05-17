@@ -111,7 +111,7 @@ Route::middleware(['auth', 'verified', IsAdmin::class]) // Terapkan semua middle
      ->name('orders.quick-update');
 
         // Tambahkan route admin lainnya di sini jika ada...
-        Route::get('/transaksi/download', [TransactionController::class, 'downloadPdf'])->name('transaction.download');
+        Route::get('/transaksi/download', [TransactionController::class, 'downloadPdf'])->name('admin.transaction.download');
     });
 Route::middleware(['auth'])->group(function () {
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
