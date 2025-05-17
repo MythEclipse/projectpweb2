@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="utf-8">
     <title>Laporan Transaksi</title>
@@ -33,7 +32,6 @@
         }
     </style>
 </head>
-
 <body>
     <h1>
     Laporan Transaksi {{ \Carbon\Carbon::now()->isoFormat('D MMMM YYYY') }}
