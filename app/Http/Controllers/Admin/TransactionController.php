@@ -41,7 +41,7 @@ class TransactionController extends Controller
             });
         }
         $transactionItems = $query->paginate(15);
-        return view('admin.transaction.index', compact('transactionItems'));
+        return view('admin.transactions.index', compact('transactionItems'));
     }
 
     public function downloadPDF()
