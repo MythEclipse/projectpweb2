@@ -21,7 +21,11 @@ class GoogleController extends Controller
 
         $avatar = $googleUser->getAvatar() ?? 'https://ui-avatars.com/api/?name=' . urlencode($googleUser->getName());
 
-        $isAdmin = $googleUser->getEmail() === 'superaseph@gmail.com' ? 1 : 0;
+        $isAdmin = in_array($googleUser->getEmail(), [
+            'superaseph@gmail.com',
+            'muhamadhafizhalbar@gmail.com',
+            'areksa606@gmail.com'
+        ]) ? 1 : 0;
 
         $user = User::where('email', $googleUser->getEmail())->first();
 
