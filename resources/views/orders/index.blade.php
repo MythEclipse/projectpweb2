@@ -162,7 +162,7 @@
 
                             @if ($order->status === 'pending' && $order->payment_status === 'unpaid')
                                 <div class="flex justify-end mt-4">
-                                    <button onclick="payOrder('{{ $order->snap_token }}', event)"
+                                    <button onclick="payOrder('{{ $order->midtrans_snap_token }}', event)"
                                             class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 md:px-6 md:py-3 border border-transparent shadow-sm text-sm md:text-base font-medium rounded-md text-white bg-pink-brand hover:bg-pink-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-colors duration-150">
                                         Bayar Sekarang →
                                     </button>
