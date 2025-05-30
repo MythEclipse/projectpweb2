@@ -162,14 +162,12 @@
 
                             @if ($order->status === 'pending' && $order->payment_status === 'unpaid')
                                 <div class="flex justify-end mt-4">
-                                    <a href="{{ route('checkout.index') }}"
-                                    class="inline-flex justify-center items-center px-4 py-2 md:px-6 md:py-3 border border-transparent shadow-sm text-sm md:text-base font-medium rounded-md text-white bg-pink-brand hover:bg-pink-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-colors duration-150">
-                                        Checkout →
-                                    </a>
+                                    <button onclick="payOrder('{{ $order->snap_token }}', event)"
+                                            class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 md:px-6 md:py-3 border border-transparent shadow-sm text-sm md:text-base font-medium rounded-md text-white bg-pink-brand hover:bg-pink-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-colors duration-150">
+                                        Bayar Sekarang →
+                                    </button>
                                 </div>
                             @endif
-
-
 
                             {{-- Optional: Button Detail --}}
                             {{-- Tombol ini seharusnya menuju detail Order, bukan item. --}}
@@ -209,4 +207,81 @@
             </div> {{-- End bg-white --}}
         </div> {{-- End max-w-7xl --}}
     </div> {{-- End py-12 --}}
+    
+    <!-- Midtrans Snap.js -->
+    <script type="text/javascript"
+            src="https://app{{ config('services.midtrans.is_production') ? '' : '.sandbox' }}.midtrans.com/snap/snap.js"
+            data-client-key="{{ config('services.midtrans.client_key') }}">
+    </script>
+
+    <script>
+        function payOrder(snapToken, event) {
+        const btn = event.target;
+
+        if (!snapToken) {
+        console.error("Token pembayaran tidak ditemukan.");
+
+        // Notifikasi user
+        alert("Pembayaran gagal: Token pembayaran tidak ditemukan.");
+
+        // Kembalikan tombol ke semula, jika ada
+        const btn = event?.target;
+        if (btn) {
+            btn.innerHTML = originalText ?? "Bayar Sekarang →";
+            btn.disabled = false;
+        }
+
+        return;
+    }
+
+
+        const originalText = btn.innerHTML;
+
+        // Tampilkan tombol loading
+        btn.innerHTML = `
+            <span class="flex items-center">
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Memproses...
+            </span>
+        `;
+        btn.disabled = true;
+
+        try {
+            // Panggil Midtrans Snap dengan token
+            if (snapToken) {
+                snap.pay(snapToken, {
+                    onSuccess: function(result) {
+                        alert("payment success!"); console.log(result);
+                        window.location.href = '{{ route("orders.index") }}'; // redirect ke order history
+                    },
+                    onPending: function(result) {
+                        alert("wating your payment!"); console.log(result);
+                        window.location.href = '{{ route("orders.index") }}'; // redirect ke order history / instruksi
+                    },
+                    onError: function(result) {
+                        alert("payment failed!"); console.log(result);
+                        // Kembalikan tombol ke semula
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    },
+                    onClose: function() {
+                        alert('you closed the popup without finishing the payment');
+                        // Kembalikan tombol ke semula
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }
+                });
+            }
+        } catch (err) {
+            alert("Terjadi kesalahan tidak terduga.");
+            console.error(err);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    </script>
 </x-app-layout>
