@@ -38,8 +38,6 @@
 #      ever applied and no repo even defined, so it could never fire.
 #   5. CI on the EXACT head SHA has settled green, or the repo genuinely has no
 #      CI. Red, pending past the deadline, or unreadable all leave it open.
-#   6. The PR is mergeable. If it conflicts with base, leave it open for a
-#      human rebase instead of failing this workflow.
 #
 # FAIL-CLOSED: a bump that waits is recoverable. A broken bump that lands is not.
 name: Dependabot auto-merge
@@ -167,13 +165,4 @@ jobs:
         # worker's own merge path uses an App installation token and does
         # trigger them, so a repo that needs the deploy should be merged by the
         # worker rather than here — label such a PR `dependabot-no-auto-merge`.
-        run: |
-          set -euo pipefail
-
-          mergeable=$(gh pr view "$PR" --repo "$REPO" --json mergeable --jq '.mergeable')
-          if [ "$mergeable" = "CONFLICTING" ]; then
-            echo "::notice::PR #$PR has merge conflicts with base — leaving it open for a human"
-            exit 0
-          fi
-
-          gh pr merge "$PR" --repo "$REPO" --merge --delete-branch
+        run: gh pr merge "$PR" --repo "$REPO" --merge --delete-branch
